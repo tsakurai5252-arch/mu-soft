@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ダウンロード - 総合ポータル | MU Soft</title>
+  
+  <!-- 共通メニューファイルを読み込み -->
+  <script src="../menu.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'HGP明朝B', 'HGPMinchoB';
+      src: url('../font/FONT.TTC') format('truetype');
+      font-weight: bold;
+    }
+
+    /* <menu-font> タグの設定 */
+    menu-font {
+      display: inline; /* インライン要素として扱う設定 */
+    }
+
+    /* ダークモード時の <menu-font> および配下要素のスタイル設定 */
+    [data-theme="dark"] menu-font,
+    [data-theme="dark"] menu-font * {
+      color: #000000 !important;
+    }
+
+    /* 既定：ホワイト（ライトモード）テーマ */
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #d97706;            /* エレガントゴールド/アンバー */
+      --accent-hover: #b45309;
+      --accent-glow: rgba(217, 119, 6, 0.15);
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(226, 232, 240, 0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 24px 50px rgba(15, 23, 42, 0.05);
+      --radius: 20px;
+      --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      --hero-text: #1e293b;
+      --hero-desc: #64748b;
+      --btn-sub-bg: rgba(15, 23, 42, 0.05);
+      --btn-sub-border: rgba(15, 23, 42, 0.15);
+      --btn-sub-text: #1e293b;
+      --btn-sub-hover-bg: rgba(15, 23, 42, 0.1);
+      --toggle-btn-bg: #ffffff;
+      --toggle-btn-text: #0f172a;
+      --toggle-btn-border: #cbd5e1;
+      --tag-bg: #f1f5f9;
+      --tag-text: #334155;
+    }
+
+    /* ダークモードテーマ */
+    [data-theme="dark"] {
+      --primary: #090d16;
+      --primary-light: #121824;
+      --accent: #d4af37;            /* ラグジュアリーゴールド */
+      --accent-hover: #f3e5ab;
+      --accent-glow: rgba(212, 175, 55, 0.25);
+      --bg: #05080f;
+      --card-bg: rgba(18, 24, 36, 0.65);
+      --card-border: rgba(212, 175, 55, 0.15);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 24px 50px rgba(0, 0, 0, 0.7);
+      --hero-bg: linear-gradient(145deg, rgba(20, 27, 41, 0.9) 0%, rgba(10, 14, 23, 0.95) 100%);
+      --hero-text: #ffffff;
+      --hero-desc: #cbd5e1;
+      --btn-sub-bg: rgba(255, 255, 255, 0.05);
+      --btn-sub-border: rgba(255, 255, 255, 0.2);
+      --btn-sub-text: #f8fafc;
+      --btn-sub-hover-bg: rgba(255, 255, 255, 0.12);
+      --toggle-btn-bg: #1e293b;
+      --toggle-btn-text: #f8fafc;
+      --toggle-btn-border: rgba(255, 255, 255, 0.2);
+      --tag-bg: rgba(255, 255, 255, 0.06);
+      --tag-text: #cbd5e1;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", Arial, sans-serif; 
+    }
+    
+    body { 
+      background-color: var(--bg); 
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(30, 41, 59, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(217, 119, 6, 0.03) 0%, transparent 40%);
+      background-attachment: fixed;
+      color: var(--text); 
+      margin: 0; 
+      padding: 40px 20px; 
+      line-height: 1.8; 
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    
+    .container { 
+      max-width: 920px; 
+      margin: 0 auto; 
+    }
+
+    /* リンクスタイル */
+    a {
+      outline: none;
+      color: var(--accent);
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+    .a-green {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+    .a-green:hover {
+      color: #34d399;
+    }
+
+    /* 画像スタイル */
+    img {
+      width: 75%;
+      height: auto;
+      border-radius: 14px;
+    }
+    img:hover {
+      transform: scale(1.02);
+    }
+    .r {
+      width: 35%;
+      height: auto;
+    }
+
+    /* テーマ切り替えボタン */
+    .theme-toggle-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    .theme-toggle-btn {
+      background: var(--toggle-btn-bg);
+      color: var(--toggle-btn-text);
+      border: 1px solid var(--toggle-btn-border);
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+    .theme-toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ヒーローセクション */
+    .hero {
+      background: var(--hero-bg);
+      color: var(--hero-text); 
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius); 
+      padding: 70px 40px;
+      text-align: center; 
+      box-shadow: var(--shadow-lg); 
+      margin-bottom: 45px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background 0.4s ease;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      animation: pulseGlow 10s infinite alternate ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95) translateY(0); opacity: 0.7; }
+      100% { transform: scale(1.05) translateY(-10px); opacity: 1; }
+    }
+    .hero h1 { 
+      font-size: 38px; 
+      margin: 0 0 16px 0; 
+      font-weight: 800; 
+      letter-spacing: 1.5px;
+      color: var(--hero-text);
+      text-shadow: none;
+    }
+    .hero p { 
+      font-size: 16px; 
+      color: var(--hero-desc); 
+      margin: 0 0 36px 0; 
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+    .hero-buttons { 
+      display: flex; 
+      gap: 18px; 
+      justify-content: center; 
+      flex-wrap: wrap; 
+      margin-top: 30px; 
+    }
+    .btn-hero {
+      padding: 14px 34px; 
+      border-radius: 50px; 
+      font-weight: 600; 
+      text-decoration: none;
+      font-size: 14px; 
+      letter-spacing: 0.5px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .btn-hero:hover { 
+      transform: translateY(-3px); 
+      text-decoration: none;
+    }
+    .btn-hero-main { 
+      background: linear-gradient(135deg, #d4af37 0%, #b45309 100%);
+      color: #ffffff; 
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+    }
+    .btn-hero-main:hover {
+      background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 100%);
+      box-shadow: 0 10px 28px rgba(212, 175, 55, 0.45);
+      color: #000000;
+    }
+    .btn-hero-sub { 
+      background: var(--btn-sub-bg); 
+      color: var(--btn-sub-text); 
+      border: 1px solid var(--btn-sub-border); 
+      backdrop-filter: blur(8px);
+    }
+    .btn-hero-sub:hover {
+      background: var(--btn-sub-hover-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* 機能・サービス紹介カード */
+    .features-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+      gap: 24px; 
+      margin-bottom: 45px; 
+    }
+    .feature-card {
+      background: var(--card-bg); 
+      padding: 32px 24px; 
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border); 
+      text-align: left;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-md), 0 0 20px var(--accent-glow);
+      border-color: var(--accent);
+    }
+    .card-category {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: block;
+      font-weight: 600;
+    }
+    .feature-title { 
+      font-weight: 700; 
+      font-size: 20px;
+      margin-bottom: 12px; 
+      color: var(--text); 
+      letter-spacing: 0.5px;
+    }
+    .feature-desc { 
+      font-size: 14px; 
+      color: var(--text-muted); 
+      margin: 0 0 20px 0; 
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    /* ダウンロードリスト・セクション */
+    .portfolio-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 36px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--card-border);
+      border-left: 5px solid var(--accent);
+      margin-bottom: 45px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .portfolio-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .portfolio-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+    }
+    .portfolio-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ダウンロードアイテム用独自スタイル */
+    .download-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .download-item {
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .download-item {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .download-item:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .download-item-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      width: 100%;
+    }
+    .download-info {
+      flex: 1;
+      min-width: 240px;
+    }
+    .download-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .download-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* 旧バージョン展開（アコーディオン）用追加スタイル */
+    .old-versions-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 0 0 0;
+      transition: color 0.3s ease;
+      outline: none;
+    }
+    .old-versions-toggle:hover {
+      color: var(--accent);
+    }
+    .old-versions-toggle .arrow {
+      display: inline-block;
+      transition: transform 0.3s ease;
+      font-size: 10px;
+    }
+    .old-versions-toggle.active .arrow {
+      transform: rotate(180deg);
+    }
+    .old-versions-container {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+      width: 100%;
+      border-top: 0px solid transparent;
+    }
+    .old-versions-container.open {
+      max-height: 1000px;
+      transition: max-height 0.4s cubic-bezier(1, 0, 1, 0);
+      border-top: 1px dashed var(--border);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    .old-versions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .old-version-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 6px;
+    }
+    [data-theme="dark"] .old-version-item {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .old-version-info {
+      display: flex;
+      gap: 16px;
+      color: var(--text-muted);
+    }
+    .old-version-num {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* 連絡事項・お知らせセクション */
+    .section-card {
+      background: var(--card-bg); 
+      border-radius: var(--radius); 
+      padding: 36px;
+      box-shadow: var(--shadow-sm); 
+      border: 1px solid var(--card-border); 
+      margin-bottom: 45px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+    .section-header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 24px; 
+      padding-bottom: 16px; 
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title { 
+      font-size: 20px; 
+      font-weight: 700; 
+      color: var(--text); 
+      margin: 0; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      letter-spacing: 0.5px;
+    }
+
+    /* お知らせリスト */
+    .news-list { list-style: none; padding: 0; margin: 0; }
+    .news-item {
+      padding: 20px 12px; 
+      border-bottom: 1px solid var(--border);
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px;
+      transition: background-color 0.25s ease, transform 0.25s ease;
+      border-radius: 10px;
+    }
+    .news-item:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+      transform: translateX(4px);
+    }
+    [data-theme="dark"] .news-item:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+    .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .news-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .news-date { color: var(--text-muted); font-weight: 500; font-family: 'Consolas', 'Courier New', monospace; letter-spacing: 1px; }
+    .badge {
+      padding: 3px 12px; 
+      border-radius: 50px; 
+      font-size: 11px; 
+      font-weight: 700; 
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .badge-important { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); } /* 重要 */
+    .badge-info { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }      /* お知らせ */
+    .badge-maint { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); }     /* メンテナンス */
+    .news-title { font-weight: 600; font-size: 16px; color: var(--text); }
+    .news-detail { font-size: 14px; color: var(--text-muted); margin-top: 2px; white-space: pre-wrap; line-height: 1.7; font-weight: 400; }
+
+    /* 注意事項・案内ブロック */
+    .toc-card {
+      text-align: center;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 45px;
+      box-shadow: var(--shadow-sm);
+    }
+    .toc-card p {
+      margin: 0 0 12px 0;
+      font-weight: 600;
+    }
+
+    /* 推奨環境セクション */
+    .requirements-section {
+      background: var(--card-bg);
+      padding: 30px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      text-align: center;
+      margin-bottom: 45px;
+      box-shadow: var(--shadow-sm);
+    }
+    .requirements-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .requirements-list {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .requirements-list li span {
+      display: block;
+      color: var(--text);
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    /* フッター */
+    footer { 
+      text-align: center; 
+      padding: 30px; 
+      color: var(--text-muted); 
+      font-size: 13px; 
+      border-top: 1px solid var(--border);
+      margin-top: 30px;
+      letter-spacing: 1px;
+    }
+
+    /* トップへ戻るボタン */
+    #pagetop-btn {
+      position: fixed;
+      right: 30px;
+      bottom: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--accent);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 11px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    #pagetop-btn:hover {
+      background: var(--accent);
+      color: #ffffff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px var(--accent-glow);
+    }
+    #pagetop-btn.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* 右上のロード中インジケーター */
+    #mini-loader {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+    }
+    .dot-spin {
+      width: 14px;
+      height: 14px;
+      margin-right: 10px;
+      border: 2px solid rgba(212, 175, 55, 0.2);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { opacity: 0; }
+  </style>
+</head>
+<body id="top">
+  <!-- JavaScript側でテンプレートから動的に描画される親要素 -->
+  <div id="menu-text-container"></div>
+
+  <!-- ロード中インジケーター -->
+  <div id="mini-loader">
+    <div class="dot-spin"></div>
+    <span>Loading...</span>
+  </div>
+
+  <div id="download"></div>
+
+  <!-- メニュー表示エリア -->
+  <div id="common-menu-area"></div>
+  <br>
+  <div class="container">
+    <!-- テーマ切り替えボタン -->
+    <div class="theme-toggle-wrapper">
+      <button id="themeToggleBtn" class="theme-toggle-btn" type="button">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">ダークモード</span>
+      </button>
+    </div>
+
+<section id="01">
+    <!-- ヒーローエリア -->
+    <header class="hero">
+      <h1>ダウンロードポータル</h1>
+      <p>MU Softが提供する各種ソフトウェアおよびツールのダウンロードページです。</p>
+      <div class="hero-buttons">
+        <a href="./index.html" class="btn-hero btn-hero-sub">トップページへ戻る</a>
+        <a href="#downloads" class="btn-hero btn-hero-main">配信ソフト一覧</a>
+      </div>
+    </header>
+</section>
+
+<section id="02">
+    <!-- 更新履歴・お知らせセクション -->
+    <section class="section-card">
+      <div class="section-header">
+        <h2 class="section-title">📦 配信・更新情報</h2>
+      </div>
+      <ul class="news-list" id="newsContainer">
+        <!-- JavaScriptで自動描画されます -->
+      </ul>
+    </section>
+</section>
+
+<section id="03">
+    <!-- 主要ソフトウェアダウンロードセクション -->
+    <section class="portfolio-section" id="downloads">
+      <div class="portfolio-header">
+        <h2 class="portfolio-title">💻 ソフトウェアダウンロード</h2>
+        <p class="portfolio-desc">以下のソフトをダウンロードできます。</p>
+      </div>
+
+      <div class="download-list">
+        <!-- TS FTP -->
+        <div class="download-item">
+          <div class="download-item-main">
+            <div class="download-info">
+              <div class="download-name">📂 TSFTP (自作FTPソフト)</div>
+              <div class="feature-desc" style="margin: 4px 0 10px 0;">PythonベースのシンプルなFTPソフト。</div>
+              <div class="download-meta">
+                <span>バージョン: v1.2d</span>
+                <span>対応OS: Windows 10 / 11</span>
+                <span>ファイル形式: ZIP</span>
+                <a href="../manual/index.html">オンラインマニュアル(v1.0d) あり</a>
+              </div>
+            </div>
+            <a href="./zip/tsftp-v1.2d.zip" class="btn-hero btn-hero-main" style="padding: 10px 24px; font-size: 13px;">ダウンロード</a>
+          </div>
+          <!-- 旧バージョン展開バー -->
+          <button type="button" class="old-versions-toggle" onclick="toggleOldVersions(this)">
+            <span>過去のバージョンを表示</span>
+            <span class="arrow">▼</span>
+          </button>
+          <div class="old-versions-container">
+            <ul class="old-versions-list">
+              <li class="old-version-item">
+                <div class="old-version-info">
+                  <span class="old-version-num">v1.1d</span>
+                  <span>リリース: 2026.09.21</span>
+                </div>
+                <a href="tsftp-v1.1d.zip" class="a-green">ダウンロード</a>
+              </li>
+              <li class="old-version-item">
+                <div class="old-version-info">
+                  <span class="old-version-num">v1.0d</span>
+                  <span>リリース: 2026.09.21</span>
+                </div>
+                <a href="tsftp-v1.0d.zip" class="a-green">ダウンロード</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- TSHTML -->
+        <div class="download-item">
+          <div class="download-item-main">
+            <div class="download-info">
+              <div class="download-name">📝 TSHTML</div>
+              <div class="feature-desc" style="margin: 4px 0 10px 0;">シンプルなHTMLエディタ。</div>
+              <div class="download-meta">
+                <span>バージョン: v1.0b</span>
+                <span>対応OS: Windows 10 / 11</span>
+                <span>ファイル形式: ZIP</span>
+              </div>
+            </div>
+            <a href="tshtml-v1.0b.zip" class="btn-hero btn-hero-main" style="padding: 10px 24px; font-size: 13px;">ダウンロード</a>
+          </div>
+            <span>過去のバージョンはありません。</span>
+        </div>
+
+        <!-- TSEXCEL -->
+        <div class="download-item">
+          <div class="download-item-main">
+            <div class="download-info">
+              <div class="download-name">📊 TSEXCEL (Excel自動入力ソフト)</div>
+              <div class="feature-desc" style="margin: 4px 0 10px 0;">Excelデータ処理業務を自動化する省力化支援アプリケーション。(ただし尾三卓球大会専用)</div>
+              <div class="download-meta">
+                <span>バージョン: v1.0c</span>
+                <span>対応OS: Windows 10 / 11</span>
+                <span>ファイル形式: ZIP</span>
+              </div>
+            </div>
+            <a href="tsexcel-v1.0c.zip" class="btn-hero btn-hero-main" style="padding: 10px 24px; font-size: 13px;">ダウンロード</a>
+          </div>
+         <span>過去のバージョンはありません。</span>
+        </div>
+
+        <!-- TSSTAMP -->
+        <div class="download-item">
+          <div class="download-item-main">
+            <div class="download-info">
+              <div class="download-name">💮 TSSTAMP (デジタルスタンプ配置ソフト)</div>
+              <div class="feature-desc" style="margin: 4px 0 10px 0;">画像(pngまたはjpg)・PDFにデジタルスタンプを配置します。</div>
+              <div class="download-meta">
+                <span>バージョン: v1.2c</span>
+                <span>対応OS: Windows 10 / 11</span>
+                <span>ファイル形式: ZIP</span>
+              </div>
+            </div>
+            <a href="tsstamp-v1.2c.zip" class="btn-hero btn-hero-main" style="padding: 10px 24px; font-size: 13px;">ダウンロード</a>
+          </div>
+          <!-- 旧バージョン展開バー -->
+          <button type="button" class="old-versions-toggle" onclick="toggleOldVersions(this)">
+            <span>過去のバージョンを表示</span>
+            <span class="arrow">▼</span>
+          </button>
+          <div class="old-versions-container">
+            <ul class="old-versions-list">
+              <li class="old-version-item">
+                <div class="old-version-info">
+                  <span class="old-version-num">v1.1c</span>
+                  <span>リリース: 2026.09.21</span>
+                </div>
+                <a href="tsstamp-v1.1c.zip" class="a-green">ダウンロード</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+</section>
+
+<section id="04">
+    <!-- インストール・ご利用上の注意 -->
+    <div class="toc-card">
+      <p>⚠️ ソフトウェア実行時の注意事項</p>
+      <p style="font-size: 13px; color: var(--text-muted); font-weight: normal; margin-bottom: 0;">
+        Windows SmartScreen等のセキュリティ機能により警告が表示される場合がありますが、「詳細情報」→「実行」を選択することで問題なくご利用いただけます。
+      </p>
+    </div>
+</section>
+
+<section id="05">
+    <!-- 推奨環境セクション -->
+    <div class="requirements-section">
+      <div class="requirements-title">SYSTEM REQUIREMENTS (簡易版)</div>
+      <ul class="requirements-list">
+        <li><span>ブラウザ</span>Microsoft Edge / Google Chrome / Safari (Latest)</li>
+        <li><span>画面</span>1280 x 720より高画質のもの</li>
+        <li><span>JavaScript</span>必須</li>
+      </ul><hr>
+     <p>より詳しい動作推奨環境については、以下のリンクをクリックしてください。</p>
+     <a href="./html/req.html">動作推奨環境</a>
+    </div>
+</section>
+
+    <!-- フッター -->
+    <footer>
+      <div id="copyright"></div>
+    </footer>
+
+  </div>
+
+  <script>
+    // ダウンロードページの更新履歴データ
+    const NEWS_DATA = [
+      {
+        date: "2026.09.21",
+        type: "info",
+        typeLabel: "ダウンロードページ開発完了",
+        title: "TS FTP、TSEXCEL、TSHTML、TSSTAMP 公開",
+        detail: "一部ソフトのダウンロードサービスを開始いたしました。"
+      }
+    ];
+
+    // お知らせを描画する処理
+    function renderNews() {
+      const container = document.getElementById('newsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      NEWS_DATA.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'news-item';
+        
+        let badgeClass = 'badge-info';
+        if (item.type === 'important') badgeClass = 'badge-important';
+        if (item.type === 'maint') badgeClass = 'badge-maint';
+
+        li.innerHTML = `
+          <div class="news-meta">
+            <span class="news-date">${item.date}</span>
+            <span class="badge ${badgeClass}">${item.typeLabel}</span>
+          </div>
+          <div class="news-title">${item.title}</div>
+          <div class="news-detail">${item.detail}</div>
+        `;
+        container.appendChild(li);
+      });
+    }
+
+    // 旧バージョンの展開・折りたたみ処理
+    function toggleOldVersions(btn) {
+      btn.classList.toggle('active');
+      const container = btn.nextElementSibling;
+      container.classList.toggle('open');
+      
+      const spanText = btn.querySelector('span:first-child');
+      if (container.classList.contains('open')) {
+        spanText.textContent = '過去のバージョンを隠す';
+      } else {
+        spanText.textContent = '過去のバージョンを表示';
+      }
+    }
+
+    // ページスクロールとトップへ戻るボタンの制御
+    function setupScrollEvent() {
+      const pageTopBtn = document.getElementById('pagetop-btn');
+      if (!pageTopBtn) return;
+
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 200) {
+          pageTopBtn.classList.add('show');
+        } else {
+          pageTopBtn.classList.remove('show');
+        }
+      });
+    }
+
+    // ロード完了時のアニメーション非表示処理
+    function setupLoader() {
+      const loader = document.getElementById('mini-loader');
+      if (loader) {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // テーマ用テンプレート文字列を生成する関数 (${menuTextId} 埋め込み形式)
+    function getMenuTemplate(menuTextId) {
+      return `<div id="${menuTextId}"></div>`;
+    }
+
+    // テーマ切り替え制御処理
+    function setupThemeToggle() {
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      if (!toggleBtn) return;
+
+      // ローカルストレージから保存されているID名を取得
+      let savedMenuId = localStorage.getItem('menuTextId');
+      
+      if (!savedMenuId) {
+        savedMenuId = 'menu-text-default';
+        localStorage.setItem('menuTextId', savedMenuId);
+      }
+
+      applyThemeFromId(savedMenuId);
+
+      toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextMenuId = currentTheme === 'dark' ? 'menu-text-default' : 'menu-text-dark';
+        
+        localStorage.setItem('menuTextId', nextMenuId);
+        applyThemeFromId(nextMenuId);
+      });
+
+      function applyThemeFromId(menuId) {
+        const container = document.getElementById('menu-text-container');
+        
+        // テンプレート文字列を用いて動的に埋め込み
+        if (container) {
+          container.innerHTML = getMenuTemplate(menuId);
+        }
+
+        if (menuId === 'menu-text-dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          if (themeIcon) themeIcon.textContent = '☀️';
+          if (themeText) themeText.textContent = 'ライトモード';
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (themeIcon) themeIcon.textContent = '🌙';
+          if (themeText) themeText.textContent = 'ダークモード';
+        }
+      }
+    }
+
+    // 初期化実行
+    window.onload = function() {
+      renderNews();
+      setupScrollEvent();
+      setupLoader();
+      setupThemeToggle();
+    };
+  </script>
+</body>
+</html>
