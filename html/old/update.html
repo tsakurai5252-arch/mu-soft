@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="ANSI">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../menu.js"></script>
+    <title>サイト内の表示について - 総合ポータル</title>
+    <style>
+        @font-face {
+            font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRSKP.TTF') format('truetype');
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'HGSeikaishotaiPRO';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRSKP.TTF') format('truetype');
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'French';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/FRSCRIPT.TTF') format('truetype');
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'HGP行書体';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRGY.TTC') format('truetype');
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'MS P明朝';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/msmincho.ttc') format('truetype');
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'MS PMincho';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/msmincho.ttc') format('truetype');
+            font-weight: bold;
+        }
+
+
+        @font-face {
+            font-family: 'POP';
+            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRPP1.TTC') format('truetype');
+            font-weight: bold;
+        }
+
+        /* 全体のレイアウト調整用（スマホ対応） */
+        body {
+            margin: 0;
+            padding: 15px;
+            background-color: #ffffff;
+            font-family: MS P明朝, serif;
+        }
+
+        /* お知らせ枠用のデザイン */
+        .info-box {
+            max-width: 600px;         /* PCなどで広がりすぎないように最大幅を設定 */
+            margin: 0 left 15px auto; /* 画面の中心に配置し、下部に余白をとる */
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 5px solid #e63946; /* 左側にアクセント */
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            box-sizing: border-box;   /* paddingやborderを幅の中に含める */
+        }
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.6;         /* スマホでも読みやすいように行間を少し広くする */
+        }
+        .info-box .title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+html {
+  scroll-behavior: smooth;
+}
+       right-text {
+                    text-align: right;
+       }
+
+/* CSS */
+.zoom-image {
+  /* 元のサイズの50%に縮小し、占有スペースも小さくする */
+  width: 30%;
+  
+  /* 縦横比を維持 */
+  height: auto;
+}
+
+/* CSS */
+.menu-image {
+  /* 元のサイズの50%に縮小し、占有スペースも小さくする */
+  width: 35%;
+  
+  /* 縦横比を維持 */
+  height: auto;
+}
+
+/* 4つの要素全体を包むコンテナ */
+.season-container {
+  display: flex;
+  flex-wrap: wrap;        /* 2つずつ折り返して2段にする設定 */
+  gap: 20px;              /* 枠同士の間の余白 */
+  max-width: 600px;       /* 全体の横幅（必要に応じて調整してください） */
+}
+
+/* 各季節の枠組み */
+.season-item {
+  flex: 1 1 calc(50% - 20px); /* 横幅を半分（2列）にして配分 */
+  box-sizing: border-box;
+  text-align: center;     /* 文字と画像を中央揃え */
+  
+  /* 枠線の設定 */
+  border: 1px solid #ccc; /* 枠線の太さと色 */
+  border-radius: 8px;     /* 枠線の角を少し丸くする */
+  padding: 15px;          /* 枠の中の余白 */
+  background-color: #fff; /* 枠内の背景色 */
+}
+
+.season-item p {
+  margin-top: 0;
+  margin-bottom: 8px;     /* 文字と画像の間の余白 */
+}
+</style>
+</head>
+<body>
+<div id="update">
+  <!-- メニュー表示エリア -->
+  <div id="common-menu-area"></div>
+<div id="right-text">
+</div>
+<hr>
+<br>
+<p>重要なことは、トップページに加えてここにも掲載されます。</p>
+<p>本サイト(総合ポータル)は管理者による複数環境を利用した厳重なテストを行い公開していますが、<br>予期せぬ挙動や不具合が発生する場合があります。ご了承ください。</p>
+<section id="new">
+<h3>最新の案内</h3>
+    <div class="info-box">
+        <p class="title">移転案内 26.9.21</p> 
+        <p>
+            総合ポータルが移転しました。
+        </p> 
+    </div>
+</div>
+<section id="thank">
+<h3>お礼</h3>
+<p>情報はありません。</p>
+</section>
+<section id="info">
+<h3>常設案内</h3>
+    <div class="info-box">
+        <p class="title">サイト内の表示について 26.9.21</p> 
+        <p>
+            「Coming Soon」は公開前の情報です。
+        </p> 
+     </div>
+  </div>
+<br>
+    <div class="info-box">
+        <p class="title">メニューバーに表示される画像・内容について 26.9.21</p> 
+        <p>
+            2026年9月21日 総合ポータル移転後より、メニューバーに日付が表示されるようになりました。<br>
+            また、季節ごとに、表示される画像が変更されます。
+        </p> 
+    </div>
+</div>
+<br>
+<div class="season-container">
+  <div class="season-item">
+    <p>・追加された部分 (例: 2026年9月19日)</p>
+    <img src="./updates/20260919-01.png" alt="該当部分画像">
+  </div>
+</div>
+<br>
+<p>・画像</p>
+<div class="season-container">
+  <div class="season-item">
+    <p>・3月～4月 [春]</p>
+    <img src="../spring.png" alt="桜 [さくら]" class="zoom-image">
+    <p>桜 [さくら]</p>
+  </div>
+  
+  <div class="season-item">
+    <p>・5月～8月 [夏]</p>
+    <img src="../leaf.png" alt="笹 [ささ]" class="zoom-image">
+    <p>笹 [ささ]</p>
+  </div>
+  <br>
+  <div class="season-item">
+    <p>・9月～11月 [秋]</p>
+    <img src="../momiji.png" alt="紅葉 [もみじ]" class="zoom-image">
+    <p>紅葉 [もみじ]</p>
+  </div>
+  
+  <div class="season-item">
+    <p>・12月～2月 [冬]</p>
+    <img src="../winter.png" alt="椿 [つばき]" class="zoom-image">
+    <p>椿 [つばき]</p>
+  </div>
+</div>
+</section>
+
+</section>
+<section id="old">
+<h3>過去の案内</h3>
+<p>過去の案内はありません。</p>
+</section>
+<hr>
+<center>
+<div id="copyright" style="font-family: HGP行書体, serif;"></div>
+</center>
+</body>
+</html>
