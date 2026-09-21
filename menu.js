@@ -510,10 +510,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const isDownload = document.getElementById('download') !== null;
     const isUpdate = document.getElementById('update') !== null;
     const isReq = document.getElementById('req') !== null;
-    const isKiroku = document.getElementById('kiroku') !== null;
-    const isMusic = document.getElementById('music-link') !== null;
     const isBlog = document.getElementById('blog') !== null;
     const isTerms = document.getElementById('terms') !== null;
+    const isPotal = document.getElementById('web-potal') !== null;
 
     // ▼ ロゴ画像およびTOPに戻る画像のパスをトップページかそれ以外かで切り替え
     const logoSrc = isTopPage ? 'logo.png' : '../logo.png';
@@ -588,6 +587,7 @@ ellipsisItemsHTML = `
         <!-- <a href="../index.html#14" class="ellipsis-item">問合せ先</a>-->
         ${deviceSwitchHTML}
       `;
+
     } else if (isUpdate) {
       tocItemsHTML = `
         <a href="#new" class="toc-item">最新の案内</a>
@@ -613,10 +613,36 @@ ellipsisItemsHTML = `
         <a href="#02" class="toc-item">利用規約 本文</a>
       `;
       ellipsisItemsHTML = `
-        <p>内容について理解していただけましたか?</p>
+        <p>ソフトウェアのダウンロードに当たって、<br>必ず利用規約をお読みください。</p>
         ${deviceSwitchHTML}
       `;
 
+    } else if (isPotal) {
+
+// 現在の日時を取得
+      const now = new Date();
+
+      // 公開開始日と公開終了日を設定（必要に応じて日時を変更してください）
+      const startDate = new Date('2026-09-21T00:00:00'); // 公開開始日時
+      const endDate   = new Date('9999-12-31T23:59:59'); // 公開終了日時
+
+      // 現在日時が公開期間内（開始日時以降かつ終了日時以前）かどうかを判定
+      const isVisible = now >= startDate && now <= endDate;
+
+       if (now < startDate) {
+            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開まで、しばらく<br>お待ちください。</span>`;
+        } else if (now > endDate) {
+            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開期間は<br>終了しました。</span>`;
+        } else {
+            tocItemsHTML = `
+        <a href="#01" class="toc-item">冒頭</a>
+        <a href="#02" class="toc-item">Webアプリ・ゲーム</a>
+`;
+        }
+
+ellipsisItemsHTML = `
+        ${deviceSwitchHTML}
+      `;
 
     } else {
       tocItemsHTML = `
@@ -643,7 +669,7 @@ ellipsisItemsHTML = `
     const downloadStart = new Date('2026-09-21T00:00:00');
     const downloadEnd = new Date('9999-12-31T23:59:59');
     let downloadHTML = '';
-    const downloadHref = isTopPage ? 'sort.html?download' : '../sort.html?download';
+    const downloadHref = isTopPage ? './download/index.html' : '../download/index.html';
 
     if (now > downloadEnd) {
       downloadHTML = '';
@@ -703,6 +729,23 @@ ellipsisItemsHTML = `
       termsHTML = `<a href="${termsHref}" class="page-link-item">利用規約</a>`;
     }
 
+    // 6. Webアプリポータル MU-WebPlay
+    const potalStart = new Date('2013-01-01T00:00:00');
+    const potalEnd = new Date('9999-12-31T23:59:59');
+    let potalHTML = '';
+    const potalHref = isTopPage ? './html/web-potal.html' : '../html/web-potal.html';
+
+    if (now > potalEnd) {
+      potalHTML = '';
+    } else if (now < potalStart) {
+      potalHTML = `<span class="page-link-item coming-soon">Coming Soon...</span>`;
+    } else if (isPotal) {
+      potalHTML = `<span class="page-link-current">Webアプリポータル</span>`;
+    } else {
+      potalHTML = `<a href="${potalHref}" class="page-link-item">Webアプリポータル</a>`;
+    }
+
+
 
     // メニューのHTML描画
     menuArea.innerHTML = `
@@ -728,8 +771,9 @@ ellipsisItemsHTML = `
           <div class="header-right-group">
             <div class="page-links-container">
               ${topPageHTML}
-              ${termsHTML}
               ${downloadHTML}
+              ${potalHTML}
+              ${termsHTML}
               ${updateHTML}
               ${reqHTML}
             </div>
