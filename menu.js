@@ -513,6 +513,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const isKiroku = document.getElementById('kiroku') !== null;
     const isMusic = document.getElementById('music-link') !== null;
     const isBlog = document.getElementById('blog') !== null;
+    const isTerms = document.getElementById('terms') !== null;
 
     // ▼ ロゴ画像およびTOPに戻る画像のパスをトップページかそれ以外かで切り替え
     const logoSrc = isTopPage ? 'logo.png' : '../logo.png';
@@ -605,68 +606,17 @@ ellipsisItemsHTML = `
       ellipsisItemsHTML = `
         ${deviceSwitchHTML}
       `;
-    } else if (isKiroku) {
-// 現在の日時を取得
-      const now = new Date();
 
-      // 公開開始日と公開終了日を設定（必要に応じて日時を変更してください）
-      const startDate = new Date('2027-03-30T00:00:00'); // 公開開始日時
-      const endDate   = new Date('2027-04-30T23:59:59'); // 公開終了日時
-
-      // 現在日時が公開期間内（開始日時以降かつ終了日時以前）かどうかを判定
-      const isVisible = now >= startDate && now <= endDate;
-
-       if (now < startDate) {
-            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開まで、しばらく<br>お待ちください。</span>`;
-        } else if (now > endDate) {
-            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開期間は<br>終了しました。</span>`;
-        } else {
-            tocItemsHTML = `
-        <a href="#page_top" class="toc-item">トップ</a>
-        <a href="#mokuji1" class="toc-item">動画</a>
-        <a href="#section-file1" class="toc-item">大会記録</a>
-        <a href="#back_homepage_top" class="toc-item">ページ最下部へ移動</a>
-      `;
-            }
-      ellipsisItemsHTML = `
-        ${deviceSwitchHTML}
-      `;
-
-    } else if (isMusic) {
-// 現在の日時を取得
-      const now = new Date();
-
-      // 公開開始日と公開終了日を設定（必要に応じて日時を変更してください）
-      const startDate = new Date('2013-01-01T00:00:00'); // 公開開始日時
-      const endDate   = new Date('9999-12-31T23:59:59'); // 公開終了日時
-
-      // 現在日時が公開期間内（開始日時以降かつ終了日時以前）かどうかを判定
-      const isVisible = now >= startDate && now <= endDate;
-
-       if (now < startDate) {
-            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開まで、しばらく<br>お待ちください。</span>`;
-        } else if (now > endDate) {
-            tocItemsHTML = `<span style="font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO', 'MS PMincho', 'MS P明朝', 'Hiragino Mincho ProN', serif;">公開期間は<br>終了しました。</span>`;
-        } else {
-            tocItemsHTML = `
-        <a href="#2025" class="toc-item">2025年3月大会</a>
-        <a href="#2026" class="toc-item">2026年3月大会</a>
-        <a href="#2027" class="toc-item">2027年3月大会</a>
-        <a href="#back_homepage_top" class="toc-item">ページ最下部へ移動</a>
-      `;
-            }
-      ellipsisItemsHTML = `
-        ${deviceSwitchHTML}
-      `;
-
-    } else if (isBlog) {
+    } else if (isTerms) {
       tocItemsHTML = `
-        <a href="#mokuji1" class="toc-item">記事一覧</a>
-        <a href="#back_homepage_top" class="toc-item">ページ最下部へ移動</a>
+        <a href="#01" class="toc-item">冒頭</a>
+        <a href="#02" class="toc-item">利用規約 本文</a>
       `;
       ellipsisItemsHTML = `
+        <p>内容について理解していただけましたか?</p>
         ${deviceSwitchHTML}
       `;
+
 
     } else {
       tocItemsHTML = `
@@ -725,7 +675,7 @@ ellipsisItemsHTML = `
     const reqStart = new Date('2013-01-01T00:00:00');
     const reqEnd = new Date('9999-12-31T23:59:59');
     let reqHTML = '';
-    const reqHref = isTopPage ? 'html/req.html' : 'https://www.mf.ccnw.ne.jp/bisan.takkyu-taikai/html/req.html';
+    const reqHref = isTopPage ? 'html/req.html' : '../html/req.html';
 
     if (now > reqEnd) {
       reqHTML = '';
@@ -735,6 +685,22 @@ ellipsisItemsHTML = `
       reqHTML = `<span class="page-link-current">動作推奨環境</span>`;
     } else {
       reqHTML = `<a href="${reqHref}" class="page-link-item">動作推奨環境</a>`;
+    }
+
+    // 5. 利用規約
+    const termsStart = new Date('2013-01-01T00:00:00');
+    const termsEnd = new Date('9999-12-31T23:59:59');
+    let termsHTML = '';
+    const termsHref = isTopPage ? './about/terms.html' : '../about/terms.html';
+
+    if (now > termsEnd) {
+      termsHTML = '';
+    } else if (now < termsStart) {
+      termsHTML = `<span class="page-link-item coming-soon">Coming Soon...</span>`;
+    } else if (isTerms) {
+      termsHTML = `<span class="page-link-current">利用規約</span>`;
+    } else {
+      termsHTML = `<a href="${termsHref}" class="page-link-item">利用規約</a>`;
     }
 
 
@@ -762,6 +728,7 @@ ellipsisItemsHTML = `
           <div class="header-right-group">
             <div class="page-links-container">
               ${topPageHTML}
+              ${termsHTML}
               ${downloadHTML}
               ${updateHTML}
               ${reqHTML}

@@ -25,7 +25,7 @@ const SHORTCUTS = {
     "senkyo": "https://sites.google.com/view/ts-site-senkyo/",
     "himajin": "https://sites.google.com/view/hima-jin/",
     "manual": "https://tsakurai5252-arch.github.io/mu-soft/manual/",
-    "download": "https://tsakurai5252-arch.github.io/mu-soft/download/"
+    "download": "./download/index.html"
 };
 
 // 4. 日付指定によるリダイレクト切り替えルール
