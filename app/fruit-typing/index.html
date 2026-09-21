@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>果物タイピング～果樹園救済物語～</title>
+<!-- Windows 10がサポート終了！悲しいね^^; -->
+<style>
+  :root{--w:800px;--h:600px}
+  html,body{
+    height:100%;margin:0;
+    background:#fce8d5;
+    color:#000000;
+    font-family:"Hiragino Kaku Gothic Pro","Meiryo",sans-serif;
+  }
+  .center{height:100%;display:flex;align-items:center;justify-content:center;}
+
+  #frame {
+    width: var(--w);
+    height: var(--h);
+    background: linear-gradient(to bottom, #fce8d5 0%, #f5cfa5 100%);
+    border: 4px solid #d98c5f;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+  #frame, #frame .story-text, #frame h2, #frame p { color:#000000; }
+
+  /* フェード画面 */
+  #fade{position:absolute;inset:0;background:#fce8d5;opacity:0;pointer-events:none;transition:opacity .45s;z-index:80}
+  #fade.on{opacity:1;pointer-events:auto}
+
+  /* ローディング関連 */
+  #loading-area{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;text-align:center;z-index:40;width:90%}
+  #loading-gif{max-width:100px;height:auto;display:block;margin:0 auto}
+  #progress-text{margin-top:8px;color:#000000;font-size:13px}
+  #progress-wrap{width:70%;margin:8px auto;background:#f5cfa5;border-radius:8px;height:14px;overflow:hidden;border:1px solid #444}
+  #progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#4fd,#6f6);transition:width .25s}
+
+  /* 各種loading */
+  #loading2,#loading3,#loading4,#loading5{position:absolute;top:8px;right:8px;z-index:90;display:none}
+  #loading2,#loading4,#loading5{width:20%}
+  #loading3{width:80px;z-index:95}
+
+  /* 共通画面 */
+  .screen{display:none;padding:12px;height:100%;box-sizing:border-box;overflow:auto}
+  .screen.active{display:block}
+  h1,h2{margin:6px 0}
+
+  /* ボタン共通 */
+  .btn{
+    display:inline-block;
+    padding:8px 12px;
+    margin:6px;
+    background:linear-gradient(to bottom,#f5cfa5,#d98c5f);
+    color:#000000;
+    border-radius:8px;
+    border:2px solid #8b5a2b;
+    cursor:pointer;
+    font-weight:bold;
+    transition:background 0.2s, transform 0.1s;
+  }
+  .btn:hover{background:linear-gradient(to bottom,#f7d9b3,#c2764a);}
+  .btn:active{transform:translateY(1px)}
+  .btn.locked{
+    background:linear-gradient(to bottom,#f2f2f2,#cccccc);
+    color:#555;
+    cursor:not-allowed;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  .small{font-size:13px;color:#000000}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+
+  .modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fce8d5;padding:14px;border-radius:8px;border:1px solid #8b5a2b;z-index:200}
+  .hidden{display:none}
+
+  /* スタッフロール */
+  .roll-wrap{height:100%;overflow:hidden;position:relative;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  .roll-inner{width:90%;}
+  .roll-line{font-size:1.5em;margin:12px 0;opacity:0;}
+  #roll-inner h2{font-family:"Yu Mincho","游明朝",serif;}
+
+  @keyframes fadeCycle{0%{opacity:0;}25%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
+
+  #top-log{position:absolute;left:12px;top:10px;font-size:12px;color:#000000;z-index:150}
+  #copyright{position:absolute;left:18px;bottom:12px;font-size:12px;color:#000000;z-index:10}
+
+  /* 注意オーバーレイ */
+  .warn-overlay{position:absolute;inset:0;background:#fce8d5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:190;}
+  .warn-text{margin-top:12px;color:#000000;font-size:18px;font-weight:bold;}
+
+  .btn:disabled{cursor:default;}
+
+  /* タイトルアニメ */
+  #title-text-anim{font-size:2.2em;white-space:nowrap;}
+  #title-text-anim span{opacity:0;animation:fadeIn 0.5s forwards;display:inline-block;}
+  @keyframes fadeIn{from{opacity:0;filter:blur(4px);transform:translateY(-10px);}to{opacity:1;filter:blur(0);transform:translateY(0);}}
+
+  .partial-warn,.mobile-warn{margin:12px;text-align:center;color:#000000;font-weight:bold;}
+
+  .title-buttons-hidden{opacity:0;visibility:hidden;transition:opacity 0.5s,visibility 0s 0.5s;}
+  .title-buttons-visible{opacity:1;visibility:visible;transition:opacity 0.5s;}
+
+  ruby{font-size:1.3em;} rt{font-size:0.5em;}
+
+  /* ストーリー画面 */
+  .story-inner{width:90%;margin:auto;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;}
+  .story-text{font-size:1.2em;margin:20px 0;line-height:1.6;text-align:left;}
+
+  /* エンディング画面 */
+  #ending-img-wrap{display:flex;justify-content:center;align-items:center;height:70%;}
+  #ending-img{max-width:100%;max-height:100%;}
+  #ending-text{font-size:1.1em;text-align:center;margin-top:10px;height:20%;display:flex;align-items:center;justify-content:center;}
+
+  /* 統一ボタン */
+  button,.btn,#exitButton{
+    background:linear-gradient(to bottom,#f5cfa5,#d98c5f)!important;
+    color:#000000!important;
+    border:2px solid #8b5a2b!important;
+    border-radius:8px!important;
+    font-weight:bold!important;
+    cursor:pointer;
+    transition:background 0.2s,transform 0.1s;
+  }
+  button:hover,.btn:hover,#exitButton:hover{background:linear-gradient(to bottom,#f7d9b3,#c2764a)!important;}
+  button:active,.btn:active,#exitButton:active{transform:translateY(1px)!important;}
+
+  /* 各種ダイアログ */
+  .dialog,.devtool-window,.settings,.settings-tab{
+    background:linear-gradient(to bottom,#fce8d5,#f5cfa5);
+    border:3px solid #d98c5f;
+    border-radius:10px;
+    padding:16px;
+    color:#000000;
+    font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+  .dialog-header,.devtool-header{
+    background:#d98c5f;
+    color:#fff4e0;
+    padding:8px;
+    border-radius:6px 6px 0 0;
+    font-size:1.1em;
+  }
+  .dialog button,.devtool-window button{
+    margin:6px;padding:6px 12px;
+    background:linear-gradient(to bottom,#f5cfa5,#d98c5f);
+    border:2px solid #8b5a2b;
+    border-radius:6px;
+    cursor:pointer;
+    color:#000;
+    font-weight:bold;
+  }
+  .dialog button:hover,.devtool-window button:hover{background:linear-gradient(to bottom,#f7d9b3,#c2764a);}
+</style>
+
+</head>
+<body>
+<div class="center">
+  <div id="frame" role="application" aria-label="ゲーム枠">
+    <div id="fade"></div>
+
+    <div id="top-log" class="small">F12:ロードログは console に出力</div>
+
+    <div id="loading-area" aria-hidden="false">
+      <img id="loading-gif" src="./image/loading.gif" alt="loading gif">
+      <div id="progress-text">ロード中... 0%</div>
+      <div id="progress-wrap"><div id="progress-bar"></div></div>
+    </div>
+    
+    <div id="partial-warn" class="partial-warn hidden">システム要件が満たされていないため、一部機能が制限されます。</div>
+    <div id="mobile-warn" class="mobile-warn hidden">モバイル版で起動しました。一部の機能は動作しない場合があります。</div>
+
+    <img id="loading2" src="./image/loading2.gif" alt="loading2 gif" style="display:none">
+    <img id="loading3" src="./image/loading3.gif" alt="loading3 gif" style="display:none;width:80px">
+    <img id="loading4" src="./image/loading5.gif" alt="loading4 gif" style="display:none;width:20%">
+    <img id="loading5" src="./image/loading6.gif" alt="loading5 gif" style="display:none;width:20%">
+
+    <div id="prologue" class="screen">
+      <div class="story-inner">
+        <h2>プロローグ</h2>
+        <div class="story-text">
+          世界中の果樹園は、悪によって支配されていた。木々は枯れ、管理者は引退していった。
+          君はそれをどうにかするために立ち上がった。
+          果たして、君は果樹園を救うことができるのか?
+        </div>
+        <button id="btn-prologue-next" class="btn">いざ出発！</button>
+      </div>
+    </div>
+    
+    <div id="story" class="screen">
+      <div class="story-inner">
+        <h2 id="story-title"></h2>
+        <div id="story-text" class="story-text"></div>
+        <div id="story-buttons" style="margin-top:20px">
+          <button id="btn-story-next" class="btn">次へ</button>
+          <button id="btn-story-back" class="btn hidden">戻る</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ending" class="screen">
+      <div class="story-inner">
+        <div id="ending-img-wrap"><img id="ending-img" src="" alt="Ending Image"></div>
+        <div id="ending-text"></div>
+        <div style="margin-top:20px">
+          <button id="btn-ending-prev" class="btn hidden">戻る</button>
+          <button id="btn-ending-next" class="btn">次へ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="title" class="screen">
+      <div id="title-text-anim"></div>
+      <div class="small" id="title-copyright"></div>
+      <div id="title-buttons" class="title-buttons-hidden" style="margin-top:18px">
+        <button id="btn-start" class="btn">スタート</button>
+        <button id="btn-records" class="btn">記録</button>
+        <button id="btn-story-list" class="btn">ストーリー</button>
+        <button id="btn-music-room" class="btn">Music Room</button>
+        <button id="btn-settings" class="btn">設定</button>
+        <button id="btn-exit" class="btn">終了</button>
+      </div>
+    </div>
+    
+    <div id="music-room" class="screen">
+      <h2>Music Room</h2>
+      <p style="margin-top:12px;">聴きたいBGMを選択してください。</p>
+      <div style="margin-top:20px;">
+        <button id="btn-play-bgm" class="btn">通常BGM</button>
+        <button id="btn-play-staff" class="btn">スタッフロールのテーマ</button>
+        <button id="btn-play-ending" class="btn">エンディングのテーマ</button>
+      </div>
+      <div style="margin-top:20px;">
+        <button id="btn-music-room-back" class="btn">タイトルに戻る</button>
+      </div>
+    </div>
+    
+    <div id="story-list" class="screen">
+      <h2>ストーリー選択</h2>
+      <div id="story-list-grid" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-story-list-back" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="chapter" class="screen">
+      <h2>章選択</h2>
+      <div id="chapter-list" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-chap-back" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="stage" class="screen">
+      <h2 id="stage-heading">章のステージ選択</h2>
+      <div id="stage-grid" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-stage-back" class="btn">章選択に戻る</button> <button id="btn-stage-title" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="play" class="screen">
+      <h2 id="play-title">ステージ</h2>
+      <div class="small">制限時間: <span id="play-timer">60</span> 秒</div>
+      <div id="question" style="margin-top:12px;font-size:18px;"></div>
+      <input id="input" type="text" style="width:80%;padding:8px;margin-top:10px;font-size:16px" autocomplete="off" inputmode="kana">
+      <div style="margin-top:12px"><button id="btn-giveup" class="btn">あきらめる</button> <button id="btn-play-back" class="btn">前に戻る</button></div>
+      <div id="play-msg" style="margin-top:8px" class="small"></div>
+    </div>
+
+    <div id="records" class="screen">
+      <h2>記録</h2>
+      <div id="records-list" class="small"></div>
+      <div style="margin-top:12px">
+        <button id="btn-records-back" class="btn">タイトルに戻る</button>
+        <button class="btn" id="btn-records-back-chapter">章選択に戻る</button>
+        <button class="btn" id="btn-records-back-last-stage">ステージ選択に戻る</button>
+        <button id="btn-records-story" class="btn">ストーリー</button>
+        <button id="btn-dev-tools" class="btn">開発者ツール</button>
+      </div>
+    </div>
+
+    <div id="staff" class="screen">
+      <div class="roll-wrap">
+        <div id="roll-inner">
+                   <h2>果物タイピング<br>～果樹園救済物語～</h2>
+          <div id="roll-copy" class="small"></div>
+          <h4 class="roll-line hidden" data-text="～開発者～"></h4>
+          <p class="roll-line hidden" data-text="考案: 人間"></p>
+          <p class="roll-line hidden" data-text="前作: いざ一流農家へ！～君の努力で農園が成長～"></p>
+          <p class="roll-line hidden" data-text="前々作: 世界を救え！～目指せタイピングマスター～"></p>
+          <p class="roll-line hidden" data-text="製作(前半): ChatGPT"></p>
+          <p class="roll-line hidden" data-text="製作(後半): ChatGPT"></p>
+          <p class="roll-line hidden" data-text="プログラム: ChatGPT"></p>
+          <p class="roll-line hidden" data-text="デザイン: ChatGPT"></p>
+          <p class="roll-line hidden" data-text="プログラム改良: 人間"></p>
+          <p class="roll-line hidden" data-text="問題文改良: Microsoft Copilot"></p>
+          <h4 class="roll-line hidden" data-text="～BGM・効果音～"></h4>
+          <p class="roll-line hidden" data-text="BGM素材: ./image/bgm/01.mp3・08.mp3・09.mp3"></p>
+          <p class="roll-line hidden" data-text="効果音: ./image/bgm/02.mp3・03.mp3・04.mp3・05.mp3・06.mp3・07.mp3"></p>
+          <p class="roll-line hidden" data-text="BGM・効果音はフリー音源を使用しています。"></p>
+          <h4 class="roll-line hidden" data-text="～Special Thanks～"></h4>
+          <p class="roll-line hidden" data-text="Internet Explorer 6.0"></p>
+          <p class="roll-line hidden" data-text="Google Chrome 140.0.7339.186"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows 11"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows 10"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows XP"></p>
+          <h3 class="roll-line hidden" data-text="～ゲーム制作ストーリー～"></h3>
+          <p class="roll-line hidden" data-text="農園ときたら果物でしょと思い"></p>
+          <p class="roll-line hidden" data-text="作ったものです。"></p>
+          <p class="roll-line hidden" data-text="果物×タイピング、どうだったでしょうか?"></p>
+          <p class="roll-line hidden" data-text="それでは。 by 人間"></p>
+          <p class="roll-line hidden" data-text="2025 自作タイピングゲーム"></p>
+          <p class="roll-line hidden" data-text="最後までプレイしてくれてありがとう!～Thank you for Playing!～"></p>      
+   </div>
+        <div id="final-msg" class="hidden" style="text-align:center;">
+          <h3 style="margin:24px 0;">終わり良ければすべて良し...</h3>
+          <button id="btn-roll-back-to-title" class="btn">タイトルに戻る</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameover" class="screen">
+  <h2 style="color:red">ゲームオーバー</h2>
+  <p>果物選別には一度のミスも許されません。</p>
+  <div style="margin-top:20px">
+    <button id="btn-gameover-title" class="btn">タイトルに戻る</button>
+  </div>
+</div>
+
+<div id="exit" class="screen">
+      <img id="exit-gif" src="./image/loading.gif" alt="loading">
+      <div id="exit-text" class="small" style="margin-top:8px">終了準備中です...</div>
+      <div id="exit-wrap" style="margin-top:8px"><div id="exit-bar" style="width:0%;height:12px;background:#e55;border-radius:6px"></div></div>
+    </div>
+
+    <div id="settings-modal" class="modal hidden" style="z-index:200">
+      <h3>設定</h3>
+      <div style="text-align:left">
+        <label><input id="chk-bgm" type="checkbox"> BGM</label><br>
+        <label><input id="chk-se" type="checkbox" checked> 効果音</label><br>
+        <label><input id="chk-kana" type="checkbox"> フリガナ</label><br>
+        <div style="margin-top:6px">BGM音量 <input id="bgm-vol" type="range" min="0" max="1" step="0.1" value="0.2"></div>
+        <div>SE音量 <input id="se-vol" type="range" min="0" max="1" step="0.1" value="1"></div>
+        <div style="margin-top:8px">
+          <label><input id="chk-easy" type="checkbox"> Easyモード</label><br>
+          <label><input id="chk-normal" type="checkbox" checked> Normalモード</label><br>
+          <label><input id="chk-hard" type="checkbox"> Hardモード</label><br>
+          <button id="btn-reset" class="btn">リセット(セーブ削除)</button>
+          <button id="btn-cert" class="btn">証明書更新</button>
+          <button id="btn-settings-close" class="btn">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dev-tools-modal" class="modal hidden" style="z-index:210">
+      <h3>開発者ツール</h3>
+      <div style="text-align:left">
+        <button id="btn-dev-to-ending" class="btn">エンディングへ</button><br>
+        <button id="btn-dev-to-staff" class="btn">スタッフロールへ</button><br>
+        <div style="margin-top:8px">
+          <button id="btn-dev-close" class="btn">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bgm-prompt" class="modal hidden" style="z-index:200">
+      <div>BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-yes" class="btn">再生する</button>
+        <button id="bgm-no" class="btn">再生しない</button>
+      </div>
+    </div>
+    
+    <div id="bgm-staff-prompt" class="modal hidden" style="z-index:200">
+      <div>スタッフロール BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-staff-yes" class="btn">再生する</button>
+        <button id="bgm-staff-no" class="btn">再生しない</button>
+      </div>
+    </div>
+
+    <div id="bgm-ending-prompt" class="modal hidden" style="z-index:200">
+      <div>エンディング BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-ending-yes" class="btn">再生する</button>
+        <button id="bgm-ending-no" class="btn">再生しない</button>
+      </div>
+    </div>
+
+    <div id="bgm-setting-warn-prompt" class="modal hidden" style="z-index:200">
+      <div>BGM ONが選択されていません。<br>BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-setting-warn-yes" class="btn">はい</button>
+        <button id="bgm-setting-warn-no" class="btn">いいえ</button>
+      </div>
+    </div>
+
+    <div id="copyright" class="small"></div>
+  </div>
+</div>
+
+<audio id="bgm" loop preload="auto"><source src="./image/bgm/01.m4a" type="audio/mpeg"></audio>
+<audio id="bgm-staff" loop preload="auto"><source src="./image/bgm/08.mp3" type="audio/mpeg"></audio>
+<audio id="bgm-ending" loop preload="auto"><source src="./image/bgm/09.m4a" type="audio/mpeg"></audio>
+<audio id="se-btn" preload="auto"><source src="./image/bgm/02.mp3" type="audio/mpeg"></audio>
+<audio id="se-clear" preload="auto"><source src="./image/bgm/03.mp3" type="audio/mpeg"></audio>
+<audio id="se-fail" preload="auto"><source src="./image/bgm/04.mp3" type="audio/mpeg"></audio>
+<audio id="se-back" preload="auto"><source src="./image/bgm/05.mp3" type="audio/mpeg"></audio>
+<audio id="se-exit" preload="auto"><source src="./image/bgm/06.mp3" type="audio/mpeg"></audio>
+<audio id="se-locked" preload="auto"><source src="./image/bgm/07.mp3" type="audio/mpeg"></audio>
+
+<script>
+/* -------------------------
+   Utilities, state, data
+   ------------------------- */
+const ADMIN_PW = "farm1227";
+const BASE_KEY = "KLP3P-HJG3L-667AP";
+const MAX_DAYS = 10950; // 30 years
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function log(...a){ console.log("[GAME]",...a); }
+
+/* fiscal key */
+function getFiscalYear(date=new Date()){
+  const y = date.getFullYear(), m = date.getMonth()+1;
+  return (m>=4) ? y : y-1;
+}
+function genKeyForYear(fy){ return `${BASE_KEY}-${fy}`; }
+
+/* certificate */
+function getBuiltInCert(){
+  const now = new Date();
+  const fy = getFiscalYear(now);
+  const issued = now.toISOString();
+  const expires = new Date(now.getFullYear()+30, now.getMonth(), now.getDate()).toISOString();
+  return { productKey: genKeyForYear(fy), issued, expires, copyright:"© 2025 Orchard Salvation Story" };
+}
+function loadCert(){
+  const s = localStorage.getItem("typing_farmer_game_certificate");
+  if(!s) return getBuiltInCert();
+  try{ return JSON.parse(s); } catch(e){ console.warn("cert parse err",e); localStorage.removeItem("typing_farmer_game_certificate"); return getBuiltInCert(); }
+}
+function validateCert(cert){
+  const expect = genKeyForYear(getFiscalYear());
+  if(!cert || !cert.productKey) throw new Error("ライセンスエラー: 証明書不正");
+  if(cert.productKey !== expect) throw new Error(`ライセンスエラー: 期待 ${expect}`);
+  if(new Date(cert.expires) < new Date()) throw new Error("証明書期限切れ");
+  return true;
+}
+function saveCert(cert){ localStorage.setItem("typing_farmer_game_certificate", JSON.stringify(cert)); }
+
+/* problems with furigana */
+const problemBank = {
+  "1-1": [
+    { "w": "りんご", "y": "りんご" },
+    { "w": "みかん", "y": "みかん" },
+    { "w": "ぶどう", "y": "ぶどう" },
+    { "w": "もも", "y": "もも" }
+  ],
+  "1-2": [
+    { "w": "いちご", "y": "いちご" },
+    { "w": "すいか", "y": "すいか" },
+    { "w": "なし", "y": "なし" },
+    { "w": "かき", "y": "かき" }
+  ],
+  "1-3": [
+    { "w": "キウイフルーツ", "y": "きういふるーつ" },
+    { "w": "パイナップル", "y": "ぱいなっぷる" },
+    { "w": "バナナ", "y": "ばなな" },
+    { "w": "レモン", "y": "れもん" }
+  ],
+  "1-4": [
+    { "w": "アボカド", "y": "あぼかど" },
+    { "w": "ラズベリー", "y": "らずべりー" },
+    { "w": "ブルーベリー", "y": "ぶるーべりー" },
+    { "w": "マンゴー", "y": "まんごー" }
+  ],
+  "1-5": [
+    { "w": "果樹園", "y": "かじゅえん" },
+    { "w": "収穫", "y": "しゅうかく" },
+    { "w": "選別", "y": "せんべつ" },
+    { "w": "出荷", "y": "しゅっか" }
+  ],
+  "1-6": [
+    { "w": "朝採れのみかん", "y": "あさどれのみかん" },
+    { "w": "甘いりんご", "y": "あまいりんご" },
+    { "w": "みずみずしいぶどう", "y": "みずみずしいぶどう" },
+    { "w": "香り高いもも", "y": "かおりたかいもも" }
+  ],
+  "2-1": [
+    { "w": "剪定", "y": "せんてい" },
+    { "w": "受粉", "y": "じゅふん" },
+    { "w": "袋かけ", "y": "ふくろかけ" },
+    { "w": "摘果", "y": "てきか" }
+  ],
+  "2-2": [
+    { "w": "貯蔵", "y": "ちょぞう" },
+    { "w": "追熟", "y": "ついじゅく" },
+    { "w": "冷蔵", "y": "れいぞう" },
+    { "w": "品質検査", "y": "ひんしつけんさ" }
+  ],
+  "2-3": [
+    { "w": "春の花", "y": "はるのはな" },
+    { "w": "夏の日差し", "y": "なつのひざし" },
+    { "w": "秋の収穫", "y": "あきのしゅうかく" },
+    { "w": "冬の休眠", "y": "ふゆのきゅうみん" }
+  ],
+  "2-4": [
+    { "w": "土づくり", "y": "つちづくり" },
+    { "w": "堆肥", "y": "たいひ" },
+    { "w": "水はけ", "y": "みずはけ" },
+    { "w": "灌水", "y": "かんすい" }
+  ],
+  "2-5": [
+    { "w": "病害虫", "y": "びょうがいちゅう" },
+    { "w": "防除", "y": "ぼうじょ" },
+    { "w": "有機栽培", "y": "ゆうきさいばい" },
+    { "w": "安全基準", "y": "あんぜんきじゅん" }
+  ],
+  "2-6": [
+    { "w": "季節の果物セット", "y": "きせつのくだものせっと" },
+    { "w": "果物屋台", "y": "くだものやたい" },
+    { "w": "直売所", "y": "ちょくばいじょ" },
+    { "w": "地域の味", "y": "ちいきのあじ" }
+  ],
+  "3-1": [
+    { "w": "新品種", "y": "しんひんしゅ" },
+    { "w": "交配", "y": "こうはい" },
+    { "w": "育種", "y": "いくしゅ" },
+    { "w": "トレーサビリティ", "y": "とれーさびりてぃ" }
+  ],
+  "3-2": [
+    { "w": "ジャム作り", "y": "じゃむづくり" },
+    { "w": "ドライフルーツ", "y": "どらいふるーつ" },
+    { "w": "ピューレ", "y": "ぴゅーれ" },
+    { "w": "コンポート", "y": "こんぽーと" }
+  ],
+  "3-3": [
+    { "w": "フルーツソース", "y": "ふるーつそーす" },
+    { "w": "フルーツワイン", "y": "ふるーつわいん" },
+    { "w": "デザート加工", "y": "でざーと かこう" },
+    { "w": "保存方法", "y": "ほぞんほうほう" }
+  ],
+  "3-4": [
+    { "w": "ブランド化", "y": "ぶらんどか" },
+    { "w": "贈答用", "y": "ぞうとうよう" },
+    { "w": "品質表示", "y": "ひんしつひょうじ" },
+    { "w": "マーケティング", "y": "まーけてぃんぐ" }
+  ],
+  "3-5": [
+    { "w": "試食イベント", "y": "ししょくいべんと" },
+    { "w": "産地直送", "y": "さんちちょくそう" },
+    { "w": "通販", "y": "つうはん" },
+    { "w": "ギフトセット", "y": "ぎふとせっと" }
+  ],
+  "3-6": [
+    { "w": "地産地消", "y": "ちさんちしょう" },
+    { "w": "六次産業化", "y": "ろくじさんぎょうか" },
+    { "w": "観光農園", "y": "かんこうのうえん" },
+    { "w": "収益化", "y": "しゅうえきか" }
+  ],
+  "4-1": [
+    { "w": "果実発育の生理学", "y": "かじつはついくのせいりがく" },
+    { "w": "ポストハーベスト技術", "y": "ぽすとはーべすとぎじゅつ" },
+    { "w": "成熟制御ホルモン", "y": "せいじゅくせいぎょほるもん" },
+    { "w": "エチレンガス処理", "y": "えちれんがすしょり" }
+  ],
+  "4-2": [
+    { "w": "根域制限栽培", "y": "こんいきせいげんさいばい" },
+    { "w": "樹体生理の解明", "y": "じゅたいせいりのかいめい" },
+    { "w": "葉面散布と栄養診断", "y": "ようめんさんぷとえいようしんだん" },
+    { "w": "高接ぎ木技術", "y": "たかつぎきぎじゅつ" }
+  ],
+  "4-3": [
+    { "w": "品種登録と知的財産権", "y": "ひんしゅとうろくとちてきざいさんけん" },
+    { "w": "地理的表示保護制度", "y": "ちりてきひょうじほごせいど" },
+    { "w": "ブランド戦略の構築", "y": "ぶらんどせんりゃくのこうちく" },
+    { "w": "マーケティングミックス", "y": "まーけてぃんぐみっくす" }
+  ],
+  "4-4": [
+    { "w": "マーケットインの視点", "y": "まーけっといんのしてん" },
+    { "w": "サプライチェーンマネジメント", "y": "さぷらいちぇーんまねじめんと" },
+    { "w": "六次産業化の推進", "y": "ろくじさんぎょうかのすいしん" },
+    { "w": "輸出戦略と検疫制度", "y": "ゆしゅつせんりゃくとけんえきせいど" }
+  ],
+  "4-5": [
+    { "w": "IPM（総合的病害虫管理）", "y": "あいぴーえむそうごうてきびょうがいちゅうかんり" },
+    { "w": "生物的防除の導入", "y": "せいぶつてきぼうじょのどうにゅう" },
+    { "w": "土壌微生物相の改善", "y": "どじょうびせいぶつそうのかいぜん" },
+    { "w": "カーボンクレジット", "y": "かーぼんくれじっと" }
+  ],
+  "4-6": [
+    { "w": "スマート農業の社会実装", "y": "すまーとのうぎょうのしゃかいじっそう" },
+    { "w": "ビッグデータの活用", "y": "びっぐでーたのかつよう" },
+    { "w": "ドローンによる生育診断", "y": "どろーんによるせいいくしんだん" },
+    { "w": "ロボット収穫システム", "y": "ろぼっとしゅうかくしすてむ" }
+  ],
+  "5-1": [
+    { "w": "絶滅危惧種の果実", "y": "ぜつめつきぐしゅのかじつ" },
+    { "w": "遺伝子ライブラリー", "y": "いでんしらいぶらりー" },
+    { "w": "品種改良の系譜", "y": "ひんしゅかいりょうのけいふ" },
+    { "w": "バイオテクノロジー", "y": "ばいおてくのろじー" }
+  ],
+  "5-2": [
+    { "w": "フードシステム全体の変革", "y": "ふーどしすてむぜんたいのへんかく" },
+    { "w": "食料安全保障の強化", "y": "しょくりょうあんぜんほしょうのきょうか" },
+    { "w": "持続可能な開発目標", "y": "じぞくかのうなかいはつもくひょう" },
+    { "w": "地球温暖化への適応策", "y": "ちきゅうおんだんかへのてきおうさく" }
+  ],
+  "5-3": [
+    { "w": "果樹園の経営戦略", "y": "かじゅえんのけいえいせんりゃく" },
+    { "w": "リスクマネジメント", "y": "りすくまねじめんと" },
+    { "w": "新規参入者の育成", "y": "しんきさんにゅうしゃのいくせい" },
+    { "w": "農福連携", "y": "のうふくれんけい" }
+  ],
+  "5-4": [
+    { "w": "伝統農法の科学的検証", "y": "でんとうのうほうのかがくてきけんしょう" },
+    { "w": "知恵の共有プラットフォーム", "y": "ちえのきょうゆうぷらっとふぉーむ" },
+    { "w": "アグロエコロジー", "y": "あぐろえころじー" },
+    { "w": "食農教育", "y": "しょくのうきょういく" }
+  ],
+  "5-5": [
+    { "w": "自然資本の価値評価", "y": "しぜんしほんのかちひょうか" },
+    { "w": "生態系サービスの経済学", "y": "せいたいけいさーびすのけいざいがく" },
+    { "w": "生物多様性条約", "y": "せいぶつたようせいじょうやく" },
+    { "w": "土壌炭素貯留", "y": "どじょうたんそちょりゅう" }
+  ],
+  "5-6": [
+    { "w": "食の哲学と倫理", "y": "しょくのてつがくとりんり" },
+    { "w": "フードロス問題の根源", "y": "ふーどろすもんだいのこんげん" },
+    { "w": "食料倫理学", "y": "しょくりょうりんりがく" },
+    { "w": "食の安全と安心", "y": "しょくのあんぜんとあんしん" }
+  ],
+  "6-1": [
+    { "w": "究極の果実栽培技術", "y": "きゅうきょくのかじつさいばいぎじゅつ" },
+    { "w": "人類の食料課題解決", "y": "じんるいのしょくりょうかだいかいけつ" },
+    { "w": "食料システムの再構築", "y": "しょくりょうしすてむのさいこうちく" },
+    { "w": "未来へのレガシー", "y": "みらいへのれがしー" }
+  ],
+  "6-2": [
+    { "w": "持続可能な未来への収穫", "y": "じぞくかのうなみらいへのしゅうかく" },
+    { "w": "叡智の果実", "y": "えいちのかじつ" },
+    { "w": "感謝と創造の連鎖", "y": "かんしゃとそうぞうのれんさ" },
+    { "w": "新たなる夜明け", "y": "あらたなるよあけ" }
+  ],
+  "6-3": [
+    { "w": "未来世代への食料資産", "y": "みらいせだいへのしょくりょうしさん" },
+    { "w": "知識と技術の継承", "y": "ちしきとぎじゅつのけいしょう" },
+    { "w": "希望を育む土壌", "y": "きぼうをはぐくむどじょう" },
+    { "w": "生命の循環", "y": "せいめいのじゅんかん" }
+  ],
+  "6-4": [
+    { "w": "グローバルな食料システム", "y": "ぐろーばるなしょくりょうしすてむ" },
+    { "w": "ローカルフードの価値", "y": "ろーかるふーどのかち" },
+    { "w": "フェアトレードと連携", "y": "ふぇあとれーどとれんけい" },
+    { "w": "フードレジリエンス", "y": "ふーどれじりえんす" }
+  ],
+  "6-5": [
+    { "w": "食料資源の公平な分配", "y": "しょくりょうしげんのこうへいなぶんぱい" },
+    { "w": "飢餓撲滅への貢献", "y": "きがぼくめつへのこうけん" },
+    { "w": "食の安全保障の確立", "y": "しょくのあんぜんほしょうのかくりつ" },
+    { "w": "地球全体への感謝", "y": "ちきゅうぜんたいへのかんしゃ" }
+  ],
+  "6-6": [
+    {
+      "w": "食料問題の終焉と新たな時代の到来",
+      "y": "しょくりょうもんだいのしゅうえんとあらたなじだいのとうらい"
+    },
+    {
+      "w": "果樹栽培は人類の未来を拓く鍵となる",
+      "y": "かじゅさいばいはじんるいのみらいをひらくかぎとなる"
+    },
+    {
+      "w": "我々の使命は地球を緑豊かな果樹園に変えること",
+      "y": "われわれのしめいはちきゅうをみどりゆたかなかじゅえんにかえること"
+    },
+    {
+      "w": "そしてその物語は永遠に語り継がれるだろう",
+      "y": "そしてそのものがたりはえいえんにかたりつがれるだろう"
+    }
+  ]
+};
+
+const stories = {
+  1: { title: "第1章 🍎 はじまりの果樹園：小さな苗木と出会う", text: "あなたは小さな果樹園の新しい管理人。まずはりんごやみかんの世話から。タイピングで畑を手入れし、苗を元気に育てよう。" },
+  2: { title: "第2章 🍊 季節と果実：春の花から秋の収穫まで", text: "季節に合わせた手入れを学ぶ時期。剪定や受粉、追肥。言葉を正確に打って、果物たちの成長を助けよう。" },
+  3: { title: "第3章 🍇 品種と加工：味を磨く工夫", text: "新品種の育成やジャム・ドライ加工を覚える章。タイピングで新しいレシピや技法を習得し、商品に付加価値を与えよう。" },
+  4: { title: "第4章 🥭 販路とブランド化：地域の誇りをつくる", text: "ブランド化や販路開拓に挑む章。正確な語句を打って、果樹園の名前を広めていこう。" },
+  5: { title: "第5章 🍓 収穫と祭り：みんなで祝う豊作", text: "大きな収穫と、地域の収穫祭。タイピングで収穫を完了させ、喜びの種を撒こう。" },
+  6: { title: "第6章 🌟 新たな伝説：果物が紡ぐ未来", text: "果樹園はやがて地域の象徴に。タイピングで未来を耕し、新しい伝説を紡いでいこう。" }
+};
+
+const endings = [
+  { img: "./image/ending/01.png", text: "果樹園の小さな苗が、君の手で大きく育った。" },
+  { img: "./image/ending/02.png", text: "地域に笑顔をもたらす美味しい果物が実った。" },
+  { img: "./image/ending/03.png", text: "直売所は行列、君の手腕は評判に。" },
+  { img: "./image/ending/04.png", text: "収穫祭は大成功。みんなで祝福の輪が広がる。" },
+  { img: "./image/ending/05.png", text: "次世代に繋ぐ種を残し、果樹園は永く続く。" },
+  { img: "./image/ending/06.png", text: "君は一流の果樹園管理人として讃えられた。" },
+  { img: "./image/ending/07.png", text: "しかし、物語はここで終わらない。だが最後に言っておこう。" },
+  { img: "./image/ending/08.png", text: "ありがとう、果物と共に歩んでくれて。" }
+];
+
+let endingPageIndex = 0;
+
+/* persistent save structure */
+function loadSave(){
+  try{
+    const s=localStorage.getItem("typing_farmer_game_typingSave");
+    if(!s) return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false };
+    const saved = JSON.parse(s);
+    if(saved.firstLaunch === undefined) saved.firstLaunch = false; // For existing users
+    if(saved.bgmEnabled === undefined) saved.bgmEnabled = true;
+    if(saved.seEnabled === undefined) saved.seEnabled = true;
+    if(saved.furigana === undefined) saved.furigana = false;
+    if(saved.unlockedStories === undefined) saved.unlockedStories = [0]; // Prologue
+    if(saved.easyMode === undefined) saved.easyMode = false;
+    if(saved.normalMode === undefined) saved.normalMode = true;
+    if(saved.hardMode === undefined) saved.hardMode = false;
+    return saved;
+  }catch(e){ localStorage.removeItem("typing_farmer_game_typingSave"); return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false }; }
+}
+function saveAll(data){
+  document.getElementById("loading3").style.display = "block";
+  localStorage.setItem("typing_farmer_game_typingSave", JSON.stringify(data));
+  setTimeout(()=>{ document.getElementById("loading3").style.display = "none"; log("save done"); }, 700);
+}
+
+/* audio helpers */
+const audio = {
+  bgm: document.getElementById("bgm"),
+  bgmStaff: document.getElementById("bgm-staff"),
+  bgmEnding: document.getElementById("bgm-ending"),
+  btn: document.getElementById("se-btn"),
+  clear: document.getElementById("se-clear"),
+  fail: document.getElementById("se-fail"),
+  back: document.getElementById("se-back"),
+  exit: document.getElementById("se-exit"),
+  locked: document.getElementById("se-locked")
+};
+function playSE(id){
+  const chk = document.getElementById("chk-se");
+  if(chk && !chk.checked) return;
+  const a = audio[id];
+  if(!a) return;
+  try{ a.currentTime=0; a.play(); }catch(e){ log("SE play failed",e); }
+}
+function setSEVolume(v){ ["btn","clear","fail","back","exit","locked"].forEach(k=>{ const a=audio[k]; if(a) a.volume = v; }); }
+function setBGMVolume(v){ 
+  if(audio.bgm) audio.bgm.volume = v; 
+  if(audio.bgmStaff) audio.bgmStaff.volume = v;
+  if(audio.bgmEnding) audio.bgmEnding.volume = v;
+}
+
+/**
+ * すべてのBGMを停止します。
+ */
+function stopAllBGM(){
+  try {
+    audio.bgm.pause();
+    audio.bgm.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmStaff.pause();
+    audio.bgmStaff.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmEnding.pause();
+    audio.bgmEnding.currentTime = 0;
+  } catch (e) {}
+}
+
+/* transition utility: fade out -> show loading gif -> run check -> exec target -> hide loading gif -> fade in */
+async function transitionWithLoading(checkFn, targetFn, fadeColor = "#000", fadeDuration = ".45s", loadingGifId = "loading2"){
+  const fade = document.getElementById("fade");
+  const loadingGif = document.getElementById(loadingGifId);
+  const loading2Gif = document.getElementById("loading2");
+  const loading4Gif = document.getElementById("loading4");
+  const loading5Gif = document.getElementById("loading5");
+  
+  // Apply specific fade styles
+  fade.style.backgroundColor = fadeColor;
+  fade.style.transitionDuration = fadeDuration;
+
+  // hide other loading gifs
+  if(loading2Gif && loadingGifId !== "loading2") loading2Gif.style.display = "none";
+  if(loading4Gif && loadingGifId !== "loading4") loading4Gif.style.display = "none";
+  if(loading5Gif && loadingGifId !== "loading5") loading5Gif.style.display = "none";
+  
+  // fade out
+  fade.classList.add("on");
+  await delay(parseFloat(fadeDuration) * 1000); // Wait for fade to complete
+  
+  // show loading gif
+  if (loadingGif) loadingGif.style.display = "block";
+  await delay(150);
+  try{
+    await checkFn();
+    await delay(200);
+    targetFn();
+  }catch(e){
+    console.error("transition check failed", e);
+    alert("🍒ページを移動できません\n" + (e && e.message? e.message : ""));
+  }finally{
+    // hide loading gif and fade in
+    if (loadingGif) loadingGif.style.display = "none";
+    await delay(150);
+    fade.classList.remove("on");
+    // Reset fade styles to default after transition
+    fade.style.backgroundColor = "#000";
+    fade.style.transitionDuration = ".45s";
+  }
+}
+
+/* safe show screen */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+  const el = document.getElementById(id);
+  if(el) el.classList.add("active");
+  // hide loading-area when not on loading stage
+  if(id !== "loading-area" && id !== "title") document.getElementById("loading-area").style.display = "none";
+}
+
+/* -------------------------
+   Game logic state
+   ------------------------- */
+let save = loadSave();
+let currentChapter = 1;
+let currentStage = 1;
+let playTimer = null;
+let remaining = 60;
+let qIndex = 0;
+let startTime = 0;
+
+/* -------------------------
+   UI behaviors
+   ------------------------- */
+function showTitle(){
+  const titleText = "果物タイピング ～果樹園救済物語～";
+  const container = document.getElementById("title-text-anim");
+  const copyright = document.getElementById("title-copyright");
+  const cert = loadCert();
+  copyright.textContent = cert && cert.copyright ? cert.copyright : "";
+
+  // hide buttons initially
+  const buttonsDiv = document.getElementById("title-buttons");
+  buttonsDiv.classList.remove("title-buttons-visible");
+  buttonsDiv.classList.add("title-buttons-hidden");
+
+  // start title animation
+  container.innerHTML = "";
+  titleText.split("").forEach((char, index) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    span.style.animationDelay = `${index * 0.05}s`;
+    container.appendChild(span);
+  });
+  
+  // show screen after a short delay to ensure initial state is set
+  setTimeout(() => {
+    showScreen("title");
+  }, 50);
+
+  // show buttons after animation completes
+  setTimeout(() => {
+    buttonsDiv.classList.remove("title-buttons-hidden");
+    buttonsDiv.classList.add("title-buttons-visible");
+  }, 1500); // 1.5s delay
+}
+function renderChapterList(){
+  const wrap = document.getElementById("chapter-list");
+  wrap.innerHTML = "";
+  for(let i=1;i<=6;i++){
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = (save.unlocked && save.unlocked[i]);
+    if(unlocked){
+      btn.textContent = `第${i}章`;
+      btn.onclick = ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ currentChapter = i; renderStageGrid(i); showScreen("stage"); }); }
+    } else {
+      btn.textContent = `🍒 第${i}章`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+}
+function renderStageGrid(ch){
+  const grid = document.getElementById("stage-grid"); grid.innerHTML="";
+  for(let s=1;s<=6;s++){
+    const key = `${ch}-${s}`;
+    const unlockedInChapter = (save.unlocked && save.unlocked[ch] && save.unlocked[ch].includes(s));
+    const cleared = (save.records && save.records[key] !== undefined);
+    const btn = document.createElement("button");
+    btn.className="btn";
+    if(unlockedInChapter){
+      let text = key;
+      if(cleared) text = `✅ ${key}`;
+      btn.textContent = text;
+      btn.onclick = ()=> { playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=> startStage(ch,s)); };
+    } else {
+      btn.textContent = `🍒 ${key}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    grid.appendChild(btn);
+  }
+  document.getElementById("stage-heading").textContent = `第${ch}章 ステージ選択`;
+}
+
+/* start stage */
+function startStage(ch, st){
+  currentChapter = ch; currentStage = st;
+  // stop bgm
+  stopAllBGM();
+  // prepare questions
+  const key = `${ch}-${st}`;
+  const problems = problemBank[key].slice(0,4);
+  qIndex = 0; remaining = 60;
+  document.getElementById("play-title").textContent = `第${key}`;
+  renderQuestion(problems[0].w, problems[0].y);
+  document.getElementById("input").value = "";
+  document.getElementById("play-timer").textContent = remaining;
+  showScreen("play");
+  startTime = Date.now();
+  // timer
+  if(playTimer) clearInterval(playTimer);
+  playTimer = setInterval(()=>{
+    remaining--;
+    document.getElementById("play-timer").textContent = remaining;
+    if(remaining<=0){ clearInterval(playTimer); onFail(); }
+  },1000);
+  // bind Enter handler to check against current problems
+  document.getElementById("input").onkeydown = function(e){
+    if(e.key === "Enter"){
+      const val = this.value.trim();
+      const correct = problems[qIndex].y;
+      // Use checkAnswer if available (supports Easy mode)
+      try {
+        if (typeof checkAnswer === "function" && checkAnswer(val, correct)) {
+          playSE('clear');
+          qIndex++;
+          if(qIndex >= problems.length){
+            clearInterval(playTimer);
+            onClear();
+          } else {
+            renderQuestion(problems[qIndex].w, problems[qIndex].y);
+            this.value = "";
+          }
+        } else {
+          // Incorrect answer
+          playSE('fail');
+          // Hard mode: immediate game over
+          if (save && save.hardMode) {
+            // show game over screen with message
+            showScreen("gameover");
+            return;
+          }
+          // Normal / Easy: allow retry
+          document.getElementById("play-msg").textContent = "不正解。もう一度。";
+          this.select();
+        }
+      } catch(err) {
+        console.error("Answer check failed:", err);
+        // fallback to strict check
+        if(val === correct){
+          playSE('clear');
+          qIndex++;
+          if(qIndex >= problems.length){
+            clearInterval(playTimer);
+            onClear();
+          } else {
+            renderQuestion(problems[qIndex].w, problems[qIndex].y);
+            this.value = "";
+          }
+        } else {
+          playSE('fail');
+          if (save && save.hardMode) {
+            showScreen("gameover");
+            return;
+          }
+          document.getElementById("play-msg").textContent = "不正解。もう一度。";
+          this.select();
+        }
+      }
+    }
+  };
+}
+
+/* render question with or without furigana */
+function renderQuestion(word, furigana){
+  const qEl = document.getElementById("question");
+  const furiganaEnabled = document.getElementById("chk-kana").checked;
+  const qText = `問題 ${qIndex+1}: 「${word}」 を入力してください`;
+  if(furiganaEnabled){
+    qEl.innerHTML = `問題 ${qIndex+1}: <ruby>${word}<rt>${furigana}</rt></ruby> を入力してください`;
+  } else {
+    qEl.textContent = qText;
+  }
+}
+
+/* on clear: compute elapsed, save best */
+function onClear(){
+  playSE('clear');
+  const elapsed = Math.max(0, Math.floor((Date.now()-startTime)/1000));
+  const key = `${currentChapter}-${currentStage}`;
+  
+  if(!save.records) save.records = {};
+  if(!save.records[key] || elapsed < save.records[key]){ save.records[key] = elapsed; }
+
+  // unlock next
+  if(!save.unlocked) save.unlocked = {};
+  if(!save.unlocked[currentChapter]) save.unlocked[currentChapter] = [];
+  
+  if (currentStage < 6) {
+    if (!save.unlocked[currentChapter].includes(currentStage + 1)) {
+      save.unlocked[currentChapter].push(currentStage + 1);
+    }
+    saveAll(save);
+    renderChapterList(); renderStageGrid(currentChapter);
+onStageCleared(elapsed);
+  } else if (currentStage === 6) {
+    if (currentChapter < 6) {
+      if (!save.unlocked[currentChapter + 1]) {
+        save.unlocked[currentChapter + 1] = [1];
+      }
+      if (!save.unlockedStories.includes(currentChapter + 1)) {
+        save.unlockedStories.push(currentChapter + 1);
+      }
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+onChapterCleared(elapsed);
+    } else if (currentChapter === 6) {
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+onFinalChapterCleared(elapsed);
+    }
+  }
+}
+
+function onStageCleared(elapsed){
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>クリア！ ${currentChapter}-${currentStage} を ${elapsed}秒で突破しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showScreen("records");
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+function onChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>第${currentChapter}章クリア！</div>`
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showStory(currentChapter + 1);
+}
+
+async function onFinalChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>🌱第6章 クリア！</div>`
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5");
+}
+
+/* fail */
+function onFail(){
+  playSE('fail');
+  showScreen("records");
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>時間切れ！ ${currentChapter}-${currentStage} は失敗しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+/* update records UI */
+function updateRecordsUI(){
+  const list = document.getElementById("records-list");
+  list.innerHTML = "";
+  if(save.records){
+    for(const k in save.records){
+      const d = document.createElement("div"); d.textContent = `${k}: ${save.records[k]}秒`; list.appendChild(d);
+    }
+  } else {
+    list.textContent = "まだ記録はありません。";
+  }
+}
+
+/* show records screen */
+function showRecords(){
+  updateRecordsUI();
+  showScreen("records");
+}
+
+/* show story */
+function showStory(chapter){
+  stopAllBGM();
+  
+  if (chapter === 0) {
+    document.getElementById("btn-prologue-next").onclick = ()=>{ 
+      playSE('btn');
+      save.firstLaunch = false;
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+transitionWithLoading(() => Promise.resolve(), () => showTitle());
+    };
+    showScreen("prologue");
+    return;
+  }
+  
+  const storyData = stories[chapter];
+  if (!storyData) return;
+
+  document.getElementById("story-title").textContent = storyData.title;
+  document.getElementById("story-text").textContent = storyData.text;
+  
+  const btnNext = document.getElementById("btn-story-next");
+  const btnBack = document.getElementById("btn-story-back");
+  
+  btnNext.onclick = ()=>{ playSE('btn'); showScreen("chapter"); };
+  btnBack.classList.add("hidden");
+
+  showScreen("story");
+}
+
+/* render story list */
+function renderStoryList(){
+  const wrap = document.getElementById("story-list-grid");
+  wrap.innerHTML = "";
+  for(let i=0;i<=6;i++){
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = save.unlockedStories.includes(i);
+    const storyTitle = (i === 0) ? "プロローグ" : `第${i}章`;
+    if(unlocked){
+      btn.textContent = `✅ ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('btn'); showStory(i); };
+    } else {
+      btn.textContent = `🍒 ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+  showScreen("story-list");
+}
+
+/* ending */
+function showEnding(){
+  
+  endingPageIndex = 0;
+  updateEndingPage();
+  showScreen("ending");
+}
+
+function updateEndingPage(){
+  const endingData = endings[endingPageIndex];
+  document.getElementById("ending-img").src = endingData.img;
+  document.getElementById("ending-text").textContent = endingData.text;
+
+  const btnNext = document.getElementById("btn-ending-next");
+  const btnPrev = document.getElementById("btn-ending-prev");
+  
+  btnPrev.classList.toggle("hidden", endingPageIndex === 0);
+  
+  if (endingPageIndex === endings.length - 1) {
+    btnNext.textContent = "スタッフロールへ";
+    // 修正: `transitionWithLoading` を使わず、直接 `startStaffRoll` を呼び出すように変更
+    btnNext.onclick = ()=>{ 
+      playSE('btn');
+      startStaffRoll();
+    };
+  } else {
+    btnNext.textContent = "次へ";
+    btnNext.onclick = ()=>{
+      playSE('btn');
+      endingPageIndex++;
+      updateEndingPage();
+    };
+  }
+}
+
+/* staff roll */
+async function startStaffRoll(){
+  stopAllBGM();
+
+  const playBGM = await askPlayStaffBGM();
+  
+  const fade = document.getElementById("fade");
+  fade.style.backgroundColor = "#fff";
+  fade.style.transitionDuration = "1s";
+  document.getElementById("loading4").style.display = "block";
+  document.getElementById("loading2").style.display = "none";
+  document.getElementById("loading5").style.display = "none";
+  fade.classList.add("on");
+  
+  await delay(1000); // Wait for fade out to complete
+  document.getElementById("loading4").style.display = "none";
+
+  showScreen("staff");
+  
+  if (playBGM) {
+    if(document.getElementById("chk-bgm").checked){ 
+      audio.bgmStaff.volume = parseFloat(document.getElementById("bgm-vol").value || 0.2); 
+      audio.bgmStaff.play().catch(()=>{}); 
+    }
+  }
+  
+  const rollLines = document.querySelectorAll(".roll-line");
+  const finalMsg = document.getElementById("final-msg");
+
+  // Reset state
+  rollLines.forEach(line => line.classList.add("hidden"));
+  finalMsg.classList.add("hidden");
+
+  // Hide fade
+  await delay(150);
+  fade.classList.remove("on");
+  
+  // Animate lines one by one
+  for (const line of rollLines) {
+    line.textContent = line.dataset.text;
+    line.style.animation = "none";
+    line.offsetHeight; // force reflow
+    line.style.animation = "fadeCycle 4s linear forwards";
+    line.classList.remove("hidden");
+    await delay(3500);
+    line.classList.add("hidden");
+    await delay(500);
+  }
+
+  // Show final message and button
+  finalMsg.classList.remove("hidden");
+  if (!save.staffSeen) {
+    save.staffSeen = true;
+    saveAll(save);
+  renderChapterList(); renderStageGrid(currentChapter);
+}
+}
+
+/* exit process with animation and se-exit playback */
+async function runExitProcess(){
+  // stop all BGM then show exit screen
+  stopAllBGM();
+  showScreen("exit");
+  document.getElementById("exit-text").textContent = "終了準備中です...";
+  playSE('btn');
+  await delay(800);
+  document.getElementById("exit-text").textContent = "終了処理中です...";
+  const bar = document.getElementById("exit-bar");
+  for(let p=0;p<=100;p+=10){ bar.style.width = p + "%"; await delay(300); }
+  // cleanup and play exit se
+  bar.style.width = "0%";
+  document.getElementById("exit-gif").style.display = "none";
+  document.getElementById("exit-text").textContent = "ゲームを終了しました。htmlを終了することができます。";
+  playSE('exit');
+}
+
+/* settings */
+function openSettings(){ 
+  // load settings from saved data and apply to checkboxes
+  document.getElementById("chk-bgm").checked = save.bgmEnabled;
+  document.getElementById("chk-se").checked = save.seEnabled;
+  document.getElementById("chk-kana").checked = save.furigana;
+  document.getElementById("settings-modal").classList.remove("hidden"); 
+}
+function closeSettings(){ document.getElementById("settings-modal").classList.add("hidden"); }
+function applySettings(){
+  save.bgmEnabled = document.getElementById("chk-bgm").checked;
+  save.seEnabled = document.getElementById("chk-se").checked;
+  save.furigana = document.getElementById("chk-kana").checked;
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+  saveAll(save);
+renderChapterList(); renderStageGrid(currentChapter);
+}
+document.getElementById("btn-settings-close")?.addEventListener("click", ()=>{
+  applySettings(); closeSettings();
+});
+
+/* dev tools */
+function openDevTools(){
+  document.getElementById("dev-tools-modal").classList.remove("hidden");
+}
+function closeDevTools(){
+  document.getElementById("dev-tools-modal").classList.add("hidden");
+}
+
+/* certificate update flow */
+async function updateCertificate(){
+  const pw = prompt("管理者パスワード:");
+  if(pw !== ADMIN_PW){ alert("パスワードが違います"); return; }
+  const daysStr = prompt("有効期間（日数） 1〜10950:", "365");
+  const days = parseInt(daysStr,10);
+  if(isNaN(days) || days < 1 || days > MAX_DAYS){ alert("無効な日数"); return; }
+  const issued = new Date();
+  const expires = new Date(issued.getTime() + days*24*3600*1000);
+  const cert = { productKey: genKeyForYear(getFiscalYear()), issued: issued.toISOString(), expires: expires.toISOString(), copyright:"© 2025 Save The World! Typing Master" };
+  saveCert(cert);
+  alert("証明書を更新しました。");
+}
+
+/* check system requirements and return boolean result */
+function checkSystemRequirements(){
+    const ua = navigator.userAgent;
+    let isOSSupported = false;
+    let isBrowserSupported = false;
+
+    // OS check
+    const isWindows = /Windows NT/.test(ua);
+    if (isWindows) {
+        const winVerMatch = /Windows NT (\d+\.\d)/.exec(ua);
+        if (winVerMatch && parseFloat(winVerMatch[1]) >= 6.1) {
+            isOSSupported = true;
+        }
+    }
+
+    // Browser check
+    if (ua.indexOf("Edg") > -1) {
+        if (parseInt(/Edg\/(\d+)/.exec(ua)[1], 10) >= 79) isBrowserSupported = true;
+    } else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) {
+        if (parseInt(/(?:Opera|OPR)\/(\d+)/.exec(ua)[1], 10) >= 50) isBrowserSupported = true;
+    } else if (ua.indexOf("Chrome") > -1) {
+        if (parseInt(/Chrome\/(\d+)/.exec(ua)[1], 10) >= 63) isBrowserSupported = true;
+    } else if (ua.indexOf("Firefox") > -1) {
+        if (parseInt(/Firefox\/(\d+)/.exec(ua)[1], 10) >= 58) isBrowserSupported = true;
+    }
+    
+    return { isOSSupported, isBrowserSupported };
+}
+
+/* run loading checks with retries and console logging */
+async function runLoadingChecks(){
+  const bar = document.getElementById("progress-bar");
+  const ptext = document.getElementById("progress-text");
+  let attempt = 0;
+  let lastError = null;
+
+  const reqs = checkSystemRequirements();
+  const isOSSupported = reqs.isOSSupported;
+  const isBrowserSupported = reqs.isBrowserSupported;
+  const isSuperRestricted = !isOSSupported && !isBrowserSupported;
+  const isPartialRestricted = !isSuperRestricted && (!isOSSupported || !isBrowserSupported);
+
+  if (isSuperRestricted) {
+      document.getElementById("btn-start").disabled = true;
+      document.getElementById("btn-records").disabled = true;
+      document.getElementById("btn-story-list").disabled = true;
+      document.getElementById("btn-settings").disabled = true;
+  }
+  
+  if (isPartialRestricted) {
+      document.getElementById("partial-warn").classList.remove("hidden");
+      document.getElementById("btn-start").disabled = true;
+      document.getElementById("btn-start").textContent = "🚫スタート";
+  }
+
+  while(attempt < 3){
+    attempt++;
+    try{
+      console.log("[LOAD] attempt", attempt);
+      // step 1: function inspection (simulate)
+      ptext.textContent = "関数チェック中..."; bar.style.width = "10%"; console.log("[LOAD] functions check");
+      await delay(700);
+      
+      // step 2: image check
+      ptext.textContent = "画像ファイルチェック中..."; bar.style.width = "30%"; console.log("[LOAD] checking gifs");
+      const images = ["./image/loading.gif","./image/loading2.gif","./image/loading3.gif","./image/loading4.gif", "./image/loading5.gif", ...[...Array(8)].map((_, i) => `./image/ending/0${i+1}.png`)];
+      const imagePromises = images.map(u => new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => { console.log("[LOAD] image ok", u); resolve(true); };
+        i.onerror = () => { console.error("[LOAD] image missing or failed to load", u); reject(new Error(`Image load failed: ${u}`)); };
+        i.src = u;
+      }));
+      await Promise.all(imagePromises);
+      await delay(300);
+
+      // step 3: audio check
+      ptext.textContent = "音声ファイルチェック中..."; bar.style.width = "50%"; console.log("[LOAD] checking audio");
+      const audios = [...[...Array(9)].map((_, i) => `./image/bgm/0${i+1}.mp3`)];
+      const audioPromises = audios.map(u => new Promise((resolve, reject) => {
+        const a = new Audio();
+        a.oncanplaythrough = () => { console.log("[LOAD] audio ok", u); resolve(true); };
+        a.onerror = () => { console.error("[LOAD] audio missing or failed to load", u); reject(new Error(`Audio load failed: ${u}`)); };
+        a.src = u;
+        a.load();
+      }));
+      await Promise.all(audioPromises);
+      await delay(300);
+
+      // step 4: check cert
+      ptext.textContent = "証明書確認中..."; bar.style.width = "70%"; console.log("[LOAD] certificate check");
+      try {
+          const cert = loadCert();
+          validateCert(cert);
+      } catch (e) {
+          console.warn("証明書エラー発生。自動的にリセットします。", e);
+          localStorage.removeItem("typing_farmer_game_certificate");
+          location.reload(); // ページをリロードして再起動
+          return; // Add return to prevent further execution after reload
+      }
+      await delay(300);
+
+      // step 5: check CSS / encoding (simulate)
+      ptext.textContent = "HTML/CSS検証中..."; bar.style.width = "90%"; console.log("[LOAD] css check");
+      const metas = document.getElementsByTagName("meta");
+      let charsetOk = false;
+      for(const m of metas) if(m.getAttribute("charset") && m.getAttribute("charset").toLowerCase().includes("utf")) charsetOk = true;
+      if(!charsetOk) console.warn("[LOAD] charset meta not utf-8 (warning)");
+      await delay(300);
+      
+      // final
+      ptext.textContent = "正常終了 ✅"; bar.style.width = "100%"; console.log("[LOAD] done");
+      await delay(600);
+      // hide loading area now and prompt BGM
+      document.getElementById("loading-area").style.display = "none";
+      await askPlayBGM();
+      if(save.firstLaunch){
+        await transitionWithLoading(() => Promise.resolve(), () => showStory(0));
+      } else {
+        // Use transitionWithLoading for safe screen change
+        await transitionWithLoading(() => Promise.resolve(), showTitle);
+      }
+      return;
+    }catch(e){
+      lastError = e;
+      console.error("[LOAD] Fatal error during checks:", e);
+      // log error name + message
+      console.error("Error name/message:", e.name, e.message);
+      // retry loop
+      if(attempt < 3){
+        console.log("[LOAD] retrying...");
+        ptext.textContent = `ロードに問題が発生しました。再試行します... (${attempt})`;
+        await delay(800);
+      } else {
+        ptext.textContent = "❗ロードに失敗しました";
+        console.error("[LOAD] failed after retries:", e);
+        // show exit button
+        const btn = document.createElement("button"); btn.className="btn"; btn.textContent="ゲームを終了する"; btn.onclick = ()=> runExitProcess();
+        document.getElementById("loading-area").appendChild(btn);
+        return;
+      }
+    }
+  }
+}
+
+/* ask Play BGM overlay BEFORE showing title */
+function askPlayBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-yes").onclick = ()=>{
+      modal.classList.add("hidden");
+      // save.bgmEnabled defaults to true on first run, so this will set the checkbox state
+      document.getElementById("chk-bgm").checked = true;
+      document.getElementById("bgm-vol").value = localStorage.getItem("typing_farmer_game_bgmVol") || 0.2;
+      setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+      try{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }catch(e){}
+      resolve();
+    };
+    document.getElementById("bgm-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      document.getElementById("chk-bgm").checked = false;
+      resolve();
+    };
+  });
+}
+
+/* ask Play Ending BGM */
+function askPlayEndingBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-ending-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-ending-yes").onclick = ()=>{
+      // BGM設定がONになっているかチェック
+      const isBgmEnabled = document.getElementById("chk-bgm").checked;
+      if (!isBgmEnabled) {
+          // ONになっていなければ警告ダイアログを表示
+          const warnModal = document.getElementById("bgm-setting-warn-prompt");
+          warnModal.classList.remove("hidden");
+          
+          document.getElementById("bgm-setting-warn-yes").onclick = ()=>{
+              warnModal.classList.add("hidden");
+              modal.classList.add("hidden");
+              document.getElementById("chk-bgm").checked = true; // BGM ONに設定
+              saveAll(save);
+              renderChapterList(); renderStageGrid(currentChapter);
+stopAllBGM();
+              audio.bgmEnding.play().catch(e => {
+                  console.error("Failed to play ending BGM:", e);
+              });
+              resolve();
+          };
+          document.getElementById("bgm-setting-warn-no").onclick = ()=>{
+              warnModal.classList.add("hidden");
+              modal.classList.add("hidden");
+              resolve();
+          };
+      } else {
+          // ONになっていればそのまま再生
+          modal.classList.add("hidden");
+          stopAllBGM();
+          audio.bgmEnding.play().catch(e => {
+              console.error("Failed to play ending BGM:", e);
+          });
+          resolve();
+      }
+    };
+    document.getElementById("bgm-ending-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve();
+    };
+  });
+}
+
+/* ask Play Staff BGM */
+function askPlayStaffBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-staff-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-staff-yes").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve(true);
+    };
+    document.getElementById("bgm-staff-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve(false);
+    };
+  });
+}
+
+// ---------------------------
+// START OF NEW / MODIFIED CODE
+// ---------------------------
+
+/**
+ * モバイルデバイスを検知する関数
+ * @returns {boolean} モバイルデバイスであればtrue
+ */
+function checkMobileDevice() {
+    const ua = navigator.userAgent;
+    const mobileKeywords = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    return mobileKeywords.test(ua);
+}
+
+/* wire events on load */
+window.addEventListener("DOMContentLoaded", async ()=>{
+  // bind buttons
+  document.getElementById("btn-story-next")?.addEventListener("click", ()=>{ playSE('btn'); showScreen("chapter"); });
+  document.getElementById("btn-story-back")?.addEventListener("click", ()=>{ playSE('back'); renderStoryList(); });
+  document.getElementById("btn-story-list")?.addEventListener("click", ()=>{ playSE('btn'); renderStoryList(); });
+  document.getElementById("btn-story-list-back")?.addEventListener("click", ()=>{ playSE('back'); showScreen("title"); });
+
+  document.getElementById("btn-start").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderChapterList(); showScreen("chapter"); }); });
+  document.getElementById("btn-records").addEventListener("click", ()=>{ playSE('btn'); showRecords(); });
+  document.getElementById("btn-music-room").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("music-room"); }); });
+  document.getElementById("btn-music-room-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ stopAllBGM(); showScreen("title"); }); });
+  document.getElementById("btn-play-bgm").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgm.play().catch(()=>{});
+    }
+  });
+  document.getElementById("btn-play-staff").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgmStaff.play().catch(()=>{});
+    }
+  });
+  document.getElementById("btn-play-ending").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgmEnding.play().catch(()=>{});
+    }
+  });
+
+  document.getElementById("btn-settings").addEventListener("click", ()=>{ playSE('btn'); openSettings(); });
+  document.getElementById("btn-exit").addEventListener("click", ()=>{ playSE('exit'); transitionWithLoading(()=>Promise.resolve(), ()=> runExitProcess()); });
+
+  document.getElementById("btn-chap-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-stage-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("chapter"); }); });
+  document.getElementById("btn-stage-title").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+
+  document.getElementById("btn-play-back").addEventListener("click", ()=>{ playSE('back'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+  document.getElementById("btn-giveup").addEventListener("click", ()=>{ playSE('fail'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+
+  document.getElementById("btn-records-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-records-back-last-stage").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("stage"); }); });
+  document.getElementById("btn-records-back-chapter").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("chapter"); }); });
+  document.getElementById("btn-records-story").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStoryList(); }); });
+  document.getElementById("btn-dev-tools").addEventListener("click", ()=>{ playSE('btn'); openDevTools(); });
+  document.getElementById("btn-reset").addEventListener("click", ()=>{ 
+    if(confirm("セーブと証明書を削除しますか？")){ 
+      localStorage.removeItem("typing_farmer_game_typingSave"); 
+      localStorage.removeItem("typing_farmer_game_certificate"); // <- これが修正箇所です
+      save = loadSave(); 
+      alert("リセットしました"); 
+    }
+  });
+  document.getElementById("btn-cert").addEventListener("click", ()=>{ updateCertificate(); });
+
+  document.getElementById("btn-dev-to-ending").addEventListener("click", async ()=>{ closeDevTools(); await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5"); });
+  document.getElementById("btn-dev-to-staff").addEventListener("click", async ()=>{ closeDevTools(); startStaffRoll(); });
+  document.getElementById("btn-dev-close").addEventListener("click", ()=>{ playSE('back'); closeDevTools(); });
+
+  document.getElementById("btn-roll-back-to-title").addEventListener("click", ()=>{ playSE('back'); 
+    transitionWithLoading(() => Promise.resolve(), () => {
+        stopAllBGM();
+        showScreen("title");
+        if(document.getElementById("chk-bgm").checked){ 
+            audio.bgm.play().catch(()=>{}); 
+        }
+    }, "#fff", "1s", "loading4");
+  });
+  document.getElementById("btn-chap-back").addEventListener("click", ()=>{ playSE('back'); showScreen("title"); });
+  document.getElementById("btn-ending-prev")?.addEventListener("click", ()=>{
+    if(endingPageIndex > 0) {
+      playSE('back');
+      endingPageIndex--;
+      updateEndingPage();
+    }
+  });
+
+  document.getElementById("bgm-vol").addEventListener("input", (e)=>{ localStorage.setItem("typing_farmer_game_bgmVol", e.target.value); setBGMVolume(e.target.value); });
+  document.getElementById("se-vol").addEventListener("input", (e)=>{ localStorage.setItem("typing_farmer_game_seVol", e.target.value); setSEVolume(e.target.value); });
+
+  // init volumes and settings from localStorage
+  const savedSettings = loadSave();
+  document.getElementById("bgm-vol").value = localStorage.getItem("typing_farmer_game_bgmVol") || 0.2;
+  document.getElementById("se-vol").value = localStorage.getItem("typing_farmer_game_seVol") || 1;
+  document.getElementById("chk-bgm").checked = savedSettings.bgmEnabled;
+  document.getElementById("chk-se").checked = savedSettings.seEnabled;
+  document.getElementById("chk-kana").checked = savedSettings.furigana;
+
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+
+  // cert copyright display
+  document.getElementById("copyright").textContent = loadCert().copyright || "";
+
+  // initial run loading checks
+  if (checkMobileDevice()) {
+      document.getElementById("loading-area").style.display = "none";
+      document.getElementById("mobile-warn").classList.remove("hidden");
+      await askPlayBGM();
+      if(save.firstLaunch){
+          await transitionWithLoading(() => Promise.resolve(), () => showStory(0));
+      } else {
+          await transitionWithLoading(() => Promise.resolve(), showTitle);
+      }
+  } else {
+      runLoadingChecks();
+  }
+});
+
+/* small safety: ensure showScreen('title') exists */
+document.addEventListener("click", (e)=>{ if(e.target && e.target.matches && e.target.matches('.btn')){ /* user interacted; allow autoplay */ } });
+
+/* 農園風確認ダイアログ制御関数 */
+function showConfirmDialog(id, message, callback){
+  const dialog = document.getElementById(id);
+  if(!dialog) return;
+  dialog.querySelector("p").innerText = message;
+  dialog.style.display = "block";
+
+  const buttons = dialog.getElementsByTagName("button");
+  if(buttons.length >= 2){
+    buttons[0].onclick = () => { dialog.style.display = "none"; callback(true); };
+    buttons[1].onclick = () => { dialog.style.display = "none"; callback(false); };
+  }
+}
+
+
+// 設定確認ダイアログの使用例
+// showConfirmDialog("settingsConfirm", "設定を保存しますか？", (ok)=>{
+//   if(ok){
+//     saveSettings();
+//   } else {
+//     console.log("設定は保存されませんでした");
+//   }
+// });
+
+
+// ------------------ モード用ヘルパー ------------------
+function levenshtein(a, b) {
+  const dp = Array.from({length: a.length+1}, ()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+      else dp[i][j]=1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function checkAnswer(input, correct) {
+  if(save.easyMode) {
+    return levenshtein(input, correct) <= 2;
+  } else {
+    return input === correct;
+  }
+}
+
+function setMode(mode) {
+  save.easyMode = (mode === "easy");
+  save.normalMode = (mode === "normal");
+  save.hardMode = (mode === "hard");
+
+  document.getElementById("chk-easy").checked = save.easyMode;
+  document.getElementById("chk-normal").checked = save.normalMode;
+  document.getElementById("chk-hard").checked = save.hardMode;
+
+  saveAll(save);
+}
+
+function openSettings() {
+  document.getElementById("chk-easy").checked = save.easyMode;
+  document.getElementById("chk-normal").checked = save.normalMode;
+  document.getElementById("chk-hard").checked = save.hardMode;
+  document.getElementById("settings-modal").classList.remove("hidden"); // 修正済み
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("chk-easy")?.addEventListener("change", e => {
+    if (e.target.checked) setMode("easy");
+    else if (!save.hardMode) setMode("normal");
+  });
+
+  document.getElementById("chk-normal")?.addEventListener("change", e => {
+    if (e.target.checked) setMode("normal");
+  });
+
+  document.getElementById("chk-hard")?.addEventListener("change", e => {
+    if (e.target.checked) setMode("hard");
+    else if (!save.easyMode) setMode("normal");
+  });
+});
+// =======================================================
+
+
+// gameover button handler
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("btn-gameover-title")?.addEventListener("click", ()=>{
+    playSE('btn');
+    showTitle();
+  });
+});
+
+
+
+// --- Extra buttons with fixed BGM playback (01.mp3) ---
+document.addEventListener("DOMContentLoaded", () => {
+  // MusicRoom → タイトルに戻る
+  document.getElementById("btn-music-title")?.addEventListener("click", () => {
+    playSE('btn');
+    showTitle();
+    if (save.bgmEnabled) {
+      const audio = new Audio("./image/bgm/01.mp3");
+      audio.loop = true;
+      audio.play();
+    }
+  });
+
+  // 章解放ストーリー → 閉じる
+  document.getElementById("btn-story-close")?.addEventListener("click", () => {
+    playSE('btn');
+    closeStory();
+    if (save.bgmEnabled) {
+      const audio = new Audio("./image/bgm/01.mp3");
+      audio.loop = true;
+      audio.play();
+    }
+  });
+
+  // Hardモード ゲームオーバー → タイトルに戻る
+  document.getElementById("btn-gameover-title")?.addEventListener("click", () => {
+    playSE('btn');
+    showTitle();
+    if (save.bgmEnabled) {
+      const audio = new Audio("./image/bgm/01.mp3");
+      audio.loop = true;
+      audio.play();
+    }
+  });
+
+  // プロローグ → 閉じる
+  document.getElementById("btn-prologue-close")?.addEventListener("click", () => {
+    playSE('btn');
+    closePrologue();
+    if (save.bgmEnabled) {
+      const audio = new Audio("./image/bgm/01.mp3");
+      audio.loop = true;
+      audio.play();
+    }
+  });
+});
+
+</script>
+</body>
+</html>
+<div class="ending-slide" id="ending-1" style="display:none;">見習い農家として小さな畑を耕し始めた。</div>
+<div class="ending-slide" id="ending-2" style="display:none;">やがて土から芽が顔を出し、希望が芽生える。</div>
+<div class="ending-slide" id="ending-3" style="display:none;">春夏秋冬、作物と共に成長していく日々。</div>
+<div class="ending-slide" id="ending-4" style="display:none;">家族や仲間と力を合わせ、村の畑は活気づいていった。</div>
+<div class="ending-slide" id="ending-5" style="display:none;">嵐や日照りに悩まされながらも、努力を絶やさなかった。</div>
+<div class="ending-slide" id="ending-6" style="display:none;">黄金色に実った稲、色とりどりの野菜。畑は笑顔で満ちていく。</div>
+<div class="ending-slide" id="ending-7" style="display:none;">あなたの農園は地域の誇り、一流農家と称えられる存在になった。</div>
+<div class="ending-slide" id="ending-8" style="display:none;">作物と共に歩む日々は終わらない。あなたの農家物語はこれからも続いていく。</div>
