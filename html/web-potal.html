@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webアプリポータル - MU Soft</title>
+  
+  <!-- 共通メニューファイルを読み込み -->
+  <script src="../menu.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'HGP明朝B', 'HGPMinchoB';
+      src: url('../font/FONT.TTC') format('truetype');
+      font-weight: bold;
+    }
+
+    /* <menu-font> タグの設定 */
+    menu-font {
+      display: inline;
+    }
+
+    /* ダークモード時の <menu-font> および配下要素のスタイル設定 */
+    [data-theme="dark"] menu-font,
+    [data-theme="dark"] menu-font * {
+      color: #000000 !important;
+    }
+
+    /* 既定：ホワイト（ライトモード）テーマ */
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #d97706;
+      --accent-hover: #b45309;
+      --accent-glow: rgba(217, 119, 6, 0.15);
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(226, 232, 240, 0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 24px 50px rgba(15, 23, 42, 0.05);
+      --radius: 20px;
+      --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      --hero-text: #1e293b;
+      --hero-desc: #64748b;
+      --btn-sub-bg: rgba(15, 23, 42, 0.05);
+      --btn-sub-border: rgba(15, 23, 42, 0.15);
+      --btn-sub-text: #1e293b;
+      --btn-sub-hover-bg: rgba(15, 23, 42, 0.1);
+      --toggle-btn-bg: #ffffff;
+      --toggle-btn-text: #0f172a;
+      --toggle-btn-border: #cbd5e1;
+      --tag-bg: #f1f5f9;
+      --tag-text: #334155;
+    }
+
+    /* ダークモードテーマ */
+    [data-theme="dark"] {
+      --primary: #090d16;
+      --primary-light: #121824;
+      --accent: #d4af37;
+      --accent-hover: #f3e5ab;
+      --accent-glow: rgba(212, 175, 55, 0.25);
+      --bg: #05080f;
+      --card-bg: rgba(18, 24, 36, 0.65);
+      --card-border: rgba(212, 175, 55, 0.15);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 24px 50px rgba(0, 0, 0, 0.7);
+      --hero-bg: linear-gradient(145deg, rgba(20, 27, 41, 0.9) 0%, rgba(10, 14, 23, 0.95) 100%);
+      --hero-text: #ffffff;
+      --hero-desc: #cbd5e1;
+      --btn-sub-bg: rgba(255, 255, 255, 0.05);
+      --btn-sub-border: rgba(255, 255, 255, 0.2);
+      --btn-sub-text: #f8fafc;
+      --btn-sub-hover-bg: rgba(255, 255, 255, 0.12);
+      --toggle-btn-bg: #1e293b;
+      --toggle-btn-text: #f8fafc;
+      --toggle-btn-border: rgba(255, 255, 255, 0.2);
+      --tag-bg: rgba(255, 255, 255, 0.06);
+      --tag-text: #cbd5e1;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", Arial, sans-serif; 
+    }
+    
+    body { 
+      background-color: var(--bg); 
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(30, 41, 59, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(217, 119, 6, 0.03) 0%, transparent 40%);
+      background-attachment: fixed;
+      color: var(--text); 
+      margin: 0; 
+      padding: 40px 20px; 
+      line-height: 1.8; 
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    
+    .container { 
+      max-width: 920px; 
+      margin: 0 auto; 
+    }
+
+    a {
+      outline: none;
+      color: var(--accent);
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    /* テーマ切り替えボタン */
+    .theme-toggle-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    .theme-toggle-btn {
+      background: var(--toggle-btn-bg);
+      color: var(--toggle-btn-text);
+      border: 1px solid var(--toggle-btn-border);
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+    .theme-toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ヒーローセクション */
+    .hero {
+      background: var(--hero-bg);
+      color: var(--hero-text); 
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius); 
+      padding: 60px 40px;
+      text-align: center; 
+      box-shadow: var(--shadow-lg); 
+      margin-bottom: 35px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .hero h1 { 
+      font-size: 34px; 
+      margin: 0 0 12px 0; 
+      font-weight: 800; 
+      letter-spacing: 1.5px;
+      color: var(--hero-text);
+    }
+    .hero p { 
+      font-size: 15px; 
+      color: var(--hero-desc); 
+      margin: 0; 
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      font-weight: 300;
+    }
+
+    /* 検索バーセクション */
+    .search-box-wrapper {
+      margin-bottom: 35px;
+      display: flex;
+      justify-content: center;
+    }
+    .search-input {
+      width: 100%;
+      max-width: 600px;
+      padding: 14px 24px;
+      border-radius: 50px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 15px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(12px);
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* Webアプリ一覧カードセクション */
+    .apps-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 36px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--card-border);
+      margin-bottom: 45px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0 0 28px 0;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .app-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .app-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md), 0 0 15px var(--accent-glow);
+    }
+    .app-category {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .app-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+    .app-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0 0 16px 0;
+      line-height: 1.6;
+    }
+    .app-link {
+      align-self: flex-start;
+      padding: 6px 16px;
+      background: linear-gradient(135deg, #d4af37 0%, #b45309 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+      transition: all 0.25s ease;
+    }
+    .app-link:hover {
+      opacity: 0.9;
+      color: #ffffff;
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+
+    /* フッター */
+    footer { 
+      text-align: center; 
+      padding: 30px; 
+      color: var(--text-muted); 
+      font-size: 13px; 
+      border-top: 1px solid var(--border);
+      margin-top: 30px;
+      letter-spacing: 1px;
+    }
+
+    /* ロード中インジケーター */
+    #mini-loader {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+    }
+    .dot-spin {
+      width: 14px;
+      height: 14px;
+      margin-right: 10px;
+      border: 2px solid rgba(212, 175, 55, 0.2);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { opacity: 0; }
+  </style>
+</head>
+<body id="top">
+<div id="web-potal"></div>
+  <!-- JavaScript側でテンプレートから動的に描画される親要素 -->
+  <div id="menu-text-container"></div>
+
+  <!-- ロード中インジケーター -->
+  <div id="mini-loader">
+    <div class="dot-spin"></div>
+    <span>Loading...</span>
+  </div>
+
+  <div id="common-menu-area"></div>
+  <br>
+
+  <div class="container">
+    <!-- テーマ切り替えボタン -->
+    <div class="theme-toggle-wrapper">
+      <button id="themeToggleBtn" class="theme-toggle-btn" type="button">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">ダークモード</span>
+      </button>
+    </div>
+<section id="01">
+    <!-- ヒーローエリア -->
+    <header class="hero">
+      <h1>Webアプリポータル【MU-WebPlay】</h1>
+      <p>開発したすべてのWebアプリケーションを一覧・検索できるポータルサイトです。<br>すべての操作はブラウザ内で完結します。</p>
+    </header>
+
+    <!-- 検索バー -->
+    <div class="search-box-wrapper">
+      <input type="text" id="appSearchInput" class="search-input" placeholder="🔍 アプリ名やキーワードで検索...">
+    </div>
+</section>
+<section id="02">
+    <!-- Webアプリ一覧セクション -->
+    <section class="apps-section">
+      <h2 class="section-title">🌐 Webアプリ・ゲーム</h2>
+      <p class="section-desc">これまでに開発・公開されたWebアプリを掲載しており、実際にプレイすることが可能です(完全無料)。<br>これらのゲーム上にMU Softのメニューバーが表示されることはありません。また、広告もありません。</p>
+      
+      <div class="app-grid" id="appGrid">
+        <div class="app-card" data-name="寿司タイピング">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">寿司タイピング</h3>
+            <p class="app-desc">お寿司をテーマにした楽しく学べるタイピングゲームアプリです。</p>
+          </div>
+          <a href="../app/sushi/welcome.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="精霊の言葉">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">精霊の言葉</h3>
+            <p class="app-desc">神秘的な精霊たちのメッセージを体感できるWebアプリです。</p>
+          </div>
+          <a href="../app/seirei/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="言葉の森">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">言葉の森</h3>
+            <p class="app-desc">美しい言葉や表現に触れることができる読書・語彙アプリです。</p>
+          </div>
+          <a href="../app/forest/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="茶道タイピング">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">茶道タイピング</h3>
+            <p class="app-desc">茶道の作法や用語をタイピングを通じて学べるアプリケーション。</p>
+          </div>
+          <a href="../app/sadou/welcome.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="ビンゴカード作成ツール">
+          <div>
+            <div class="app-category">ツール</div>
+            <h3 class="app-name">ビンゴカード作成ツール</h3>
+            <p class="app-desc">5x5のマス目に1～48の数字を自動割り当て。誰でも簡単にオリジナルビンゴカードを簡単に作成できます。</p>
+          </div>
+          <a href="../app/bingo-create/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="日本語タイピング">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">日本語タイピング</h3>
+            <p class="app-desc">スコアに応じて自動でランクがつけられる、遊び要素のあるタイピングゲーム。(前作【寿司タイピング】比)</p>
+          </div>
+          <a href="../app/japanese-typing/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="囲碁ゲーム">
+          <div>
+            <div class="app-category">ミニゲーム</div>
+            <h3 class="app-name">囲碁ゲーム</h3>
+            <p class="app-desc">奥深い陣取り合戦を楽しめるブラウザ対応の囲碁アプリケーション。</p>
+          </div>
+          <a href="../app/igo/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="オセロゲーム">
+          <div>
+            <div class="app-category">ミニゲーム</div>
+            <h3 class="app-name">オセロゲーム</h3>
+            <p class="app-desc">シンプルで誰もが楽しめる定番のボードゲームアプリ。</p>
+          </div>
+          <a href="../app/osero/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="世界を救え！タイピングマスター">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">世界を救え！タイピングマスター</h3>
+            <p class="app-desc">ストーリーを進めながらタイピングスキルを鍛えるアドベンチャーゲーム。</p>
+          </div>
+          <a href="../app/save-the-world/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="いざ一流農家へ！あなたの努力で農園が成長">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">いざ一流農家へ！</h3>
+            <p class="app-desc">作物を育てて立派な農園経営を目指す育成シミュレーションアプリ。</p>
+          </div>
+          <a href="../app/become-top-farmer/index.html" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="果物タイピング～果樹園救済物語～">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">果物タイピング</h3>
+            <p class="app-desc">果物を収穫しながらストーリーを進めるタイピングゲーム。</p>
+          </div>
+          <a href="../app/fruit-typing/" class="app-link">アプリを開く</a>
+        </div>
+
+        <div class="app-card" data-name="SDGsタイピング">
+          <div>
+            <div class="app-category">タイピング</div>
+            <h3 class="app-name">SDGsタイピング</h3>
+            <p class="app-desc">持続可能な開発目標（SDGs）についてタイピングしながら学べるアプリ。</p>
+          </div>
+          <a href="../app/sdgs-typing" class="app-link">アプリを開く</a>
+        </div>
+    </section>
+</section>
+
+    <!-- フッター -->
+    <footer>
+      <div id="copyright"></div>
+    </footer>
+  </div>
+
+  <script>
+    // 検索フィルタリング機能
+    function setupSearch() {
+      const searchInput = document.getElementById('appSearchInput');
+      const appCards = document.querySelectorAll('.app-card');
+
+      if (!searchInput) return;
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+
+        appCards.forEach(card => {
+          const name = card.getAttribute('data-name').toLowerCase();
+          const desc = card.querySelector('.app-desc').textContent.toLowerCase();
+          const category = card.querySelector('.app-category').textContent.toLowerCase();
+
+          if (name.includes(query) || desc.includes(query) || category.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // ロード完了時のアニメーション非表示処理
+    function setupLoader() {
+      const loader = document.getElementById('mini-loader');
+      if (loader) {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // テーマ用テンプレート文字列を生成する関数
+    function getMenuTemplate(menuTextId) {
+      return `<div id="${menuTextId}"></div>`;
+    }
+
+    // テーマ切り替え制御処理
+    function setupThemeToggle() {
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      if (!toggleBtn) return;
+
+      let savedMenuId = localStorage.getItem('menuTextId');
+      if (!savedMenuId) {
+        savedMenuId = 'menu-text-default';
+        localStorage.setItem('menuTextId', savedMenuId);
+      }
+
+      applyThemeFromId(savedMenuId);
+
+      toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextMenuId = currentTheme === 'dark' ? 'menu-text-default' : 'menu-text-dark';
+        
+        localStorage.setItem('menuTextId', nextMenuId);
+        applyThemeFromId(nextMenuId);
+      });
+
+      function applyThemeFromId(menuId) {
+        const container = document.getElementById('menu-text-container');
+        if (container) {
+          container.innerHTML = getMenuTemplate(menuId);
+        }
+
+        if (menuId === 'menu-text-dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          if (themeIcon) themeIcon.textContent = '☀️';
+          if (themeText) themeText.textContent = 'ライトモード';
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (themeIcon) themeIcon.textContent = '🌙';
+          if (themeText) themeText.textContent = 'ダークモード';
+        }
+      }
+    }
+
+    // 初期化実行
+    window.onload = function() {
+      setupSearch();
+      setupLoader();
+      setupThemeToggle();
+    };
+  </script>
+</body>
+</html>
