@@ -1,222 +1,584 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="ANSI">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../menu.js"></script>
-    <title>サイト内の表示について - 総合ポータル</title>
-    <style>
-        @font-face {
-            font-family: 'HG正楷書体PRO', 'HGSeikaishotaiPRO';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRSKP.TTF') format('truetype');
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: 'HGSeikaishotaiPRO';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRSKP.TTF') format('truetype');
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: 'French';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/FRSCRIPT.TTF') format('truetype');
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: 'HGP行書体';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRGY.TTC') format('truetype');
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: 'MS P明朝';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/msmincho.ttc') format('truetype');
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: 'MS PMincho';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/msmincho.ttc') format('truetype');
-            font-weight: bold;
-        }
-
-
-        @font-face {
-            font-family: 'POP';
-            src: url('https://tsakurai5252-arch.github.io/mu-soft/fonts/HGRPP1.TTC') format('truetype');
-            font-weight: bold;
-        }
-
-        /* 全体のレイアウト調整用（スマホ対応） */
-        body {
-            margin: 0;
-            padding: 15px;
-            background-color: #ffffff;
-            font-family: MS P明朝, serif;
-        }
-
-        /* お知らせ枠用のデザイン */
-        .info-box {
-            max-width: 600px;         /* PCなどで広がりすぎないように最大幅を設定 */
-            margin: 0 left 15px auto; /* 画面の中心に配置し、下部に余白をとる */
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-left: 5px solid #e63946; /* 左側にアクセント */
-            padding: 15px;
-            border-radius: 5px;
-            text-align: left;
-            box-sizing: border-box;   /* paddingやborderを幅の中に含める */
-        }
-        .info-box p {
-            margin: 0;
-            font-size: 14px;
-            line-height: 1.6;         /* スマホでも読みやすいように行間を少し広くする */
-        }
-        .info-box .title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 15px;
-        }
-
-html {
-  scroll-behavior: smooth;
-}
-       right-text {
-                    text-align: right;
-       }
-
-/* CSS */
-.zoom-image {
-  /* 元のサイズの50%に縮小し、占有スペースも小さくする */
-  width: 30%;
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サイト内の表示について - 総合ポータル | MU Soft</title>
   
-  /* 縦横比を維持 */
-  height: auto;
-}
+  <!-- 共通メニューファイルを読み込み -->
+  <script src="../menu.js"></script>
 
-/* CSS */
-.menu-image {
-  /* 元のサイズの50%に縮小し、占有スペースも小さくする */
-  width: 35%;
-  
-  /* 縦横比を維持 */
-  height: auto;
-}
+  <style>
+    @font-face {
+      font-family: 'HGP明朝B', 'HGPMinchoB';
+      src: url('../font/FONT.TTC') format('truetype');
+      font-weight: bold;
+    }
 
-/* 4つの要素全体を包むコンテナ */
-.season-container {
-  display: flex;
-  flex-wrap: wrap;        /* 2つずつ折り返して2段にする設定 */
-  gap: 20px;              /* 枠同士の間の余白 */
-  max-width: 600px;       /* 全体の横幅（必要に応じて調整してください） */
-}
+    /* <menu-font> タグの設定 */
+    menu-font {
+      display: inline;
+    }
 
-/* 各季節の枠組み */
-.season-item {
-  flex: 1 1 calc(50% - 20px); /* 横幅を半分（2列）にして配分 */
-  box-sizing: border-box;
-  text-align: center;     /* 文字と画像を中央揃え */
-  
-  /* 枠線の設定 */
-  border: 1px solid #ccc; /* 枠線の太さと色 */
-  border-radius: 8px;     /* 枠線の角を少し丸くする */
-  padding: 15px;          /* 枠の中の余白 */
-  background-color: #fff; /* 枠内の背景色 */
-}
+    /* ダークモード時の <menu-font> および配下要素のスタイル設定 */
+    [data-theme="dark"] menu-font,
+    [data-theme="dark"] menu-font * {
+      color: #000000 !important;
+    }
 
-.season-item p {
-  margin-top: 0;
-  margin-bottom: 8px;     /* 文字と画像の間の余白 */
-}
-</style>
+    /* 既定：ホワイト（ライトモード）テーマ */
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #d97706;            /* エレガントゴールド/アンバー */
+      --accent-hover: #b45309;
+      --accent-glow: rgba(217, 119, 6, 0.15);
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(226, 232, 240, 0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 24px 50px rgba(15, 23, 42, 0.05);
+      --radius: 20px;
+      --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      --hero-text: #1e293b;
+      --hero-desc: #64748b;
+      --btn-sub-bg: rgba(15, 23, 42, 0.05);
+      --btn-sub-border: rgba(15, 23, 42, 0.15);
+      --btn-sub-text: #1e293b;
+      --btn-sub-hover-bg: rgba(15, 23, 42, 0.1);
+      --toggle-btn-bg: #ffffff;
+      --toggle-btn-text: #0f172a;
+      --toggle-btn-border: #cbd5e1;
+      --tag-bg: #f1f5f9;
+      --tag-text: #334155;
+    }
+
+    /* ダークモードテーマ */
+    [data-theme="dark"] {
+      --primary: #090d16;
+      --primary-light: #121824;
+      --accent: #d4af37;            /* ラグジュアリーゴールド */
+      --accent-hover: #f3e5ab;
+      --accent-glow: rgba(212, 175, 55, 0.25);
+      --bg: #05080f;
+      --card-bg: rgba(18, 24, 36, 0.65);
+      --card-border: rgba(212, 175, 55, 0.15);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 24px 50px rgba(0, 0, 0, 0.7);
+      --hero-bg: linear-gradient(145deg, rgba(20, 27, 41, 0.9) 0%, rgba(10, 14, 23, 0.95) 100%);
+      --hero-text: #ffffff;
+      --hero-desc: #cbd5e1;
+      --btn-sub-bg: rgba(255, 255, 255, 0.05);
+      --btn-sub-border: rgba(255, 255, 255, 0.2);
+      --btn-sub-text: #f8fafc;
+      --btn-sub-hover-bg: rgba(255, 255, 255, 0.12);
+      --toggle-btn-bg: #1e293b;
+      --toggle-btn-text: #f8fafc;
+      --toggle-btn-border: rgba(255, 255, 255, 0.2);
+      --tag-bg: rgba(255, 255, 255, 0.06);
+      --tag-text: #cbd5e1;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", Arial, sans-serif; 
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body { 
+      background-color: var(--bg); 
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(30, 41, 59, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(217, 119, 6, 0.03) 0%, transparent 40%);
+      background-attachment: fixed;
+      color: var(--text); 
+      margin: 0; 
+      padding: 40px 20px; 
+      line-height: 1.8; 
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    
+    .container { 
+      max-width: 920px; 
+      margin: 0 auto; 
+    }
+
+    /* リンクスタイル */
+    a {
+      outline: none;
+      color: var(--accent);
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    /* 画像スタイル */
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+    }
+    img:hover {
+      transform: scale(1.02);
+    }
+    .zoom-image {
+      width: 50%;
+      height: auto;
+    }
+
+    /* テーマ切り替えボタン */
+    .theme-toggle-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    .theme-toggle-btn {
+      background: var(--toggle-btn-bg);
+      color: var(--toggle-btn-text);
+      border: 1px solid var(--toggle-btn-border);
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+    .theme-toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ヒーローセクション */
+    .hero {
+      background: var(--hero-bg);
+      color: var(--hero-text); 
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius); 
+      padding: 60px 40px;
+      text-align: center; 
+      box-shadow: var(--shadow-lg); 
+      margin-bottom: 45px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background 0.4s ease;
+    }
+    .hero h1 { 
+      font-size: 32px; 
+      margin: 0 0 16px 0; 
+      font-weight: 800; 
+      letter-spacing: 1.5px;
+      color: var(--hero-text);
+    }
+    .hero p { 
+      font-size: 15px; 
+      color: var(--hero-desc); 
+      margin: 0; 
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    /* セクションカード共通 */
+    .section-card {
+      background: var(--card-bg); 
+      border-radius: var(--radius); 
+      padding: 36px;
+      box-shadow: var(--shadow-sm); 
+      border: 1px solid var(--card-border); 
+      margin-bottom: 45px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+    .section-header {
+      margin-bottom: 24px; 
+      padding-bottom: 16px; 
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title { 
+      font-size: 20px; 
+      font-weight: 700; 
+      color: var(--text); 
+      margin: 0; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      letter-spacing: 0.5px;
+    }
+
+    /* お知らせ・案内用インフォボックス */
+    .info-box {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--accent);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: left;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      transition: transform 0.25s ease;
+    }
+    .info-box:hover {
+      transform: translateX(4px);
+    }
+    .info-box p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+    .info-box .title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    /* 季節・画像レイアウトグリッド */
+    .season-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .season-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+    .season-item:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md);
+    }
+    .season-item p {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* フッター */
+    footer { 
+      text-align: center; 
+      padding: 30px; 
+      color: var(--text-muted); 
+      font-size: 13px; 
+      border-top: 1px solid var(--border);
+      margin-top: 30px;
+      letter-spacing: 1px;
+    }
+
+    /* トップへ戻るボタン */
+    #pagetop-btn {
+      position: fixed;
+      right: 30px;
+      bottom: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--accent);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 11px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    #pagetop-btn:hover {
+      background: var(--accent);
+      color: #ffffff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px var(--accent-glow);
+    }
+    #pagetop-btn.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ロード中インジケーター */
+    #mini-loader {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+    }
+    .dot-spin {
+      width: 14px;
+      height: 14px;
+      margin-right: 10px;
+      border: 2px solid rgba(212, 175, 55, 0.2);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { opacity: 0; }
+  </style>
 </head>
-<body>
-<div id="update">
-  <!-- メニュー表示エリア -->
-  <div id="common-menu-area"></div>
-<div id="right-text">
-</div>
-<hr>
-<br>
-<p>重要なことは、トップページに加えてここにも掲載されます。</p>
-<p>本サイト(総合ポータル)は管理者による複数環境を利用した厳重なテストを行い公開していますが、<br>予期せぬ挙動や不具合が発生する場合があります。ご了承ください。</p>
-<section id="new">
-<h3>最新の案内</h3>
-    <div class="info-box">
-        <p class="title">移転案内 26.9.21</p> 
-        <p>
-            総合ポータルが移転しました。
-        </p> 
-    </div>
-</div>
-<section id="thank">
-<h3>お礼</h3>
-<p>情報はありません。</p>
-</section>
-<section id="info">
-<h3>常設案内</h3>
-    <div class="info-box">
-        <p class="title">サイト内の表示について 26.9.21</p> 
-        <p>
-            「Coming Soon」は公開前の情報です。
-        </p> 
-     </div>
+<body id="top">
+<div id="update"></div>
+  <!-- JavaScript側でテンプレートから動的に描画される親要素 -->
+  <div id="menu-text-container"></div>
+
+  <!-- ロード中インジケーター -->
+  <div id="mini-loader">
+    <div class="dot-spin"></div>
+    <span>Loading...</span>
   </div>
-<br>
-    <div class="info-box">
+
+  <div id="common-menu-area"></div>
+
+  <div class="container">
+    <!-- テーマ切り替えボタン -->
+    <div class="theme-toggle-wrapper">
+      <button id="themeToggleBtn" class="theme-toggle-btn" type="button">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">ダークモード</span>
+      </button>
+    </div>
+
+    <!-- ヒーローエリア -->
+    <header class="hero">
+      <h1>サイト内の表示について</h1>
+      <p>重要な案内や、サイト内の表示仕様に関する詳細情報をご確認いただけます。</p>
+    </header>
+
+    <!-- メインコンテンツカード -->
+    <section class="section-card">
+      <div class="section-header">
+        <h2 class="section-title">📌 ご案内について</h2>
+      </div>
+      <p>重要なことは、トップページに加えてここにも掲載されます。</p>
+      <p>本サイト(総合ポータル)は管理者による複数環境を利用した厳重なテストを行い公開していますが、予期せぬ挙動や不具合が発生する場合があります。ご了承ください。</p>
+    </section>
+
+    <!-- 最新の案内 -->
+    <section class="section-card" id="new">
+      <div class="section-header">
+        <h2 class="section-title">🆕 最新の案内</h2>
+      </div>
+      <div class="info-box">
+        <p class="title">移転案内 26.9.21</p> 
+        <p>総合ポータルが移転しました。</p> 
+      </div>
+    </section>
+
+    <!-- お礼 -->
+    <section class="section-card" id="thank">
+      <div class="section-header">
+        <h2 class="section-title">🎁 お礼</h2>
+      </div>
+      <p>情報はありません。</p>
+    </section>
+
+    <!-- 常設案内 -->
+    <section class="section-card" id="info">
+      <div class="section-header">
+        <h2 class="section-title">📖 常設案内</h2>
+      </div>
+
+      <div class="info-box">
+        <p class="title">サイト内の表示について 26.9.21</p> 
+        <p>「Coming Soon」は公開前の情報です。</p> 
+      </div>
+
+      <div class="info-box">
         <p class="title">メニューバーに表示される画像・内容について 26.9.21</p> 
         <p>
-            2026年9月21日 総合ポータル移転後より、メニューバーに日付が表示されるようになりました。<br>
-            また、季節ごとに、表示される画像が変更されます。
+          2026年9月21日 総合ポータル移転後より、メニューバーに日付が表示されるようになりました。<br>
+          また、季節ごとに、表示される画像が変更されます。
         </p> 
-    </div>
-</div>
-<br>
-<div class="season-container">
-  <div class="season-item">
-    <p>・追加された部分 (例: 2026年9月19日)</p>
-    <img src="./updates/20260919-01.png" alt="該当部分画像">
-  </div>
-</div>
-<br>
-<p>・画像</p>
-<div class="season-container">
-  <div class="season-item">
-    <p>・3月～4月 [春]</p>
-    <img src="../spring.png" alt="桜 [さくら]" class="zoom-image">
-    <p>桜 [さくら]</p>
-  </div>
-  
-  <div class="season-item">
-    <p>・5月～8月 [夏]</p>
-    <img src="../leaf.png" alt="笹 [ささ]" class="zoom-image">
-    <p>笹 [ささ]</p>
-  </div>
-  <br>
-  <div class="season-item">
-    <p>・9月～11月 [秋]</p>
-    <img src="../momiji.png" alt="紅葉 [もみじ]" class="zoom-image">
-    <p>紅葉 [もみじ]</p>
-  </div>
-  
-  <div class="season-item">
-    <p>・12月～2月 [冬]</p>
-    <img src="../winter.png" alt="椿 [つばき]" class="zoom-image">
-    <p>椿 [つばき]</p>
-  </div>
-</div>
-</section>
+      </div>
 
-</section>
-<section id="old">
-<h3>過去の案内</h3>
-<p>過去の案内はありません。</p>
-</section>
-<hr>
-<center>
-<div id="copyright" style="font-family: HGP行書体, serif;"></div>
-</center>
+      <p>・追加された部分 (例: 2026年9月19日)</p>
+      <div class="season-container">
+        <div class="season-item" style="grid-column: 1 / -1; max-width: 400px; margin: 0 auto;">
+          <img src="./updates/20260919-01.png" alt="該当部分画像">
+        </div>
+      </div>
+
+      <p style="margin-top: 30px;">・季節ごとの画像一覧</p>
+      <div class="season-container">
+        <div class="season-item">
+          <p>3月～4月 [春]</p>
+          <img src="../spring.png" alt="桜 [さくら]" class="zoom-image">
+          <p style="margin-top: 8px; font-weight: normal; font-size: 13px; color: var(--text-muted);">桜 [さくら]</p>
+        </div>
+        
+        <div class="season-item">
+          <p>5月～8月 [夏]</p>
+          <img src="../leaf.png" alt="笹 [ささ]" class="zoom-image">
+          <p style="margin-top: 8px; font-weight: normal; font-size: 13px; color: var(--text-muted);">笹 [ささ]</p>
+        </div>
+
+        <div class="season-item">
+          <p>9月～11月 [秋]</p>
+          <img src="../momiji.png" alt="紅葉 [もみじ]" class="zoom-image">
+          <p style="margin-top: 8px; font-weight: normal; font-size: 13px; color: var(--text-muted);">紅葉 [もみじ]</p>
+        </div>
+        
+        <div class="season-item">
+          <p>12月～2月 [冬]</p>
+          <img src="../winter.png" alt="椿 [つばき]" class="zoom-image">
+          <p style="margin-top: 8px; font-weight: normal; font-size: 13px; color: var(--text-muted);">椿 [つばき]</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 過去の案内 -->
+    <section class="section-card" id="old">
+      <div class="section-header">
+        <h2 class="section-title">📂 過去の案内</h2>
+      </div>
+      <p>過去の案内はありません。</p>
+    </section>
+
+    <!-- フッター -->
+    <footer>
+      <div id="copyright"></div>
+    </footer>
+  </div>
+
+  <!-- トップへ戻るボタン -->
+<!--
+  <a href="#top" id="pagetop-btn">TOP</a>
+-->
+
+  <script>
+    // ページスクロールとトップへ戻るボタンの制御
+    function setupScrollEvent() {
+      const pageTopBtn = document.getElementById('pagetop-btn');
+      if (!pageTopBtn) return;
+
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 200) {
+          pageTopBtn.classList.add('show');
+        } else {
+          pageTopBtn.classList.remove('show');
+        }
+      });
+    }
+
+    // ロード完了時のアニメーション非表示処理
+    function setupLoader() {
+      const loader = document.getElementById('mini-loader');
+      if (loader) {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // テーマ用テンプレート文字列を生成する関数
+    function getMenuTemplate(menuTextId) {
+      return `<div id="${menuTextId}"></div>`;
+    }
+
+    // テーマ切り替え制御処理
+    function setupThemeToggle() {
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      if (!toggleBtn) return;
+
+      let savedMenuId = localStorage.getItem('menuTextId');
+      
+      if (!savedMenuId) {
+        savedMenuId = 'menu-text-default';
+        localStorage.setItem('menuTextId', savedMenuId);
+      }
+
+      applyThemeFromId(savedMenuId);
+
+      toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextMenuId = currentTheme === 'dark' ? 'menu-text-default' : 'menu-text-dark';
+        
+        localStorage.setItem('menuTextId', nextMenuId);
+        applyThemeFromId(nextMenuId);
+      });
+
+      function applyThemeFromId(menuId) {
+        const container = document.getElementById('menu-text-container');
+        
+        if (container) {
+          container.innerHTML = getMenuTemplate(menuId);
+        }
+
+        if (menuId === 'menu-text-dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          if (themeIcon) themeIcon.textContent = '☀️';
+          if (themeText) themeText.textContent = 'ライトモード';
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (themeIcon) themeIcon.textContent = '🌙';
+          if (themeText) themeText.textContent = 'ダークモード';
+        }
+      }
+    }
+
+    // 初期化実行
+    window.onload = function() {
+      setupScrollEvent();
+      setupLoader();
+      setupThemeToggle();
+    };
+  </script>
 </body>
 </html>
