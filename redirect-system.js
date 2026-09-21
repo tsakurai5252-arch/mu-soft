@@ -1,13 +1,13 @@
 /**
- * ƒŠƒ_ƒCƒŒƒNƒgˆêŒ³ŠÇ—ƒVƒXƒeƒ€ (redirect-system.js MU-SOFT”Å)
+ * ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆä¸€å…ƒç®¡ç†ã‚·ã‚¹ãƒ†ãƒ  (redirect-system.js MU-SOFTç‰ˆ)
  */
 
-// 1. “ú•tŒŸõ—p‚Ìƒtƒ@ƒCƒ‹ƒŠƒXƒg (ƒpƒX•t‚«‚É‚à‘Î‰)
+// 1. æ—¥ä»˜æ¤œç´¢ç”¨ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆ (ãƒ‘ã‚¹ä»˜ãã«ã‚‚å¯¾å¿œ)
 const ALL_FILES = [
     ""
 ];
 
-// 2. ‹–‰Â‚³‚ê‚½ŠO•”URLƒvƒŒƒtƒBƒbƒNƒX (ƒI[ƒvƒ“ƒŠƒ_ƒCƒŒƒNƒg‘Îô)
+// 2. è¨±å¯ã•ã‚ŒãŸå¤–éƒ¨URLãƒ—ãƒ¬ãƒ•ã‚£ãƒƒã‚¯ã‚¹ (ã‚ªãƒ¼ãƒ—ãƒ³ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆå¯¾ç­–)
 const ALLOWED_EXTERNAL_URLS = [
     "https://tsakurai5252-arch.github.io/my-page/",
     "https://tsakurai5252-arch.github.io/mu-card/",
@@ -16,7 +16,7 @@ const ALLOWED_EXTERNAL_URLS = [
     "https://sites.google.com/view/hima-jin/"
 ];
 
-// 3. ŒÅ’èƒVƒ‡[ƒgƒJƒbƒg‚Ì’è‹`
+// 3. å›ºå®šã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆã®å®šç¾©
 const SHORTCUTS = {
     "top-page": "https://tsakurai5252-arch.github.io/mu-soft/",
     "top": "https://tsakurai5252-arch.github.io/my-page/",
@@ -28,37 +28,37 @@ const SHORTCUTS = {
     "download": "./download/index.html"
 };
 
-// 4. “ú•tw’è‚É‚æ‚éƒŠƒ_ƒCƒŒƒNƒgØ‚è‘Ö‚¦ƒ‹[ƒ‹
-// target: ƒNƒGƒŠƒpƒ‰ƒ[ƒ^ (—á: "tokusetu", "top-page", ŠO•”URL‚È‚Ç)
-// startDate: ‚±‚Ì“úˆÈ~‚É“K—p (–¢w’è‚È‚ç§ŒÀ‚È‚µ)
-// endDate: ‚±‚Ì“ú‚æ‚è‘O‚É“K—p (–¢w’è‚È‚ç§ŒÀ‚È‚µ)
-// redirectUrl: Ø‚è‘Ö‚¦æURL
+// 4. æ—¥ä»˜æŒ‡å®šã«ã‚ˆã‚‹ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆåˆ‡ã‚Šæ›¿ãˆãƒ«ãƒ¼ãƒ«
+// target: ã‚¯ã‚¨ãƒªãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ (ä¾‹: "tokusetu", "top-page", å¤–éƒ¨URLãªã©)
+// startDate: ã“ã®æ—¥æ™‚ä»¥é™ã«é©ç”¨ (æœªæŒ‡å®šãªã‚‰åˆ¶é™ãªã—)
+// endDate: ã“ã®æ—¥æ™‚ã‚ˆã‚Šå‰ã«é©ç”¨ (æœªæŒ‡å®šãªã‚‰åˆ¶é™ãªã—)
+// redirectUrl: åˆ‡ã‚Šæ›¿ãˆå…ˆURL
 const DATE_RULES = [
     {
         target: "keihin",
-        startDate: "2027-03-25T00:00:00", // 2027”N3Œ25“úˆÈ~‚Í‚±‚¿‚ç‚Ö
+        startDate: "2027-03-25T00:00:00", // 2027å¹´3æœˆ25æ—¥ä»¥é™ã¯ã“ã¡ã‚‰ã¸
         redirectUrl: "./keihin_list/keihin2027.html"
     },
     {
         target: "keihin",
-        endDate: "2027-03-24T23:59:59",   // 2027”N3Œ24“úˆÈ‘O‚Í‚±‚¿‚ç‚Ö
+        endDate: "2027-03-24T23:59:59",   // 2027å¹´3æœˆ24æ—¥ä»¥å‰ã¯ã“ã¡ã‚‰ã¸
         redirectUrl: "./keihin_list/keihin.html"
     }
 ];
 
 /**
- * ƒŠƒ_ƒCƒŒƒNƒgƒƒCƒ“ˆ—
+ * ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆãƒ¡ã‚¤ãƒ³å‡¦ç†
  */
 function initRedirectSystem() {
     const query = window.location.search.substring(1);
 
     if (!query) {
-        document.body.innerHTML = "<p>ƒpƒ‰ƒ[ƒ^‚ªw’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB</p>";
+        document.body.innerHTML = "<p>ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãŒæŒ‡å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚</p>";
         return;
     }
 
     // --------------------------------------------------
-    // A-0. “ú•tw’èƒ‹[ƒ‹‚Ì”»’è (Å—Dæ‚Åƒ`ƒFƒbƒN)
+    // A-0. æ—¥ä»˜æŒ‡å®šãƒ«ãƒ¼ãƒ«ã®åˆ¤å®š (æœ€å„ªå…ˆã§ãƒã‚§ãƒƒã‚¯)
     // --------------------------------------------------
     const now = new Date();
     const keywordForDate = query.startsWith("sort-") ? query.replace("sort-", "") : query;
@@ -79,26 +79,26 @@ function initRedirectSystem() {
     }
 
     // --------------------------------------------------
-    // A. ŠO•”URLihttp...j‚ª’¼Úw’è‚³‚ê‚½ê‡
+    // A. å¤–éƒ¨URLï¼ˆhttp...ï¼‰ãŒç›´æ¥æŒ‡å®šã•ã‚ŒãŸå ´åˆ
     // --------------------------------------------------
     if (query.startsWith("http://") || query.startsWith("https://")) {
         const isAllowed = ALLOWED_EXTERNAL_URLS.some(allowedUrl => query.startsWith(allowedUrl));
 
         if (isAllowed) {
-            const userConfirmed = confirm("ƒŠƒ_ƒCƒŒƒNƒgæ‚Í " + query + " ‚Å‚·B\nˆÚ“®‚µ‚Ü‚·‚©H");
+            const userConfirmed = confirm("ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆå…ˆã¯ " + query + " ã§ã™ã€‚\nç§»å‹•ã—ã¾ã™ã‹ï¼Ÿ");
             if (userConfirmed) {
                 window.location.href = encodeURI(query);
             } else {
-                document.body.innerHTML = "<p>ƒLƒƒƒ“ƒZƒ‹‚µ‚Ü‚µ‚½B<a href='index.html'>ƒgƒbƒv‚Ö–ß‚é</a></p>";
+                document.body.innerHTML = "<p>ã‚­ãƒ£ãƒ³ã‚»ãƒ«ã—ã¾ã—ãŸã€‚<a href='index.html'>ãƒˆãƒƒãƒ—ã¸æˆ»ã‚‹</a></p>";
             }
         } else {
-            document.body.innerHTML = "<p>‹–‰Â‚³‚ê‚Ä‚¢‚È‚¢URL‚Ö‚ÌƒŠƒ_ƒCƒŒƒNƒg‚ªÀs‚³‚ê‚Ü‚µ‚½B</p>";
+            document.body.innerHTML = "<p>è¨±å¯ã•ã‚Œã¦ã„ãªã„URLã¸ã®ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆãŒå®Ÿè¡Œã•ã‚Œã¾ã—ãŸã€‚</p>";
         }
         return;
     }
 
     // --------------------------------------------------
-    // B. ŒÅ’èƒVƒ‡[ƒgƒJƒbƒg‚Ì”»’è
+    // B. å›ºå®šã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆã®åˆ¤å®š
     // --------------------------------------------------
     if (SHORTCUTS[query]) {
         window.location.href = SHORTCUTS[query];
@@ -106,12 +106,12 @@ function initRedirectSystem() {
     }
 
     // --------------------------------------------------
-    // C. ƒL[ƒ[ƒhŒŸõEƒtƒ@ƒCƒ‹‚Ö‚ÌƒŠƒ_ƒCƒŒƒNƒg”»’è
-    //    (?sort-xxx / ?xxx / ?xxx-old ‚ÌŒ`®‚É‘Î‰)
+    // C. ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰æ¤œç´¢ãƒ»ãƒ•ã‚¡ã‚¤ãƒ«ã¸ã®ãƒªãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆåˆ¤å®š
+    //    (?sort-xxx / ?xxx / ?xxx-old ã®å½¢å¼ã«å¯¾å¿œ)
     // --------------------------------------------------
     let rawKeyword = query.startsWith("sort-") ? query.replace("sort-", "") : query;
     
-    // "-old" ‚ª‚Â‚¢‚Ä‚¢‚éê‡‚Í‹Œƒo[ƒWƒ‡ƒ“w’è‚Æ”»’è
+    // "-old" ãŒã¤ã„ã¦ã„ã‚‹å ´åˆã¯æ—§ãƒãƒ¼ã‚¸ãƒ§ãƒ³æŒ‡å®šã¨åˆ¤å®š
     const isOldVersion = rawKeyword.endsWith("-old");
     if (isOldVersion) {
         rawKeyword = rawKeyword.replace(/-old$/, "");
@@ -120,10 +120,10 @@ function initRedirectSystem() {
     const safeKeyword = rawKeyword.replace(/[^a-zA-Z0-9_-]/g, "");
 
     if (safeKeyword) {
-        // ƒpƒX‚©‚çƒtƒ@ƒCƒ‹–¼‚Ì‚İ‚ğæ‚èo‚·•â•ŠÖ”
+        // ãƒ‘ã‚¹ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«åã®ã¿ã‚’å–ã‚Šå‡ºã™è£œåŠ©é–¢æ•°
         const getFilename = (filePath) => filePath.split('/').pop();
 
-        // ƒL[ƒ[ƒh‚Éˆê’v‚·‚éƒtƒ@ƒCƒ‹‚ğ’Šo
+        // ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã«ä¸€è‡´ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŠ½å‡º
         const matchedFiles = ALL_FILES.filter(filePath => {
             const fileName = getFilename(filePath);
             return fileName.startsWith(safeKeyword);
@@ -131,14 +131,14 @@ function initRedirectSystem() {
 
         if (matchedFiles.length > 0) {
             if (isOldVersion) {
-                // ‹Œƒo[ƒWƒ‡ƒ“w’è (-old) ‚Ìê‡Fƒtƒ@ƒCƒ‹–¼•”•ª‚Å¸‡ƒ\[ƒgiˆê”ÔŒÃ‚¢ƒtƒ@ƒCƒ‹‚ğ“Á’èj
+                // æ—§ãƒãƒ¼ã‚¸ãƒ§ãƒ³æŒ‡å®š (-old) ã®å ´åˆï¼šãƒ•ã‚¡ã‚¤ãƒ«åéƒ¨åˆ†ã§æ˜‡é †ã‚½ãƒ¼ãƒˆï¼ˆä¸€ç•ªå¤ã„ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ç‰¹å®šï¼‰
                 matchedFiles.sort((a, b) => {
                     const fileNameA = getFilename(a);
                     const fileNameB = getFilename(b);
                     return fileNameA.localeCompare(fileNameB);
                 });
             } else {
-                // ’Êíw’è‚Ìê‡Fƒtƒ@ƒCƒ‹–¼•”•ª‚Å~‡ƒ\[ƒgiˆê”ÔV‚µ‚¢ƒtƒ@ƒCƒ‹‚ğ“Á’èj
+                // é€šå¸¸æŒ‡å®šã®å ´åˆï¼šãƒ•ã‚¡ã‚¤ãƒ«åéƒ¨åˆ†ã§é™é †ã‚½ãƒ¼ãƒˆï¼ˆä¸€ç•ªæ–°ã—ã„ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ç‰¹å®šï¼‰
                 matchedFiles.sort((a, b) => {
                     const fileNameA = getFilename(a);
                     const fileNameB = getFilename(b);
@@ -153,9 +153,9 @@ function initRedirectSystem() {
     }
 
     // --------------------------------------------------
-    // D. ŠY“–ƒy[ƒW‚ª‘¶İ‚µ‚È‚¢ê‡‚ÌƒtƒH[ƒ‹ƒoƒbƒN
+    // D. è©²å½“ãƒšãƒ¼ã‚¸ãŒå­˜åœ¨ã—ãªã„å ´åˆã®ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯
     // --------------------------------------------------
-    document.body.innerHTML = "<p>ŠY“–‚·‚éƒy[ƒW‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ‚Å‚µ‚½B3•bŒã‚Éƒgƒbƒvƒy[ƒW‚É–ß‚è‚Ü‚·B</p>";
+    document.body.innerHTML = "<p>è©²å½“ã™ã‚‹ãƒšãƒ¼ã‚¸ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚3ç§’å¾Œã«ãƒˆãƒƒãƒ—ãƒšãƒ¼ã‚¸ã«æˆ»ã‚Šã¾ã™ã€‚</p>";
     setTimeout(() => {
         window.location.href = "index.html";
     }, 3000);
