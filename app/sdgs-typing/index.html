@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>目指そうSDGs～サステナブルな世界～</title>
+<!-- Windows 10がサポート終了！悲しいね^^; -->
+<style>
+  :root{--w:800px;--h:600px}
+  /* Updated Background and Text */
+  html,body{height:100%;margin:0;background:#111827;color:#E5E7EB;font-family: "Hiragino Kaku Gothic Pro","Meiryo",sans-serif;}
+  .center{height:100%;display:flex;align-items:center;justify-content:center;}
+  /* Updated Frame for SDGs theme */
+  #frame{width:var(--w);height:var(--h);background:#1F2937;border:3px solid #4CAF50;border-radius:6px;position:relative;overflow:hidden;box-sizing:border-box;padding:12px;}
+  #fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:80}
+  #fade.on{opacity:1;pointer-events:auto}
+  /* loading area bottom (non-expanded gif) */
+  #loading-area{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;text-align:center;z-index:40;width:90%}
+  #loading-gif{max-width:100px;height:auto;display:block;margin:0 auto} /* 拡大しない */
+  #progress-text{margin-top:8px;color:#A9F1DF;font-size:13px}
+  #progress-wrap{width:70%;margin:8px auto;background:#2D3748;border-radius:8px;height:14px;overflow:hidden;border:1px solid #4CAF50}
+  #progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#4CAF50,#209E77);transition:width .25s}
+  /* loading2 top-right 20% */
+  #loading2{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* loading3 small right-top when saving */
+  #loading3{position:absolute;top:8px;right:8px;z-index:95;display:none;width:80px}
+  /* loading4 same as loading2 */
+  #loading4{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* NEW loading5 */
+  #loading5{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* screen base */
+  .screen{display:none;padding:12px;height:100%;box-sizing:border-box;overflow:auto}
+  .screen.active{display:block}
+  h1,h2{margin:6px 0}
+  /* Updated Button Style - SDGs Green Gradient */
+  .btn{
+    display:inline-block;padding:10px 16px;margin:6px;
+    background: linear-gradient(to right, #209E77, #4CAF50);
+    color:#fff;
+    border-radius:6px;
+    border:1px solid #1B8365;
+    cursor:pointer;
+    transition:background 0.3s, transform 0.1s;
+    font-weight: bold;
+    box-shadow: 0 3px #1B8365;
+  }
+  .btn:hover{background: linear-gradient(to right, #1B8365, #3D8B42);}
+  .btn:active{transform:translateY(2px); box-shadow: 0 1px #1B8365;}
+  .btn:disabled{cursor:default; background: #374151; box-shadow: 0 3px #1F2937; border-color: #1F2937;}
+  
+  .small{font-size:13px;color:#BCCCDC} /* Changed small text color */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  /* Modal Border changed */
+  .modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#101214;padding:18px;border-radius:8px;border:1px solid #4CAF50;z-index:200}
+  .hidden{display:none}
+  /* staff roll inner */
+  .roll-wrap{height:100%;overflow:hidden;position:relative;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  .roll-inner{width:90%;}
+  .roll-line{
+    font-size: 1.5em;
+    margin: 12px 0;
+    opacity: 0;
+  }
+  #roll-inner h2 {
+    font-family: "Yu Mincho", "游明朝", serif;
+  }
+  @keyframes fadeCycle {
+    0% { opacity: 0; }
+    25% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  #top-log{position:absolute;left:12px;top:10px;font-size:12px;color:#9CA3AF;z-index:150} /* Log color changed */
+  #copyright{position:absolute;left:18px;bottom:12px;font-size:12px;color:#4B5563;z-index:10} /* Copyright color changed */
+  /* Added for critical restricted mode */
+  .warn-overlay{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:190;}
+  .warn-text{margin-top:12px;color:#F87171;font-size:18px;font-weight:bold;}
+  /* Text animation */
+  #title-text-anim {
+    font-size: 2.5em; /* Slightly larger */
+    white-space: nowrap;
+    color: #FDD835; /* SDGs Yellow for accent */
+    font-weight: 700;
+  }
+  #title-text-anim span {
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+    display: inline-block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; filter: blur(4px); transform: translateY(-10px); }
+    to { opacity: 1; filter: blur(0); transform: translateY(0); }
+  }
+  /* New warning style */
+  .partial-warn{margin: 12px; text-align: center; color:#FBBF24; font-weight: bold;}
+  /* New button fade-in style */
+  .title-buttons-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0s 0.5s;
+  }
+  .title-buttons-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s;
+  }
+  /* Ruby text (furigana) styling */
+  ruby{font-size:1.3em;}
+  rt{font-size:0.5em;}
+
+  /* story screen styles */
+  .story-inner{width:90%; margin:auto; text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%;}
+  .story-text{font-size:1.2em; margin:20px 0; line-height:1.6; text-align:left;}
+
+  /* ending screen styles */
+  #ending-img-wrap{display:flex; justify-content:center; align-items:center; height:70%;}
+  #ending-img{max-width:100%; max-height:100%;}
+  #ending-text{font-size:1.1em; text-align:center; margin-top:10px; height:20%; display:flex; align-items:center; justify-content:center;}
+
+  /* Mobile-specific warning style */
+  .mobile-warn{margin: 12px; text-align: center; color: #60A5FA; font-weight: bold;}
+  
+  /* Play screen styles */
+  #question{
+    font-size: 22px !important; /* Slightly larger question font */
+    color: #A9F1DF; /* Light color for the target text */
+  }
+  #input{
+    width:80%;padding:10px;margin-top:10px;font-size:18px;
+    background: #2D3748; /* Darker input background */
+    color: #E5E7EB;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+<div class="center">
+<div aria-label="ゲーム枠" id="frame" role="application">
+<div id="fade"></div>
+<div class="small" id="top-log">F12:ロードログは console に出力</div>
+<div aria-hidden="false" id="loading-area">
+<img alt="loading gif" id="loading-gif" src="./image/loading.gif"/>
+<div id="progress-text">ロード中... 0%</div>
+<div id="progress-wrap"><div id="progress-bar"></div></div>
+</div>
+<div class="partial-warn hidden" id="partial-warn">システム要件が満たされていないため、一部機能が制限されます。</div>
+<div class="mobile-warn hidden" id="mobile-warn">モバイル版で起動しました。一部の機能は動作しない場合があります。</div>
+<img alt="loading2 gif" id="loading2" src="./image/loading2.gif" style="display:none"/>
+<img alt="loading3 gif" id="loading3" src="./image/loading3.gif" style="display:none;width:80px"/>
+<img alt="loading4 gif" id="loading4" src="./image/loading6.gif" style="display:none;width:20%"/>
+<img alt="loading5 gif" id="loading5" src="./image/loading5.gif" style="display:none;width:20%"/>
+<div class="screen" id="prologue">
+<div class="story-inner">
+<h2>プロローグ</h2>
+<div class="story-text">
+          世界は、深刻な課題に直面していた。「貧困、飢餓、格差」。人類は「持続可能性（サステナビリティ）」という言葉を忘れ、未来は危機に瀕していた。
+          だが、最後の希望が残されていた。それは、**SDGs**の目標を言葉として紡ぎ、人々の意識を覚醒させる古代のキーボード。
+          君は、そのキーボードの力を信じ、**サステナブルマスター**を目指す最後の希望。未来を救うタイピングの旅が、今、始まる。
+        </div>
+<button class="btn" id="btn-prologue-next">旅立つ</button>
+</div>
+</div>
+<div class="screen" id="story">
+<div class="story-inner">
+<h2 id="story-title"></h2>
+<div class="story-text" id="story-text"></div>
+<div id="story-buttons" style="margin-top:20px">
+<button class="btn" id="btn-story-next">次へ</button>
+<button class="btn hidden" id="btn-story-back">戻る</button>
+</div>
+</div>
+</div>
+<div class="screen" id="ending">
+<div class="story-inner">
+<div id="ending-img-wrap"><img alt="Ending Image" id="ending-img" src=""/></div>
+<div id="ending-text"></div>
+<div style="margin-top:20px">
+<button class="btn hidden" id="btn-ending-prev">戻る</button>
+<button class="btn" id="btn-ending-next">次へ</button>
+</div>
+</div>
+</div>
+<div class="screen" id="title">
+<div id="title-text-anim"></div>
+<div class="small" id="title-copyright"></div>
+<div class="title-buttons-hidden" id="title-buttons" style="margin-top:18px">
+<button class="btn" id="btn-start">スタート</button>
+<button class="btn" id="btn-records">記録</button>
+<button class="btn" id="btn-story-list">ストーリー</button>
+<button class="btn" id="btn-music-room">Music Room</button>
+<button class="btn" id="btn-settings">設定</button>
+<button class="btn" id="btn-exit">終了</button>
+</div>
+</div>
+<div class="screen" id="music-room">
+<h2>Music Room</h2>
+<p style="margin-top:12px;">聴きたいBGMを選択してください。</p>
+<div style="margin-top:20px;">
+<button class="btn" id="btn-play-bgm">通常BGM</button>
+<button class="btn" id="btn-play-staff">スタッフロールBGM</button>
+<button class="btn" id="btn-play-ending">エンディングBGM</button>
+</div>
+<div style="margin-top:20px;">
+<button class="btn" id="btn-music-room-back">タイトルに戻る</button>
+</div>
+</div>
+<div class="screen" id="story-list">
+<h2>ストーリー選択</h2>
+<div class="grid" id="story-list-grid"></div>
+<div style="margin-top:12px"><button class="btn" id="btn-story-list-back">タイトルに戻る</button></div>
+</div>
+<div class="screen" id="chapter">
+<h2>大テーマ選択</h2>
+<div class="grid" id="chapter-list"></div>
+<div style="margin-top:12px"><button class="btn" id="btn-chap-back">タイトルに戻る</button></div>
+</div>
+<div class="screen" id="stage">
+<h2 id="stage-heading">テーマの目標選択</h2>
+<div class="grid" id="stage-grid"></div>
+<div style="margin-top:12px"><button class="btn" id="btn-stage-back">大テーマ選択に戻る</button> <button class="btn" id="btn-stage-title">タイトルに戻る</button></div>
+</div>
+<div class="screen" id="play">
+<h2 id="play-title">目標</h2>
+<div class="small">制限時間: <span id="play-timer">60</span> 秒</div>
+<div id="question" style="margin-top:12px;"></div>
+<input autocomplete="off" id="input" inputmode="kana" type="text"/>
+<div style="margin-top:12px"><button class="btn" id="btn-giveup">あきらめる</button> <button class="btn" id="btn-play-back">前に戻る</button></div>
+<div class="small" id="play-msg" style="margin-top:8px"></div>
+</div>
+<div class="screen" id="records">
+<h2>記録</h2>
+<div class="small" id="records-list"></div>
+<div style="margin-top:12px">
+<button class="btn" id="btn-records-back">タイトルに戻る</button>
+<button class="btn" id="btn-records-back-chapter">テーマ選択に戻る</button>
+<button class="btn" id="btn-records-back-last-stage">目標選択に戻る</button>
+<button class="btn" id="btn-records-story">ストーリー</button>
+<button class="btn" id="btn-dev-tools">開発者ツール</button>
+</div>
+</div>
+<div class="screen" id="staff">
+<div class="roll-wrap">
+<div id="roll-inner">
+<h2>目指せSDGs<br/>～サステナブルな世界～</h2>
+<div class="small" id="roll-copy"></div>
+<h4 class="roll-line hidden" data-text="～作品について～"></h4>
+<p class="roll-line hidden" data-text="AIタイピング第3.5弾[目指せSDGs～サステナブルな世界～]"></p>
+<p class="roll-line hidden" data-text="タイピングRPGエンジン転用元: play17.html"></p>
+<h4 class="roll-line hidden" data-text="～開発者～"></h4>
+<p class="roll-line hidden" data-text="考案: 人間"></p>
+<p class="roll-line hidden" data-text="製作(前半): ChatGPT"></p>
+<p class="roll-line hidden" data-text="製作(後半): 人間"></p>
+<p class="roll-line hidden" data-text="プログラム: ChatGPT"></p>
+<p class="roll-line hidden" data-text="デザイン: ChatGPT"></p>
+<p class="roll-line hidden" data-text="プログラム改良: 人間"></p>
+<p class="roll-line hidden" data-text="問題文改良: Microsoft Copilot, Gemini"></p>
+<h4 class="roll-line hidden" data-text="～BGM・効果音～"></h4>
+<p class="roll-line hidden" data-text="BGM素材: ./image/bgm/01.m4a・08.mp3・09.m4a"></p>
+<p class="roll-line hidden" data-text="効果音: ./image/bgm/02.mp3・03.mp3・04.mp3・05.mp3・06.mp3・07.mp3"></p>
+<p class="roll-line hidden" data-text="BGM・効果音はフリー音源を使用しています。"></p>
+<h4 class="roll-line hidden" data-text="～Special Thanks～"></h4>
+<p class="roll-line hidden" data-text="Internet Explorer 6.0"></p>
+<p class="roll-line hidden" data-text="Google Chrome 141.0.7390.55"></p>
+<p class="roll-line hidden" data-text="Microsoft Windows 11"></p>
+<p class="roll-line hidden" data-text="Microsoft Windows 10"></p>
+<p class="roll-line hidden" data-text="Microsoft Windows XP"></p>
+<h3 class="roll-line hidden" data-text="～ゲーム制作ストーリー～"></h3>
+<p class="roll-line hidden" data-text="RPG×タイピングというコンセプトに"></p>
+<p class="roll-line hidden" data-text="SDGsの目標を組み合わせてみました。"></p>
+<p class="roll-line hidden" data-text="SDGs×タイピング、どうだったでしょうか?"></p>
+<p class="roll-line hidden" data-text="それでは。 by 人間"></p>
+<p class="roll-line hidden" data-text="2025 自作タイピングゲーム"></p>
+<p class="roll-line hidden" data-text="最後までプレイしてくれてありがとう!～Thank you for Playing!～"></p>
+</div>
+<div class="hidden" id="final-msg" style="text-align:center;">
+<h3 style="margin:24px 0;">持続可能な社会を目指して...</h3>
+<button class="btn" id="btn-roll-back-to-title">タイトルに戻る</button>
+</div>
+</div>
+</div>
+<div class="screen" id="exit">
+<img alt="loading" id="exit-gif" src="./image/loading.gif"/>
+<div class="small" id="exit-text" style="margin-top:8px">終了準備中です...</div>
+<div id="exit-wrap" style="margin-top:8px"><div id="exit-bar" style="width:0%;height:12px;background:#e55;border-radius:6px"></div></div>
+</div>
+<div class="modal hidden" id="settings-modal" style="z-index:200">
+<h3>設定</h3>
+<div style="text-align:left">
+<label><input id="chk-bgm" type="checkbox"/> BGM ON</label><br/>
+<label><input checked="" id="chk-se" type="checkbox"/> 効果音 ON</label><br/>
+<label><input id="chk-kana" type="checkbox"/> フリガナ ON</label><br/>
+<div style="margin-top:6px">BGM音量 <input id="bgm-vol" max="1" min="0" step="0.1" type="range" value="0.2"/></div>
+<div>SE音量 <input id="se-vol" max="1" min="0" step="0.1" type="range" value="1"/></div>
+<div style="margin-top:8px">
+<button class="btn" id="btn-reset">リセット(セーブ削除)</button>
+<button class="btn" id="btn-cert">証明書更新</button>
+<button class="btn" id="btn-settings-close">閉じる</button>
+</div>
+</div>
+<div style="margin-top:8px"><button class="btn" id="btn-export-save">ゲームデータをダウンロード</button><button class="btn" id="btn-import-save">ゲームデータを取り込む</button><input accept=".dat" id="file-import" style="display:none" type="file"/></div></div>
+<div class="modal hidden" id="dev-tools-modal" style="z-index:210">
+<h3>開発者ツール</h3>
+<div style="text-align:left">
+<button class="btn" id="btn-dev-to-ending">エンディングへ</button><br/>
+<button class="btn" id="btn-dev-to-staff">スタッフロールへ</button><br/>
+<div style="margin-top:8px">
+<button class="btn" id="btn-dev-close">閉じる</button>
+</div>
+</div>
+</div>
+<div class="modal hidden" id="bgm-prompt" style="z-index:200">
+<div>BGMを再生しますか？</div>
+<div style="margin-top:8px">
+<button class="btn" id="bgm-yes">再生する</button>
+<button class="btn" id="bgm-no">再生しない</button>
+</div>
+</div>
+<div class="modal hidden" id="bgm-staff-prompt" style="z-index:200">
+<div>スタッフロール BGMを再生しますか？</div>
+<div style="margin-top:8px">
+<button class="btn" id="bgm-staff-yes">再生する</button>
+<button class="btn" id="bgm-staff-no">再生しない</button>
+</div>
+</div>
+<div class="modal hidden" id="bgm-ending-prompt" style="z-index:200">
+<div>エンディング BGMを再生しますか？</div>
+<div style="margin-top:8px">
+<button class="btn" id="bgm-ending-yes">再生する</button>
+<button class="btn" id="bgm-ending-no">再生しない</button>
+</div>
+</div>
+<div class="modal hidden" id="bgm-setting-warn-prompt" style="z-index:200">
+<div>BGM ONが選択されていません。<br/>BGMを再生しますか？</div>
+<div style="margin-top:8px">
+<button class="btn" id="bgm-setting-warn-yes">はい</button>
+<button class="btn" id="bgm-setting-warn-no">いいえ</button>
+</div>
+</div>
+<div class="small" id="copyright"></div>
+</div>
+</div>
+<audio id="bgm" loop="" preload="auto"><source src="./image/bgm/01.m4a" type="audio/mpeg"/></audio>
+<audio id="bgm-staff" loop="" preload="auto"><source src="./image/bgm/08.mp3" type="audio/mpeg"/></audio>
+<audio id="bgm-ending" loop="" preload="auto"><source src="./image/bgm/09.m4a" type="audio/mpeg"/></audio>
+<audio id="se-btn" preload="auto"><source src="./image/bgm/02.mp3" type="audio/mpeg"/></audio>
+<audio id="se-clear" preload="auto"><source src="./image/bgm/03.mp3" type="audio/mpeg"/></audio>
+<audio id="se-fail" preload="auto"><source src="./image/bgm/04.mp3" type="audio/mpeg"/></audio>
+<audio id="se-back" preload="auto"><source src="./image/bgm/05.mp3" type="audio/mpeg"/></audio>
+<audio id="se-exit" preload="auto"><source src="./image/bgm/06.mp3" type="audio/mpeg"/></audio>
+<audio id="se-locked" preload="auto"><source src="./image/bgm/07.mp3" type="audio/mpeg"/></audio>
+<script>
+/* -------------------------
+   Utilities, state, data
+   ------------------------- */
+const ADMIN_PW = "admin1227";
+// Base key changed to SDGS-WORLD-2030-GOAL
+const BASE_KEY = "SDGS-WORLD-2030-GOAL";
+const MAX_DAYS = 10950; // 30 years
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function log(...a){ console.log("[GAME]",...a); }
+
+/* fiscal key */
+function getFiscalYear(date=new Date()){
+  const y = date.getFullYear(), m = date.getMonth()+1;
+  return (m>=4) ? y : y-1;
+}
+function genKeyForYear(fy){ return `${BASE_KEY}-${fy}`; }
+
+/* certificate */
+function getBuiltInCert(){
+  const now = new Date();
+  const fy = getFiscalYear(now);
+  const issued = now.toISOString();
+  const expires = new Date(now.getFullYear()+30, now.getMonth(), now.getDate()).toISOString();
+  // Copyright changed
+  return { productKey: genKeyForYear(fy), issued, expires, copyright:"© 2025 SDGs Typing Master - Sustainable World" };
+}
+function loadCert(){
+  const s = localStorage.getItem("certificate");
+  if(!s) return getBuiltInCert();
+  try{ return JSON.parse(s); } catch(e){ console.warn("cert parse err",e); localStorage.removeItem("certificate"); return getBuiltInCert(); }
+}
+function validateCert(cert){
+  const expect = genKeyForYear(getFiscalYear());
+  if(!cert || !cert.productKey) throw new Error("ライセンスエラー: 証明書不正");
+  if(cert.productKey !== expect) throw new Error(`ライセンスエラー: 期待 ${expect}`);
+  if(new Date(cert.expires) < new Date()) throw new Error("証明書期限切れ");
+  return true;
+}
+function saveCert(cert){ localStorage.setItem("certificate", JSON.stringify(cert)); }
+
+/* problems with furigana - SDGs Themed (unchanged) */
+const problemBank = {
+  // 貧困/食料/健康
+  "1-1":[{w:"貧困をなくそう",y:"ひんこんをなくそう"},{w:"飢餓をゼロに",y:"きがをぜろに"},{w:"すべての人に健康と福祉を",y:"すべての人にけんこうとふくしを"},{w:"ベーシックニーズ",y:"べーしっくにーず"}],
+  "1-2":[{w:"ユニバーサル・ヘルス・カバレッジ",y:"ゆにばーさるへるすかばれっじ"},{w:"食料安全保障",y:"しょくりょうあんぜんほしょう"},{w:"栄養不良の撤廃",y:"えいようふりょうのてっぱい"},{w:"持続可能な農業",y:"じぞくかのうなのうぎょう"}],
+  "1-3":[{w:"経済成長",y:"けいざいせいちょう"},{w:"社会保障",y:"しゃかいほしょう"},{w:"社会的弱者",y:"しゃかいてきじゃくしゃ"},{w:"セーフティーネット",y:"せーふてぃーねっと"}],
+  "1-4":[{w:"持続可能な都市",y:"じぞくかのうなとし"},{w:"公衆衛生",y:"こうしゅうえいせい"},{w:"災害リスクの軽減",y:"さいがいりすくのけいげん"},{w:"生活の質",y:"せいかつにしつ"}],
+  "1-5":[{w:"目標の達成",y:"もくひょうのたっせい"},{w:"意識改革",y:"いしきかいかく"},{w:"行動変容",y:"こうどうへんよう"},{w:"未来への貢献",y:"みらいへのこうけん"}],
+  "1-6":[{w:"極度の貧困",y:"きょくどのひんこん"},{w:"妊産婦死亡率",y:"にんさんぷしぼうりつ"},{w:"開発途上国",y:"かいはつとじょうこく"},{w:"持続可能な開発",y:"じぞくかのうなかいはつ"}],
+  // 教育/ジェンダー/水
+  "2-1":[{w:"質の高い教育をみんなに",y:"しつのたかいきょういくをみんなに"},{w:"ジェンダー平等を実現しよう",y:"じぇんだーびょうどうをじつげんしよう"},{w:"安全な水とトイレを世界中に",y:"あんぜんなみずとといれをせかいじゅうに"},{w:"すべての人に",y:"すべての人に"}],
+  "2-2":[{w:"教育へのアクセス",y:"きょういくへのあくせす"},{w:"女子教育の促進",y:"じょしきょういくのそくしん"},{w:"水資源の管理",y:"みずしげんのかんり"},{w:"衛生施設",y:"えいせいしせつ"}],
+  "2-3":[{w:"男女共同参画",y:"だんじょきょうどうさんかく"},{w:"エンパワーメント",y:"えんぱわーめんと"},{w:"差別の撤廃",y:"さべつのてっぱい"},{w:"リーダーシップ",y:"りーだーしっぷ"}],
+  "2-4":[{w:"生涯学習",y:"しょうがいがくしゅう"},{w:"学習機会の提供",y:"がくしゅうきかいのていきょう"},{w:"デジタル教育",y:"でじたるときょういく"},{w:"基礎的能力",y:"きそてきのうりょく"}],
+  "2-5":[{w:"水質汚染",y:"すいしつおせん"},{w:"水ストレス",y:"みずすとれす"},{w:"生態系の保護",y:"せいたいけいのほご"},{w:"節水の意識",y:"せっすいのいしき"}],
+  "2-6":[{w:"女性の権利",y:"じょせいのけんり"},{w:"無償労働の価値",y:"むしょうろうどうのかち"},{w:"包摂的な社会",y:"ほうせつてきなしゃかい"},{w:"世界を変える力",y:"せかいをかえるちから"}],
+  // エネルギー/経済/インフラ
+  "3-1":[{w:"エネルギーをみんなに、そしてクリーンに",y:"えねるぎーをみんなにそしてくりーんに"},{w:"働きがいも経済成長も",y:"はたらきがいもけいざいせいちょうも"},{w:"産業と技術革新の基盤をつくろう",y:"さんぎょうとぎじゅつかくしんのきばんをつくろう"},{w:"持続可能な消費",y:"じぞくかのうなしょうひ"}],
+  "3-2":[{w:"再生可能エネルギー",y:"さいせいかのうなえねるぎー"},{w:"エネルギー効率",y:"えねるぎーこうりつ"},{w:"脱炭素社会",y:"だつたんそしゃかい"},{w:"クリーンエネルギー",y:"くりーんえねるぎー"}],
+  "3-3":[{w:"イノベーション",y:"いのべーしょん"},{w:"持続可能なインフラ",y:"じぞくかのうないんふら"},{w:"研究開発",y:"けんきゅうかいはつ"},{w:"レジリエンス",y:"れじりえんす"}],
+  "3-4":[{w:"完全雇用",y:"かんぜんこよう"},{w:"ディーセント・ワーク",y:"でぃーせんとわーく"},{w:"不平等な賃金",y:"ふびょうどうなちんぎん"},{w:"生産性の向上",y:"せいさんせいのこうじょう"}],
+  "3-5":[{w:"循環型経済",y:"じゅんかんがたけいざい"},{w:"生産と消費のパターン",y:"せいさんとしょうひのぱたーん"},{w:"廃棄物の削減",y:"はいきぶつのさくげん"},{w:"エシカル消費",y:"えしかるしょうひ"}],
+  "3-6":[{w:"公正な取引",y:"こうせいなとりひき"},{w:"サプライチェーン",y:"さぷらいちぇーん"},{w:"透明性の確保",y:"とうめいせいのかくほ"},{w:"貧困の連鎖",y:"ひんこんのれんさ"}],
+  // 不平等/住居/気候変動
+  "4-1":[{w:"人や国の不平等をなくそう",y:"ひとやくにのふびょうどうをなくそう"},{w:"住み続けられるまちづくりを",y:"すみつづけられるまちづくりを"},{w:"気候変動に具体的な対策を",y:"きこうへんどうにぐたいてきなたいさくを"},{w:"二酸化炭素排出量",y:"にさんかたんそはいしゅつりょう"}],
+  "4-2":[{w:"所得格差の是正",y:"しょとくかくさのぜせい"},{w:"社会的包摂",y:"しゃかいてきほうせつ"},{w:"国際協力",y:"こくさいきょうりょく"},{w:"開発援助",y:"かいはつえんじょ"}],
+  "4-3":[{w:"グローバル・パートナーシップ",y:"ぐろーばるぱーとなーしっぷ"},{w:"持続可能な交通",y:"じぞくかのうなこうつう"},{w:"都市計画",y:"としけいかく"},{w:"文化遺産",y:"ぶんかいさん"}],
+  "4-4":[{w:"温室効果ガス",y:"おんしつこうかぎゃす"},{w:"地球温暖化",y:"ちきゅうおんだんか"},{w:"パリ協定",y:"ぱりきょうてい"},{w:"適応策と緩和策",y:"てきおうさくとかんわさく"}],
+  "4-5":[{w:"スラム",y:"すらす"},{w:"住宅へのアクセス",y:"じゅうたくへのあくせす"},{w:"防災対策",y:"ぼうさいたいさく"},{w:"コミュニティ",y:"こみゅにてぃ"}],
+  "4-6":[{w:"小島嶼開発途上国",y:"しょうとうしょかいはつとじょうこく"},{w:"ジェントリフィケーション",y:"じぇんとりふぃけーしょん"},{w:"持続可能な開発目標",y:"じぞくかのうなかいはつもくひょう"},{w:"貧困の連鎖を断ち切る",y:"ひんこんのれんさをたちきる"}],
+  // 海/陸/平和
+  "5-1":[{w:"海の豊かさを守ろう",y:"うみのゆたかさをまもろう"},{w:"陸の豊かさも守ろう",y:"りくのゆたかさもまもろう"},{w:"平和と公正をすべての人に",y:"へいわとこうせいをすべての人に"},{w:"生物多様性",y:"せいぶつたようせい"}],
+  "5-2":[{w:"海洋資源の保全",y:"かいようしげんのほぜん"},{w:"海洋汚染",y:"かいようおせん"},{w:"違法漁業",y:"いほうぎょぎょう"},{w:"プラスチックごみ",y:"ぷらすちっくごみ"}],
+  "5-3":[{w:"森林の持続可能な管理",y:"しんりんのじぞくかのうなかんり"},{w:"砂漠化への対処",y:"さばくかへのたいしょ"},{w:"土地劣化の防止",y:"とちれっかのぼうし"},{w:"野生生物の保護",y:"やせいせいぶつのほご"}],
+  "5-4":[{w:"制度の構築",y:"せいどのこうちく"},{w:"説明責任",y:"せつめいせきにん"},{w:"汚職の防止",y:"おしょくのぼうし"},{w:"人権の尊重",y:"じんけんのそんちょう"}],
+  "5-5":[{w:"暴力の根絶",y:"ぼうりょくのこんぜつ"},{w:"法の支配",y:"ほうのしはい"},{w:"公正な司法",y:"こうせいなしほう"},{w:"平和的解決",y:"へいわてきかいけつ"}],
+  "5-6":[{w:"国際的な協調",y:"こくさいてきなきょうちょう"},{w:"紛争の予防",y:"ふんそうのよぼう"},{w:"テロリズム",y:"てろりずむ"},{w:"持続可能な平和",y:"じぞくかのうなへいわ"}],
+  // パートナーシップ/未来
+  "6-1":[{w:"パートナーシップで目標を達成しよう",y:"ぱーとなーしっぷでもくひょうをたっせいしよう"},{w:"全ての目標を統合する",y:"すべての目標をとうごうする"},{w:"グローバルな連携",y:"ぐろーばるなれんけい"},{w:"持続可能な未来",y:"じぞくかのうなみらい"}],
+  "6-2":[{w:"ODA（政府開発援助）",y:"おーでぃーえー"},{w:"キャパシティ・ビルディング",y:"きゃぱしてぃびるでぃんぐ"},{w:"技術協力",y:"ぎじゅつきょうりょく"},{w:"マルチステークホルダー",y:"まるちすてーくほるだー"}],
+  "6-3":[{w:"開発資金の動員",y:"かいはつしきんのどういん"},{w:"債務の持続可能性",y:"さいむのじぞくかのうせい"},{w:"税制の強化",y:"ぜいせいのきょうか"},{w:"政策協調",y:"せいさくきょうちょう"}],
+  "6-4":[{w:"貿易体制の強化",y:"ぼうえきたいせいのきょうか"},{w:"途上国の輸出拡大",y:"とじょうこくのゆしゅつかくだい"},{w:"普遍的価値",y:"ふへんてきかち"},{w:"相互の理解",y:"そうごのりかい"}],
+  "6-5":[{w:"データの可用性",y:"でーたのかようせい"},{w:"モニタリングと評価",y:"もにたりんぐとひょうか"},{w:"アカウンタビリティ",y:"あかうんとてぃてぃ"},{w:"科学的根拠",y:"かがくてきこんきょ"}],
+  "6-6": [
+  {
+    w: "次世代に託す地球の財産と持続可能な開発のための国際協調体制",
+    y: "じせだいにたくすちきゅうのざいさんとじぞくかのうなかいはつのためのこくさいきょうちょうたいせい"
+  },
+  {
+    w: "二〇三〇年までに達成すべき目標の総点検とそれ以降の新しい目標設定",
+    y: "にせんさんじゅうねんまでにたっせいすべきもくひょうのそうてんけんとそれいこうのあたらしいもくひょうせってい"
+  },
+  {
+    w: "サステナブルマスターとして新たな未来を切り開くための最終のタイピング",
+    y: "さすてなぶるますたーとしてあらたなみらいをきりひらくためのさいしゅうのたいぴんぐ"
+  },
+  {
+    w: "Goal6_Final_Sustainable_Future_Typing_Challenge_for_Humanity_And_Planet_Earth_End_of_Game",
+    y: "すべてのひとびとがえがおですむみらいをつくりだせ！"
+  }
+]
+};
+
+// Stories changed to reflect SDGs themes (unchanged)
+const stories = {
+  1: {
+    title: "第1テーマ: 命の基盤を築く",
+    text: "SDGsの土台となる「貧困」「飢餓」「健康」の目標に挑む。君のタイピングは、誰もが人間らしく生きるための権利を世界に訴えかけ、命の基盤を再構築する。",
+  },
+  2: {
+    title: "第2テーマ: 人と水の可能性を解放する",
+    text: "「教育」「ジェンダー平等」「水」の目標に挑む。言葉の力で格差を解消し、すべての人が学び、平等に生きられる未来、そして清らかな水を確保するための意識を世界に広める。",
+  },
+  3: {
+    title: "第3テーマ: 経済と技術をクリーンにする",
+    text: "「エネルギー」「働きがい」「インフラ」の目標に挑戦。タイピングが生み出す言葉は、持続可能な経済成長と技術革新を促し、地球に優しいエネルギーシステムへの転換を加速させる。",
+  },
+  4: {
+    title: "第4テーマ: 平等な社会と地球環境を守る",
+    text: "「不平等」「住居」「気候変動」の目標をタイピングで達成する。各国間の格差を是正し、安全な都市を築き、そして何より地球規模の気候変動対策を世界に呼びかける。",
+  },
+  5: {
+    title: "第5テーマ: 生命と平和の尊さを守る",
+    text: "「海」「陸」「平和」の目標に心を込めて挑む。君のタイピングは、地球上の生態系と、戦争のない平和で公正な社会の実現を強く求める人々の声を代弁する。",
+  },
+  6: {
+    title: "第6テーマ: パートナーシップと未来への誓い",
+    text: "ついに最後の目標「パートナーシップ」と向き合う。SDGs達成のため、政府、企業、市民社会が連携し、目標を統合する言葉を紡ぎ出す。未来を救う最後のタイピングが、世界を変える鍵となる。",
+  }
+};
+
+// Endings changed to reflect SDGs achievement (unchanged)
+const endings = [
+  { img: "./image/ending/01.png", text: "君が紡いだSDGsの言葉は、世界中の人々の心を動かした。" },
+  { img: "./image/ending/02.png", text: "貧困は解消に向かい、教育は普遍のものとなり、ジェンダー平等が実現し始めた。" },
+  { img: "./image/ending/03.png", text: "再生可能エネルギーが世界を満たし、都市は持続可能で安全な場所へと変わった。" },
+  { img: "./image/ending/04.png", text: "海の豊かさが戻り、森は緑を取り戻し、野生動物が安全に暮らせるようになった。" },
+  { img: "./image/ending/05.png", text: "戦争と汚職は減り、平和と公正が世界の隅々まで行き渡った。" },
+  { img: "./image/ending/06.png", text: "君は「サステナブルマスター」として、未来を救った英雄となった。" },
+  { img: "./image/ending/07.png", text: "2030年の目標達成は、一つの通過点にすぎない。" },
+  { img: "./image/ending/08.png", text: "より良い未来を創るための、**持続可能な挑戦**はこれからも続くのだ。" }
+];
+
+let endingPageIndex = 0;
+
+/* persistent save structure - localStorage key changed to sdgsTypingMasterSave */
+function loadSave(){
+  try{
+    const s=localStorage.getItem("sdgsTypingMasterSave");
+    if(!s) return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false };
+    const saved = JSON.parse(s);
+    if(saved.firstLaunch === undefined) saved.firstLaunch = false; // For existing users
+    if(saved.bgmEnabled === undefined) saved.bgmEnabled = true;
+    if(saved.seEnabled === undefined) saved.seEnabled = true;
+    if(saved.furigana === undefined) saved.furigana = false;
+    if(saved.unlockedStories === undefined) saved.unlockedStories = [0]; // Prologue
+    return saved;
+  }catch(e){ localStorage.removeItem("sdgsTypingMasterSave"); return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false }; }
+}
+function saveAll(data){
+  document.getElementById("loading3").style.display = "block";
+  localStorage.setItem("sdgsTypingMasterSave", JSON.stringify(data));
+  setTimeout(()=>{ document.getElementById("loading3").style.display = "none"; log("save done"); }, 700);
+}
+
+/* audio helpers (unchanged) */
+const audio = {
+  bgm: document.getElementById("bgm"),
+  bgmStaff: document.getElementById("bgm-staff"),
+  bgmEnding: document.getElementById("bgm-ending"),
+  btn: document.getElementById("se-btn"),
+  clear: document.getElementById("se-clear"),
+  fail: document.getElementById("se-fail"),
+  back: document.getElementById("se-back"),
+  exit: document.getElementById("se-exit"),
+  locked: document.getElementById("se-locked")
+};
+function playSE(id){
+  const chk = document.getElementById("chk-se");
+  if(chk && !chk.checked) return;
+  const a = audio[id];
+  if(!a) return;
+  try{ a.currentTime=0; a.play(); }catch(e){ log("SE play failed",e); }
+}
+function setSEVolume(v){ ["btn","clear","fail","back","exit","locked"].forEach(k=>{ const a=audio[k]; if(a) a.volume = v; }); }
+function setBGMVolume(v){ 
+  if(audio.bgm) audio.bgm.volume = v; 
+  if(audio.bgmStaff) audio.bgmStaff.volume = v;
+  if(audio.bgmEnding) audio.bgmEnding.volume = v;
+}
+
+/**
+ * すべてのBGMを停止します。
+ */
+function stopAllBGM(){
+  try {
+    audio.bgm.pause();
+    audio.bgm.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmStaff.pause();
+    audio.bgmStaff.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmEnding.pause();
+    audio.bgmEnding.currentTime = 0;
+  } catch (e) {}
+}
+
+/* transition utility: fade out -> show loading gif -> run check -> exec target -> hide loading gif -> fade in (unchanged) */
+async function transitionWithLoading(checkFn, targetFn, fadeColor = "#000", fadeDuration = ".45s", loadingGifId = "loading2"){
+  const fade = document.getElementById("fade");
+  const loadingGif = document.getElementById(loadingGifId);
+  const loading2Gif = document.getElementById("loading2");
+  const loading4Gif = document.getElementById("loading4");
+  const loading5Gif = document.getElementById("loading5");
+  
+  // Apply specific fade styles
+  fade.style.backgroundColor = fadeColor;
+  fade.style.transitionDuration = fadeDuration;
+
+  // hide other loading gifs
+  if(loading2Gif && loadingGifId !== "loading2") loading2Gif.style.display = "none";
+  if(loading4Gif && loadingGifId !== "loading4") loading4Gif.style.display = "none";
+  if(loading5Gif && loadingGifId !== "loading5") loading5Gif.style.display = "none";
+  
+  // fade out
+  fade.classList.add("on");
+  await delay(parseFloat(fadeDuration) * 1000); // Wait for fade to complete
+  
+  // show loading gif
+  if (loadingGif) loadingGif.style.display = "block";
+  await delay(150);
+  try{
+    await checkFn();
+    await delay(200);
+    targetFn();
+  }catch(e){
+    console.error("transition check failed", e);
+    alert("🔐ページを移動できません\n" + (e && e.message? e.message : ""));
+  }finally{
+    // hide loading gif and fade in
+    if (loadingGif) loadingGif.style.display = "none";
+    await delay(150);
+    fade.classList.remove("on");
+    // Reset fade styles to default after transition
+    fade.style.backgroundColor = "#000";
+    fade.style.transitionDuration = ".45s";
+  }
+}
+
+/* safe show screen (unchanged) */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+  const el = document.getElementById(id);
+  if(el) el.classList.add("active");
+  // hide loading-area when not on loading stage
+  if(id !== "loading-area" && id !== "title") document.getElementById("loading-area").style.display = "none";
+}
+
+/* -------------------------
+   Game logic state
+   ------------------------- */
+let save = loadSave();
+let currentChapter = 1;
+let currentStage = 1;
+let playTimer = null;
+let remaining = 60;
+let qIndex = 0;
+let startTime = 0;
+
+/* -------------------------
+   UI behaviors (unchanged)
+   ------------------------- */
+function showTitle(){
+  // Title text changed
+  const titleText = "目指せSDGs～サステナブルな世界～";
+  const container = document.getElementById("title-text-anim");
+  const copyright = document.getElementById("title-copyright");
+  const cert = loadCert();
+  copyright.textContent = cert && cert.copyright ? cert.copyright : "";
+
+  // hide buttons initially
+  const buttonsDiv = document.getElementById("title-buttons");
+  buttonsDiv.classList.remove("title-buttons-visible");
+  buttonsDiv.classList.add("title-buttons-hidden");
+
+  // start title animation
+  container.innerHTML = "";
+  titleText.split("").forEach((char, index) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    span.style.animationDelay = `${index * 0.05}s`;
+    container.appendChild(span);
+  });
+  
+  // show screen after a short delay to ensure initial state is set
+  setTimeout(() => {
+    showScreen("title");
+  }, 50);
+
+  // show buttons after animation completes
+  setTimeout(() => {
+    buttonsDiv.classList.remove("title-buttons-hidden");
+    buttonsDiv.classList.add("title-buttons-visible");
+  }, 1500); // 1.5s delay
+}
+function renderChapterList(){
+  const wrap = document.getElementById("chapter-list");
+  wrap.innerHTML = "";
+  // Chapter titles changed to reflect SDGs themes
+  const chapterTitles = ["命の基盤を築く", "人と水の可能性を解放する", "経済と技術をクリーンにする", "平等な社会と地球環境を守る", "生命と平和の尊さを守る", "パートナーシップと未来への誓い"];
+  for(let i=1;i<=6;i++){
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = (save.unlocked && save.unlocked[i]);
+    if(unlocked){
+      btn.textContent = `テーマ${i}: ${chapterTitles[i-1]}`;
+      btn.onclick = ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ currentChapter = i; renderStageGrid(i); showScreen("stage"); }); }
+    } else {
+      btn.textContent = `🔐 テーマ${i}: ${chapterTitles[i-1]}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+}
+function renderStageGrid(ch){
+  const grid = document.getElementById("stage-grid"); grid.innerHTML="";
+  // Stage (Goal) titles changed to reflect SDGs Goals
+  const goalNames = [
+      ["1:貧困", "2:飢餓", "3:健康", "11:住居", "12:生産と消費", "13:気候"],
+      ["4:教育", "5:ジェンダー", "6:水", "10:不平等", "9:インフラ", "17:パートナーシップ"],
+      ["7:エネルギー", "8:働きがい", "9:インフラ", "12:生産と消費", "13:気候", "17:パートナーシップ"],
+      ["10:不平等", "11:住居", "13:気候", "16:平和", "14:海", "15:陸"],
+      ["14:海", "15:陸", "16:平和", "1:貧困", "2:飢餓", "3:健康"],
+      ["17:パートナーシップ", "4:教育", "5:ジェンダー", "7:エネルギー", "8:働きがい", "Final"]
+  ];
+  for(let s=1;s<=6;s++){
+    const key = `${ch}-${s}`;
+    const unlockedInChapter = (save.unlocked && save.unlocked[ch] && save.unlocked[ch].includes(s));
+    const cleared = (save.records && save.records[key] !== undefined);
+    const btn = document.createElement("button");
+    btn.className="btn";
+    if(unlockedInChapter){
+      let text = `目標${s} (${goalNames[ch-1][s-1]})`;
+      if(cleared) text = `✅ 目標${s} (${goalNames[ch-1][s-1]})`;
+      btn.textContent = text;
+      btn.onclick = ()=> { playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=> startStage(ch,s)); };
+    } else {
+      btn.textContent = `🔐 目標${s}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    grid.appendChild(btn);
+  }
+  document.getElementById("stage-heading").textContent = `テーマ${ch} 目標選択`;
+}
+
+/* start stage (unchanged) */
+function startStage(ch, st){
+  currentChapter = ch; currentStage = st;
+  // stop bgm
+  stopAllBGM();
+  // prepare questions
+  const key = `${ch}-${st}`;
+  const problems = problemBank[key];
+  qIndex = 0; remaining = 60;
+  document.getElementById("play-title").textContent = `テーマ${key}`;
+  renderQuestion(problems[0].w, problems[0].y);
+  document.getElementById("input").value = "";
+  document.getElementById("play-timer").textContent = remaining;
+  showScreen("play");
+  startTime = Date.now();
+  // timer
+  if(playTimer) clearInterval(playTimer);
+  playTimer = setInterval(()=>{
+    remaining--;
+    document.getElementById("play-timer").textContent = remaining;
+    if(remaining<=0){ clearInterval(playTimer); onFail(); }
+  },1000);
+  // bind Enter handler to check against current problems
+  document.getElementById("input").onkeydown = function(e){
+    if(e.key === "Enter"){
+      const val = this.value.trim();
+      const correct = problems[qIndex].y;
+      if(val === correct){
+        playSE('clear');
+        qIndex++;
+        if(qIndex >= problems.length){
+          clearInterval(playTimer);
+          onClear();
+        } else {
+          renderQuestion(problems[qIndex].w, problems[qIndex].y);
+          this.value = "";
+        }
+      } else {
+        playSE('fail');
+        document.getElementById("play-msg").textContent = "不正解。もう一度。";
+        this.select();
+      }
+    }
+  };
+}
+
+/* render question with or without furigana (unchanged) */
+function renderQuestion(word, furigana){
+  const qEl = document.getElementById("question");
+  const furiganaEnabled = document.getElementById("chk-kana").checked;
+  const qText = `問題 ${qIndex+1}: 「${word}」 を入力してください`;
+  if(furiganaEnabled){
+    qEl.innerHTML = `問題 ${qIndex+1}: <ruby>${word}<rt>${furigana}</rt></ruby> を入力してください`;
+  } else {
+    qEl.textContent = qText;
+  }
+}
+
+/* on clear: compute elapsed, save best (unchanged) */
+function onClear(){
+  playSE('clear');
+  const elapsed = Math.max(0, Math.floor((Date.now()-startTime)/1000));
+  const key = `${currentChapter}-${currentStage}`;
+  
+  if(!save.records) save.records = {};
+  if(!save.records[key] || elapsed < save.records[key]){ save.records[key] = elapsed; }
+
+  // unlock next
+  if(!save.unlocked) save.unlocked = {};
+  if(!save.unlocked[currentChapter]) save.unlocked[currentChapter] = [];
+  
+  if (currentStage < 6) {
+    if (!save.unlocked[currentChapter].includes(currentStage + 1)) {
+      save.unlocked[currentChapter].push(currentStage + 1);
+    }
+    saveAll(save);
+    onStageCleared(elapsed);
+  } else if (currentStage === 6) {
+    if (currentChapter < 6) {
+      if (!save.unlocked[currentChapter + 1]) {
+        save.unlocked[currentChapter + 1] = [1];
+      }
+      if (!save.unlockedStories.includes(currentChapter + 1)) {
+        save.unlockedStories.push(currentChapter + 1);
+      }
+      saveAll(save);
+      onChapterCleared(elapsed);
+    } else if (currentChapter === 6) {
+      saveAll(save);
+      onFinalChapterCleared(elapsed);
+    }
+  }
+}
+
+function onStageCleared(elapsed){
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>クリア！ テーマ${currentChapter}-${currentStage} を ${elapsed}秒で突破しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showScreen("records");
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+function onChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>テーマ${currentChapter}クリア！</div>`
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showStory(currentChapter + 1);
+}
+
+async function onFinalChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>最終テーマクリア！</div>`
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5");
+}
+
+/* fail (unchanged) */
+function onFail(){
+  playSE('fail');
+  showScreen("records");
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>時間切れ！ テーマ${currentChapter}-${currentStage} は失敗しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+/* update records UI (unchanged) */
+function updateRecordsUI(){
+  const list = document.getElementById("records-list");
+  list.innerHTML = "";
+  if(save.records){
+    for(const k in save.records){
+      const d = document.createElement("div"); d.textContent = `テーマ${k}: ${save.records[k]}秒`; list.appendChild(d);
+    }
+  } else {
+    list.textContent = "まだ記録はありません。";
+  }
+}
+
+/* show records screen (unchanged) */
+function showRecords(){
+  updateRecordsUI();
+  showScreen("records");
+}
+
+/* show story (unchanged) */
+function showStory(chapter){
+  stopAllBGM();
+  
+  if (chapter === 0) {
+    document.getElementById("btn-prologue-next").onclick = ()=>{ 
+      playSE('btn');
+      save.firstLaunch = false;
+      saveAll(save);
+      transitionWithLoading(() => Promise.resolve(), () => showTitle());
+    };
+    showScreen("prologue");
+    return;
+  }
+  
+  const storyData = stories[chapter];
+  if (!storyData) return;
+
+  document.getElementById("story-title").textContent = storyData.title;
+  document.getElementById("story-text").textContent = storyData.text;
+  
+  const btnNext = document.getElementById("btn-story-next");
+  const btnBack = document.getElementById("btn-story-back");
+  
+  btnNext.onclick = ()=>{ playSE('btn'); showScreen("chapter"); };
+  btnBack.classList.add("hidden");
+
+  showScreen("story");
+}
+
+/* render story list (unchanged) */
+function renderStoryList(){
+  const wrap = document.getElementById("story-list-grid");
+  wrap.innerHTML = "";
+  const chapterTitles = ["プロローグ", "命の基盤を築く", "人と水の可能性を解放する", "経済と技術をクリーンにする", "平等な社会と地球環境を守る", "生命と平和の尊さを守る", "パートナーシップと未来への誓い"];
+  for(let i=0;i<=6;i++){
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = save.unlockedStories.includes(i);
+    const storyTitle = (i === 0) ? "プロローグ" : `テーマ${i}: ${chapterTitles[i]}`;
+    if(unlocked){
+      btn.textContent = `✅ ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('btn'); showStory(i); };
+    } else {
+      btn.textContent = `🔐 ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+  showScreen("story-list");
+}
+
+/* ending (unchanged) */
+function showEnding(){
+  
+  endingPageIndex = 0;
+  updateEndingPage();
+  showScreen("ending");
+}
+
+function updateEndingPage(){
+  const endingData = endings[endingPageIndex];
+  document.getElementById("ending-img").src = endingData.img;
+  document.getElementById("ending-text").textContent = endingData.text;
+
+  const btnNext = document.getElementById("btn-ending-next");
+  const btnPrev = document.getElementById("btn-ending-prev");
+  
+  btnPrev.classList.toggle("hidden", endingPageIndex === 0);
+  
+  if (endingPageIndex === endings.length - 1) {
+    btnNext.textContent = "スタッフロールへ";
+    // 修正: `transitionWithLoading` を使わず、直接 `startStaffRoll` を呼び出すように変更
+    btnNext.onclick = ()=>{ 
+      playSE('btn');
+      startStaffRoll();
+    };
+  } else {
+    btnNext.textContent = "次へ";
+    btnNext.onclick = ()=>{
+      playSE('btn');
+      endingPageIndex++;
+      updateEndingPage();
+    };
+  }
+}
+
+/* staff roll (unchanged) */
+async function startStaffRoll(){
+  stopAllBGM();
+
+  const playBGM = await askPlayStaffBGM();
+  
+  const fade = document.getElementById("fade");
+  fade.style.backgroundColor = "#fff";
+  fade.style.transitionDuration = "1s";
+  document.getElementById("loading4").style.display = "block";
+  document.getElementById("loading2").style.display = "none";
+  document.getElementById("loading5").style.display = "none";
+  fade.classList.add("on");
+  
+  await delay(1000); // Wait for fade out to complete
+  document.getElementById("loading4").style.display = "none";
+
+  showScreen("staff");
+  
+  if (playBGM) {
+    if(document.getElementById("chk-bgm").checked){ 
+      audio.bgmStaff.volume = parseFloat(document.getElementById("bgm-vol").value || 0.2); 
+      audio.bgmStaff.play().catch(()=>{}); 
+    }
+  }
+  
+  const rollLines = document.querySelectorAll(".roll-line");
+  const finalMsg = document.getElementById("final-msg");
+
+  // Reset state
+  rollLines.forEach(line => line.classList.add("hidden"));
+  finalMsg.classList.add("hidden");
+
+  // Hide fade
+  await delay(150);
+  fade.classList.remove("on");
+  
+  // Animate lines one by one
+  for (const line of rollLines) {
+    line.textContent = line.dataset.text;
+    line.style.animation = "none";
+    line.offsetHeight; // force reflow
+    line.style.animation = "fadeCycle 4s linear forwards";
+    line.classList.remove("hidden");
+    await delay(3500);
+    line.classList.add("hidden");
+    await delay(500);
+  }
+
+  // Show final message and button
+  finalMsg.classList.remove("hidden");
+  if (!save.staffSeen) {
+    save.staffSeen = true;
+    saveAll(save);
+  }
+}
+
+/* exit process with animation and se-exit playback (unchanged) */
+async function runExitProcess(){
+  // stop all BGM then show exit screen
+  stopAllBGM();
+  showScreen("exit");
+  document.getElementById("exit-text").textContent = "終了準備中です...";
+  playSE('btn');
+  await delay(800);
+  document.getElementById("exit-text").textContent = "終了処理中です...";
+  const bar = document.getElementById("exit-bar");
+  for(let p=0;p<=100;p+=10){ bar.style.width = p + "%"; await delay(300); }
+  // cleanup and play exit se
+  bar.style.width = "0%";
+  document.getElementById("exit-gif").style.display = "none";
+  document.getElementById("exit-text").textContent = "ゲームを終了しました。htmlを終了することができます。";
+  playSE('exit');
+}
+
+/* settings (unchanged) */
+function openSettings(){ 
+  // load settings from saved data and apply to checkboxes
+  document.getElementById("chk-bgm").checked = save.bgmEnabled;
+  document.getElementById("chk-se").checked = save.seEnabled;
+  document.getElementById("chk-kana").checked = save.furigana;
+  document.getElementById("settings-modal").classList.remove("hidden"); 
+}
+function closeSettings(){ document.getElementById("settings-modal").classList.add("hidden"); }
+function applySettings(){
+  save.bgmEnabled = document.getElementById("chk-bgm").checked;
+  save.seEnabled = document.getElementById("chk-se").checked;
+  save.furigana = document.getElementById("chk-kana").checked;
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+  saveAll(save);
+}
+document.getElementById("btn-settings-close")?.addEventListener("click", ()=>{
+  applySettings(); closeSettings();
+});
+
+/* dev tools (unchanged) */
+function openDevTools(){
+  document.getElementById("dev-tools-modal").classList.remove("hidden");
+}
+function closeDevTools(){
+  document.getElementById("dev-tools-modal").classList.add("hidden");
+}
+
+/* certificate update flow (unchanged) */
+async function updateCertificate(){
+  const pw = prompt("管理者パスワード:");
+  if(pw !== ADMIN_PW){ alert("パスワードが違います"); return; }
+  const daysStr = prompt("有効期間（日数） 1〜10950:", "365");
+  const days = parseInt(daysStr,10);
+  if(isNaN(days) || days < 1 || days > MAX_DAYS){ alert("無効な日数"); return; }
+  const issued = new Date();
+  const expires = new Date(issued.getTime() + days*24*3600*1000);
+  // Copyright changed
+  const cert = { productKey: genKeyForYear(getFiscalYear()), issued: issued.toISOString(), expires: expires.toISOString(), copyright:"© 2025 SDGs Typing Master - Sustainable World" };
+  saveCert(cert);
+  alert("証明書を更新しました。");
+}
+
+/* check system requirements and return boolean result (unchanged) */
+function checkSystemRequirements(){
+    const ua = navigator.userAgent;
+    let isOSSupported = false;
+    let isBrowserSupported = false;
+
+    // OS check
+    const isWindows = /Windows NT/.test(ua);
+    if (isWindows) {
+        const winVerMatch = /Windows NT (\d+\.\d)/.exec(ua);
+        if (winVerMatch && parseFloat(winVerMatch[1]) >= 6.1) {
+            isOSSupported = true;
+        }
+    }
+
+    // Browser check
+    if (ua.indexOf("Edg") > -1) {
+        if (parseInt(/Edg\/(\d+)/.exec(ua)[1], 10) >= 79) isBrowserSupported = true;
+    } else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) {
+        if (parseInt(/(?:Opera|OPR)\/(\d+)/.exec(ua)[1], 10) >= 50) isBrowserSupported = true;
+    } else if (ua.indexOf("Chrome") > -1) {
+        if (parseInt(/Chrome\/(\d+)/.exec(ua)[1], 10) >= 63) isBrowserSupported = true;
+    } else if (ua.indexOf("Firefox") > -1) {
+        if (parseInt(/Firefox\/(\d+)/.exec(ua)[1], 10) >= 58) isBrowserSupported = true;
+    }
+    
+    return { isOSSupported, isBrowserSupported };
+}
+
+/* run loading checks with retries and console logging (unchanged logic) */
+async function runLoadingChecks(){
+  const bar = document.getElementById("progress-bar");
+  const ptext = document.getElementById("progress-text");
+  let attempt = 0;
+  let lastError = null;
+
+  const reqs = checkSystemRequirements();
+  const isOSSupported = reqs.isOSSupported;
+  const isBrowserSupported = reqs.isBrowserSupported;
+  const isSuperRestricted = !isOSSupported && !isBrowserSupported;
+  const isPartialRestricted = !isSuperRestricted && (!isOSSupported || !isBrowserSupported);
+
+  if (isSuperRestricted) {
+      document.getElementById("btn-start").disabled = true;
+      document.getElementById("btn-records").disabled = true;
+      document.getElementById("btn-story-list").disabled = true;
+      document.getElementById("btn-settings").disabled = true;
+  }
+  
+  if (isPartialRestricted) {
+      document.getElementById("partial-warn").classList.remove("hidden");
+      document.getElementById("btn-start").disabled = true;
+      document.getElementById("btn-start").textContent = "🔐スタート";
+  }
+
+  while(attempt < 3){
+    attempt++;
+    try{
+      console.log("[LOAD] attempt", attempt);
+      // step 1: function inspection (simulate)
+      ptext.textContent = "関数チェック中..."; bar.style.width = "10%"; console.log("[LOAD] functions check");
+      await delay(700);
+      
+      // step 2: image check
+      ptext.textContent = "画像ファイルチェック中..."; bar.style.width = "30%"; console.log("[LOAD] checking gifs");
+      const images = ["./image/loading.gif","./image/loading2.gif","./image/loading3.gif","./image/loading4.gif", "./image/loading5.gif", ...[...Array(8)].map((_, i) => `./image/ending/0${i+1}.png`)];
+      const imagePromises = images.map(u => new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => { console.log("[LOAD] image ok", u); resolve(true); };
+        i.onerror = () => { console.error("[LOAD] image missing or failed to load", u); reject(new Error(`Image load failed: ${u}`)); };
+        i.src = u;
+      }));
+      await Promise.all(imagePromises);
+      await delay(300);
+
+      // step 3: audio check
+      ptext.textContent = "音声ファイルチェック中..."; bar.style.width = "50%"; console.log("[LOAD] checking audio");
+      const audios = [...[...Array(9)].map((_, i) => `./image/bgm/0${i+1}.mp3`)];
+      const audioPromises = audios.map(u => new Promise((resolve, reject) => {
+        const a = new Audio();
+        a.oncanplaythrough = () => { console.log("[LOAD] audio ok", u); resolve(true); };
+        a.onerror = () => { console.error("[LOAD] audio missing or failed to load", u); reject(new Error(`Audio load failed: ${u}`)); };
+        a.src = u;
+        a.load();
+      }));
+      await Promise.all(audioPromises);
+      await delay(300);
+
+      // step 4: check cert
+      ptext.textContent = "証明書確認中..."; bar.style.width = "70%"; console.log("[LOAD] certificate check");
+      try {
+          const cert = loadCert();
+          validateCert(cert);
+      } catch (e) {
+          console.warn("証明書エラー発生。自動的にリセットします。", e);
+          localStorage.removeItem("certificate");
+          location.reload(); // ページをリロードして再起動
+          return; // Add return to prevent further execution after reload
+      }
+      await delay(300);
+
+      // step 5: check CSS / encoding (simulate)
+      ptext.textContent = "HTML/CSS検証中..."; bar.style.width = "90%"; console.log("[LOAD] css check");
+      const metas = document.getElementsByTagName("meta");
+      let charsetOk = false;
+      for(const m of metas) if(m.getAttribute("charset") && m.getAttribute("charset").toLowerCase().includes("utf")) charsetOk = true;
+      if(!charsetOk) console.warn("[LOAD] charset meta not utf-8 (warning)");
+      await delay(300);
+      
+      // final
+      ptext.textContent = "正常終了 ✅"; bar.style.width = "100%"; console.log("[LOAD] done");
+      await delay(600);
+      // hide loading area now and prompt BGM
+      document.getElementById("loading-area").style.display = "none";
+      await askPlayBGM();
+      if(save.firstLaunch){
+        await transitionWithLoading(() => Promise.resolve(), () => showStory(0));
+      } else {
+        // Use transitionWithLoading for safe screen change
+        await transitionWithLoading(() => Promise.resolve(), showTitle);
+      }
+      return;
+    }catch(e){
+      lastError = e;
+      console.error("[LOAD] Fatal error during checks:", e);
+      // log error name + message
+      console.error("Error name/message:", e.name, e.message);
+      // retry loop
+      if(attempt < 3){
+        console.log("[LOAD] retrying...");
+        ptext.textContent = `ロードに問題が発生しました。再試行します... (${attempt})`;
+        await delay(800);
+      } else {
+        ptext.textContent = "❗ロードに失敗しました";
+        console.error("[LOAD] failed after retries:", e);
+        // show exit button
+        const btn = document.createElement("button"); btn.className="btn"; btn.textContent="ゲームを終了する"; btn.onclick = ()=> runExitProcess();
+        document.getElementById("loading-area").appendChild(btn);
+        return;
+      }
+    }
+  }
+}
+
+/* ask Play BGM overlay BEFORE showing title (unchanged logic) */
+function askPlayBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-yes").onclick = ()=>{
+      modal.classList.add("hidden");
+      // save.bgmEnabled defaults to true on first run, so this will set the checkbox state
+      document.getElementById("chk-bgm").checked = true;
+      document.getElementById("bgm-vol").value = localStorage.getItem("bgmVol") || 0.2;
+      setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+      try{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }catch(e){}
+      resolve();
+    };
+    document.getElementById("bgm-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      document.getElementById("chk-bgm").checked = false;
+      resolve();
+    };
+  });
+}
+
+/* ask Play Ending BGM (unchanged logic) */
+function askPlayEndingBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-ending-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-ending-yes").onclick = ()=>{
+      // BGM設定がONになっているかチェック
+      const isBgmEnabled = document.getElementById("chk-bgm").checked;
+      if (!isBgmEnabled) {
+          // ONになっていなければ警告ダイアログを表示
+          const warnModal = document.getElementById("bgm-setting-warn-prompt");
+          warnModal.classList.remove("hidden");
+          
+          document.getElementById("bgm-setting-warn-yes").onclick = ()=>{
+              warnModal.classList.add("hidden");
+              modal.classList.add("hidden");
+              document.getElementById("chk-bgm").checked = true; // BGM ONに設定
+              saveAll(save);
+              stopAllBGM();
+              audio.bgmEnding.play().catch(e => {
+                  console.error("Failed to play ending BGM:", e);
+              });
+              resolve();
+          };
+          document.getElementById("bgm-setting-warn-no").onclick = ()=>{
+              warnModal.classList.add("hidden");
+              modal.classList.add("hidden");
+              resolve();
+          };
+      } else {
+          // ONになっていればそのまま再生
+          modal.classList.add("hidden");
+          stopAllBGM();
+          audio.bgmEnding.play().catch(e => {
+              console.error("Failed to play ending BGM:", e);
+          });
+          resolve();
+      }
+    };
+    document.getElementById("bgm-ending-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve();
+    };
+  });
+}
+
+/* ask Play Staff BGM (unchanged logic) */
+function askPlayStaffBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-staff-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-staff-yes").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve(true);
+    };
+    document.getElementById("bgm-staff-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      resolve(false);
+    };
+  });
+}
+
+// ---------------------------
+// START OF NEW / MODIFIED CODE
+// ---------------------------
+
+/**
+ * モバイルデバイスを検知する関数
+ * @returns {boolean} モバイルデバイスであればtrue
+ */
+function checkMobileDevice() {
+    const ua = navigator.userAgent;
+    const mobileKeywords = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    return mobileKeywords.test(ua);
+}
+
+/* wire events on load (unchanged logic) */
+window.addEventListener("DOMContentLoaded", async ()=>{
+  // bind buttons
+  document.getElementById("btn-story-next")?.addEventListener("click", ()=>{ playSE('btn'); showScreen("chapter"); });
+  document.getElementById("btn-story-back")?.addEventListener("click", ()=>{ playSE('back'); renderStoryList(); });
+  document.getElementById("btn-story-list")?.addEventListener("click", ()=>{ playSE('btn'); renderStoryList(); });
+  document.getElementById("btn-story-list-back")?.addEventListener("click", ()=>{ playSE('back'); showScreen("title"); });
+
+  document.getElementById("btn-start").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderChapterList(); showScreen("chapter"); }); });
+  document.getElementById("btn-records").addEventListener("click", ()=>{ playSE('btn'); showRecords(); });
+  document.getElementById("btn-music-room").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("music-room"); }); });
+  document.getElementById("btn-music-room-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ stopAllBGM(); showScreen("title"); }); });
+  document.getElementById("btn-play-bgm").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgm.play().catch(()=>{});
+    }
+  });
+  document.getElementById("btn-play-staff").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgmStaff.play().catch(()=>{});
+    }
+  });
+  document.getElementById("btn-play-ending").addEventListener("click", ()=>{ 
+    if(document.getElementById("chk-bgm").checked) {
+      stopAllBGM();
+      audio.bgmEnding.play().catch(()=>{});
+    }
+  });
+
+  document.getElementById("btn-settings").addEventListener("click", ()=>{ playSE('btn'); openSettings(); });
+  document.getElementById("btn-exit").addEventListener("click", ()=>{ playSE('exit'); transitionWithLoading(()=>Promise.resolve(), ()=> runExitProcess()); });
+
+  document.getElementById("btn-chap-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-stage-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); }); });
+  document.getElementById("btn-stage-title").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+
+  document.getElementById("btn-play-back").addEventListener("click", ()=>{ playSE('back'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+  document.getElementById("btn-giveup").addEventListener("click", ()=>{ playSE('fail'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+
+  document.getElementById("btn-records-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-records-back-last-stage").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("stage"); }); });
+  document.getElementById("btn-records-back-chapter").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("chapter"); }); });
+  document.getElementById("btn-records-story").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStoryList(); }); });
+  document.getElementById("btn-dev-tools").addEventListener("click", ()=>{ playSE('btn'); openDevTools(); });
+  document.getElementById("btn-reset").addEventListener("click", ()=>{ 
+    if(confirm("セーブと証明書を削除しますか？")){ 
+      localStorage.removeItem("sdgsTypingMasterSave"); 
+      localStorage.removeItem("certificate"); // <- これが修正箇所です
+      save = loadSave(); 
+      alert("リセットしました"); 
+    }
+  });
+  document.getElementById("btn-cert").addEventListener("click", ()=>{ updateCertificate(); });
+
+  document.getElementById("btn-dev-to-ending").addEventListener("click", async ()=>{ closeDevTools(); await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5"); });
+  document.getElementById("btn-dev-to-staff").addEventListener("click", async ()=>{ closeDevTools(); startStaffRoll(); });
+  document.getElementById("btn-dev-close").addEventListener("click", ()=>{ playSE('back'); closeDevTools(); });
+
+  document.getElementById("btn-roll-back-to-title").addEventListener("click", ()=>{ playSE('back'); 
+    transitionWithLoading(() => Promise.resolve(), () => {
+        stopAllBGM();
+        showScreen("title");
+        if(document.getElementById("chk-bgm").checked){ 
+            audio.bgm.play().catch(()=>{}); 
+        }
+    }, "#fff", "1s", "loading4");
+  });
+  document.getElementById("btn-chap-back").addEventListener("click", ()=>{ playSE('back'); showScreen("title"); });
+  document.getElementById("btn-ending-prev")?.addEventListener("click", ()=>{
+    if(endingPageIndex > 0) {
+      playSE('back');
+      endingPageIndex--;
+      updateEndingPage();
+    }
+  });
+
+  document.getElementById("bgm-vol").addEventListener("input", (e)=>{ localStorage.setItem("bgmVol", e.target.value); setBGMVolume(e.target.value); });
+  document.getElementById("se-vol").addEventListener("input", (e)=>{ localStorage.setItem("seVol", e.target.value); setSEVolume(e.target.value); });
+
+  // init volumes and settings from localStorage
+  const savedSettings = loadSave();
+  document.getElementById("bgm-vol").value = localStorage.getItem("bgmVol") || 0.2;
+  document.getElementById("se-vol").value = localStorage.getItem("seVol") || 1;
+  document.getElementById("chk-bgm").checked = savedSettings.bgmEnabled;
+  document.getElementById("chk-se").checked = savedSettings.seEnabled;
+  document.getElementById("chk-kana").checked = savedSettings.furigana;
+
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+
+  // cert copyright display
+  document.getElementById("copyright").textContent = loadCert().copyright || "";
+
+  // initial run loading checks
+  if (checkMobileDevice()) {
+      document.getElementById("loading-area").style.display = "none";
+      document.getElementById("mobile-warn").classList.remove("hidden");
+      await askPlayBGM();
+      if(save.firstLaunch){
+          await transitionWithLoading(() => Promise.resolve(), () => showStory(0));
+      } else {
+          await transitionWithLoading(() => Promise.resolve(), showTitle);
+      }
+  } else {
+      runLoadingChecks();
+  }
+});
+
+/* small safety: ensure showScreen('title') exists */
+document.addEventListener("click", (e)=>{ if(e.target && e.target.matches && e.target.matches('.btn')){ /* user interacted; allow autoplay */ } });
+
+/* -------------------------
+   Save export/import (固定鍵版)
+   ------------------------- */
+
+const SAVE_KEY1 = "typing-sdgs_v1_data"; // Key changed
+const SAVE_KEY2 = "master-the-goals"; // Key changed
+
+function xorProcessBytes(dataBytes, key){
+  const keyBytes = new TextEncoder().encode(key);
+  const out = new Uint8Array(dataBytes.length);
+  for(let i=0;i<dataBytes.length;i++){
+    out[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+  }
+  return out;
+}
+
+function exportSaveToDat(){
+  const s = localStorage.getItem("sdgsTypingMasterSave");
+  if(!s){
+    alert("保存データが見つかりません。");
+    return;
+  }
+  const dataBytes = new TextEncoder().encode(s);
+  let enc = xorProcessBytes(dataBytes, SAVE_KEY1);
+  enc = xorProcessBytes(enc, SAVE_KEY2);
+  const b64 = btoa(String.fromCharCode(...enc));
+  const blob = new Blob([b64], { type: "application/octet-stream" });
+  // Filename changed
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "sdgs-typing_v2.dat";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 5000);
+  alert("sdgs-typing_v2.dat をダウンロードしました。");
+}
+
+function importDatFile(file){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const text = e.target.result;
+      const bytes = Uint8Array.from(atob(text), c=>c.charCodeAt(0));
+      let dec = xorProcessBytes(bytes, SAVE_KEY2);
+      dec = xorProcessBytes(dec, SAVE_KEY1);
+      const decoded = new TextDecoder().decode(dec);
+      const parsed = JSON.parse(decoded);
+      localStorage.setItem("sdgsTypingMasterSave", JSON.stringify(parsed));
+      save = loadSave();
+      alert("セーブデータを取り込みました。タイトルへ戻ると反映されます。");
+    }catch(err){
+      console.error("import failed", err);
+      alert("取り込みに失敗しました。ファイルが壊れている可能性があります。");
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("btn-export-save")?.addEventListener("click", ()=>{ playSE('btn'); exportSaveToDat(); });
+document.getElementById("btn-import-save")?.addEventListener("click", ()=>{ 
+  playSE('btn'); 
+  const f = document.getElementById("file-import");
+  f.value = "";
+  f.click();
+});
+document.getElementById("file-import")?.addEventListener("change", (ev)=>{
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  if(!confirm(`${file.name} を取り込みます。現在のセーブは上書きされます。よろしいですか？`)) return;
+  importDatFile(file);
+});
+</script>
+</body>
+</html>
