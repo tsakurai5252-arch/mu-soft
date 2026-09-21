@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!-- saved from url=(0057)https://tsakurai5252-arch.github.io/my-page/tsftp/manual/ -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+</head><body id="page_top">
+
+<title>【オンラインマニュアル】TS FTPの使い方</title>
+<style>
+        @font-face {
+            font-family: 'HGP明朝B', 'HGPMinchoB';
+            src: url('../../font/FONT.TTC') format('truetype');
+            font-weight: bold;
+        }
+
+/* すべての画像を元の大きさの70%にする設定です */
+    img {
+      width: 56%;
+      height: auto; /* 画像がゆがまないように縦横のバランスを自動で調整します */
+    }
+
+        a {
+          outline: none;
+          text-decoration: underline;
+        }
+        
+        a:link { color: #0000FF; }
+        a:visited { color: #0000FF; }
+        a:active { color: #0000FF; }
+
+        a:link {
+          color: #0000FF; 
+          transition: 0.4s; 
+        }
+
+        a:hover {
+          color: red; 
+        }
+
+       /* a-greenというクラスがついたaタグだけを緑色にする */
+       .a-green {
+        color: blue;
+        text-decoration: none; /* 下線を消したい場合は追加 */
+        }
+
+  /* マウスを乗せたときの色を変えたい場合はこちら */
+  .a-green:hover {
+    color: green;
+  }
+
+
+/* --- トップへ戻るボタンのスタイル --- */
+        #pagetop-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background: #0000FF;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 12px;
+            opacity: 0;          /* 最初は隠す */
+            visibility: hidden;  /* 最初は隠す */
+            transition: 0.3s;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        #pagetop-btn:hover {
+            background: red;
+            color: #fff;
+        }
+
+        /* 表示された時の状態 */
+        #pagetop-btn.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+/* --- 右上のロード中インジケーター --- */
+        #mini-loader {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7); /* 黒背景（透過） */
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.4s ease;
+            pointer-events: none; /* 下のコンテンツの操作を邪魔しない */
+        }
+
+        /* 小さなくるくるアニメーション */
+        .dot-spin {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 読み込み完了後に消す用 */
+        .hidden {
+            opacity: 0;
+        }
+
+/* 目印（クラス）がついた画像だけを元の大きさの70%にする設定です */
+    .r {
+      width: 35%;
+      height: auto; /* 画像がゆがまないように縦横のバランスを自動で調整します */
+    }
+</style>
+<style>
+</style>
+
+<section id="page_top">
+<a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#page_top" id="pagetop-btn">TOP</a>
+<!-- ロード中インジケーター -->
+    <div id="mini-loader" class="hidden">
+        <div class="dot-spin"></div>
+        <span>ロード中...</span>
+    </div>
+</section>
+<h3 style="font-family: 'HGP明朝B', serif;">オンラインマニュアル</h3>
+<hr>
+<center>
+<h1 style="font-family: 'HGP明朝B', serif;">【オンラインマニュアル】TS FTPの使い方</h1>
+<p style="font-family: 'HGP明朝B', serif;">ここでは、自作FTPソフト【TS FTP】の使い方についての説明を画像付きで行っていきます。</p>
+<p style="font-family: 'HGP明朝B', serif;">～目次～</p>
+<li><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#section-mokuji" style="font-family: 'HGP明朝B', serif;">はじめに</a></li>
+<li><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#section-mokuji1" style="font-family: 'HGP明朝B', serif;">使い方</a></li>
+<li><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#section-mokuji4" style="font-family: 'HGP明朝B', serif;">1.0c/1.0dでの変更点</a></li>
+<li><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#section-mokuji2" style="font-family: 'HGP明朝B', serif;">【初心者向け】簡単モードについて</a></li>
+<li><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/manual/#section-mokuji3" style="font-family: 'HGP明朝B', serif;">開発秘話</a></li>
+<br>
+<section id="section-mokuji">
+<h2 style="font-family: 'HGP明朝B', serif;">はじめに</h2>
+<img src="./index_files/logo.png" alt="Powered by Python / Created by Gemini" class="r">
+<p style="font-family: 'HGP明朝B', serif;">本ソフトは個人で開発されたものです。最低限の動作確認を済ませてあります。<br>なお、開発にはGoogle Gemini (3.5 Flash-Lite, 3.6 Flash, 3.1 Pro)を使用し、コードはPythonで書かれています。</p>
+<h4 style="font-family: 'HGP明朝B', serif;">1.0dの変更点</h4>
+<p style="font-family: 'HGP明朝B', serif;">ファイルの名前変更に対応しました。<br>ファイルの移動・コピーに対応しました。<br>所有者が表示されるようになりました。<br>.doc/.docx/.ppt/.pptxのアイコン表示を追加しました。</p>
+<h4 style="font-family: 'HGP明朝B', serif;">1.1dの変更点</h4>
+<p style="font-family: 'HGP明朝B', serif;">SFTPに対応しました。</p>
+<download></download><a href="https://tsakurai5252-arch.github.io/my-page/tsftp/page/download.html">ダウンロードする</a>
+</section>
+<hr>
+<section id="section-mokuji1">
+<h2 style="font-family: 'HGP明朝B', serif;">TS FTPの使い方</h2>
+<img src="./index_files/01.png" alt="画像1">
+<p style="font-family: 'HGP明朝B', serif;">TS FTPソフトが入っているフォルダを見ると、このようになっています。<br>tsftp.exeと書かれているものをダブルクリックしてください。</p>
+<img src="./index_files/02.png" alt="画像2">
+<p style="font-family: 'HGP明朝B', serif;">するとこのようなログイン画面になります。<br>ホスト名/ユーザー名/パスワードと接続方式を設定して〈接続〉をクリックしてください。</p>
+<img src="./index_files/03.png" alt="画像3">
+<p style="font-family: 'HGP明朝B', serif;">〈接続〉をクリックし、接続に成功するとこのような画面になります。<br>失敗した場合、エラーメッセージが表示されます。</p>
+</section>
+<section id="section-mokuji4">
+<h2 style="font-family: 'HGP明朝B', serif;">1.0c/1.0dでの変更点</h2>
+<img src="./index_files/update.png" alt="画像1">
+<p style="font-family: 'HGP明朝B', serif;">表示項目の増加に伴い、ウインドウサイズが変更されました。</p>
+</section>
+<section id="section-mokuji2">
+<h2 style="font-family: 'HGP明朝B', serif;">【初心者向け】簡単モードについて</h2>
+<img src="./index_files/04.png" alt="画像4">
+<p style="font-family: 'HGP明朝B', serif;">通常の画面で簡単モードのボタンをクリックすると、この画面になります。</p>
+<img src="./index_files/05.png" alt="画像5">
+<p style="font-family: 'HGP明朝B', serif;">ファイルをクリックしてアップロードボタンをクリックすると、ウインドウが表示されます。</p>
+<img src="./index_files/06.png" alt="画像6" class="r">
+<p style="font-family: 'HGP明朝B', serif;">ファイルをクリックせずにアップロードボタンをクリックすると、エラーメッセージが表示されます。</p>
+<img src="./index_files/07.png" alt="画像7">
+<p style="font-family: 'HGP明朝B', serif;">ファイルをクリックしてダウンロードボタンをクリックすると、「名前をつけて保存」ダイアログボックスが<br>表示されます。</p>
+<img src="./index_files/08.png" alt="画像8" class="r">
+<p style="font-family: 'HGP明朝B', serif;">ファイルをクリックして削除ボタンをクリックすると、<font color="red">必ず<font color="black">削除確認画面が表示される仕様になっています。</font></font></p><font color="red"><font color="black">
+<img src="./index_files/09.png" alt="画像9">
+<p style="font-family: 'HGP明朝B', serif;">通常モードと簡単モードの決定的な違いは、分かりやすいボタンがあるか否かです。</p>
+</font></font></section><font color="red"><font color="black">
+<hr>
+<section id="section-mokuji3">
+<h2 style="font-family: 'HGP明朝B', serif;">開発秘話</h2>
+<img src="./index_files/hiwa.png" alt="開発秘話【画像】" class="r">
+<p style="font-family: 'HGP明朝B', serif;">FTPソフト【TS FTP】が誕生した背景には、様々な物語があります。<br>ぜひご覧ください。</p>
+<p style="font-family: 'HGP明朝B', serif;">当初の予定は、〈弾幕シューティングゲームの自動プレイプログラム〉と〈囲碁ゲーム〉を作ることだったんです。<br>しかし、生成AIでコードを生成する他に方法がない私では、どちらも完成させることができませんでした。</p>
+<br>
+<font color="gray">
+<p style="font-family: 'HGP明朝B', serif;">＜当初の予定＞</p>
+</font>
+<img src="./index_files/logo-sub.png" alt="当初の予定" class="r">
+<font color="black">
+<br>
+<p style="font-family: 'HGP明朝B', serif;">Pythonで囲碁ゲームを開発する初の試みで、ロゴ画像まで作成していました。</p>
+<br>
+<font color="gray">
+<p style="font-family: 'HGP明朝B', serif;">＜囲碁ゲームのソースコードの一部＞</p>
+</font>
+<!--囲碁ゲームのソースコードここから-->
+<code><p>
+import copy<br>
+import os<br>
+import random<br>
+import tkinter as tk<br>
+from tkinter import messagebox<br>
+from PIL import Image, ImageTk<br><br><br>
+
+
+# ==========================================<br>
+# 厳格な囲碁ルールエンジン<br>
+# ==========================================<br>
+class GoBoard:<br><br>
+
+  def __init__(self, size=9):<br>
+    self.size = size<br>
+    # 盤面: 0=空, 1=黒, 2=白<br>
+    self.board = [[0] * size for _ in range(size)]<br>
+    self.current_player = 1  # 1:黒, 2:白<br>
+    self.history = []  # コウ（同形反復）判定用履歴<br>
+    self.captured_black = 0  # 黒が取った白の石（アゲハ）<br>
+    self.captured_white = 0  # 白が取った黒の石（アゲハ）<br>
+
+  def get_adjacent(self, r, c):<br>
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    adj = []
+    for dr, dc in directions:
+      nr, nc = r + dr, c + dc
+      if 0 &lt;= nr &lt; self.size and 0 &lt;= nc &lt; self.size:
+        adj.append((nr, nc))
+    return adj
+
+  def find_group(self, r, c, board_state):
+    """指定した座標の石が属する連（グループ）と呼吸点を取得"""
+    color = board_state[r][c]
+    if color == 0:
+      return set(), set()
+
+    group = set([(r, c)])
+    liberties = set()
+    frontier = [(r, c)]
+    visited = set([(r, c)])
+
+  </p></code>
+<!--ここまで-->
+<br>
+<font color="gray">
+<p style="font-family: 'HGP明朝B', serif;">＜弾幕STG自動プレイプログラムのソースコードの一部＞</p>
+</font>
+<!--自動プレイプログラムのソースコードここから-->
+<code><p>
+import numpy as np
+import time
+import math
+import cv2
+import json
+import keyboard
+from PIL import ImageGrab
+import pydirectinput
+from typing import List, Tuple, Optional
+
+# pydirectinputのフェイルセーフ（画面の端にマウスをやると停止する機能）を有効化
+pydirectinput.FAILSAFE = True
+
+class DanmakuSTGBot:
+    def __init__(self, bbox: Tuple[int, int, int, int] = (100, 100, 740, 580), save_file: str = "touhou-bot.txt"):
+        # --- 基本設定 ---
+        self.bbox = bbox
+        self.save_file = save_file
+        self.bomb_save_file = "bomb-data.txt" # 手動ボムのタイミングを記録するファイル
+        self.learn_file = "learn.txt" # 追加: 被弾前の失敗データを記録するファイル
+        self.last_player_pos: Optional[Tuple[int, int]] = None
+        self.shots_and_focus_pressed = False # ZとShiftを押しっぱなしにしているかのフラグ
+        self.is_auto_bomb = True # ボムを自動で撃つかどうかのフラグ
+
+        # --- 追加: 被弾検知と学習データ保存のための設定 ---
+        self.history_buffer = [] # 直近の動きを記憶しておくリスト
+        self.max_history_len = 100 # 何コマ分（約1秒分）の動きを記憶しておくか
+        self.warp_threshold = 100.0 # これ以上一瞬で移動したら「ワープ（被弾）」と判定する距離
+        self.item_burst_threshold = 10 # 1コマでこれ以上アイテムが増えたら「アイテムが散らばった」と判定
+
+        # --- 画像認識の調整値 ---
+        # 自機（赤色）の検出範囲
+        self.hsv_lower_red1 = np.array([0, 150, 150])
+        self.hsv_upper_red1 = np.array([10, 255, 255])
+        self.hsv_lower_red2 = np.array([170, 150, 150])
+        self.hsv_upper_red2 = np.array([180, 255, 255])
+        # [FIX] 自機の当たり判定点（小さい点）のサイズ範囲。
+        #       これを使い、UIの赤アイコンや赤アイテムの塊など
+        #       「大きすぎる/小さすぎる」赤色の塊を自機として誤認しないようにする
+        self.player_min_area = 2
+        self.player_max_area = 200
+        # [FIX] 1フレームでこれ以上動くのは基本的にあり得ない距離。
+        #       これを超えて離れた候補は「別の赤い物体」の可能性が高い
+        self.player_max_jump_dist = 80
+
+        # [FIX] 移動キーの現在の押下状態を記憶し、差分だけを送信するための集合
+        self._pressed_move_keys = set()
+        
+        # 弾の検出基準
+        self.bullet_thresh = 200 # 明るさの基準
+        self.bullet_min_area = 5 # これより小さいものはゴミ(ノイズ)として無視
+        self.bullet_max_area = 600 # これより大きいものはエフェクトとして無視
+        # [FIX] アイテムと弾の最小距離を厳しく: 自機付近の自機ショットなどを除外
+        self.min_dist_to_recognize_bullet = 20 # 自機に近すぎるものを自機自身と誤認しないための距離
+        # [FIX] アイテム除外用：アイテムとして検出された座標から半径このピクセル内の輝度blob は弾として扱わない
+        self.item_bullet_exclusion_radius = 12
+
+        # --- 回避アルゴリズムの調整値 ---
+        self.danger_threshold = 130.0 # この距離以内に弾が来たら逃げ始める
+        self.bomb_danger_dist = 30.0 # この距離以内に弾が来たらボムを検討
+        self.bomb_trigger_count = 2 # 危険な距離に弾が何個あったらボムを使うか
+        
+        # [FIX] エッジマージンをスクリーン絶対座標ではなくゲーム画像内のローカル座標で扱う
+        self.margin_edge = 40 # 画面端に近づきたくない距離（ゲーム画像内ピクセル）
+        self.edge_weight = 3.0 # [FIX] 画面端から押し返される力の強さ（大幅増）
+        self.bottom_margin_extra = 80 # 画面下部はさらにこれだけ余裕を持つ
+        self.bottom_edge_weight = 4.0 # [FIX] 画面下端から押し返される力の強さ（強め）
+        
+        self.center_target_y_ratio = 0.7 # 落ち着きたい縦の位置（0.0が上、1.0が下）
+        self.center_gravity_weight = 0.08 # [FIX] 中央に戻ろうとする力の強さ（増加）
+        self.move_threshold = 0.3 # どれくらい力が加わったら実際に動くか
+
+
+  </p></code>
+<!--ここまで-->
+<p style="font-family: 'HGP明朝B', serif;">これは囲碁ゲーム/弾幕STG自動プレイプログラムのソースコードの一部ですが、コードの構造がおかしかったり、何かバグっていたりしてうまく動作しませんでした。以下に開発中の画像を載せておきます。</p>
+<br>
+<font color="gray">
+<p style="font-family: 'HGP明朝B', serif;">＜囲碁ゲーム/弾幕STG自動プレイプログラム  開発中の画像＞</p>
+</font>
+<img src="./index_files/hiwa02.png" alt="開発秘話">
+<p style="font-family: 'HGP明朝B', serif;">囲碁ゲームを起動したときのウインドウの状態</p>
+<img src="./index_files/hiwa03.png" alt="開発秘話">
+<p style="font-family: 'HGP明朝B', serif;">弾幕STG自動プレイプログラムの開発中の様子</p>
+<p style="font-family: 'HGP明朝B', serif;">そこで、これら2つの開発を諦める決断をしましたが、Pythonで何かを作りたいという気持ちは薄れることがありませんでした。<br>そのとき、ふと思い出したのがFFFTPというFTPソフトの存在です。現在は私がとあるホームページの管理をしているのですが、将来的に家族が管理しなければ<br>ならなくなったときに、FFFTPでは複雑ではないかと思ったんです。<br><br>だったら、「必要最低限の機能のみに絞ったFTPソフト」があればいいんじゃないかなと。そういうことで、TS FTPソフトの開発を始めました。</p>
+<p style="font-family: 'HGP明朝B', serif;">開発は難航しました。<br>まずFFFTPがどんな方式でCCNETのサーバーにアクセスしているのかを理解する必要がありました。<br>次に、設定されているユーザー名とパスワードを用意する必要がありました。<br>幸いにも、FFFTPのログ/設定をエクスポートしてログイン情報を確認することでどちらも解決しました。<br><br>いかがだったでしょうか。<br>今後ともTS FTPソフトをご利用いただけますと幸いです。</p>
+</font></section><font color="black">
+<hr>
+<p style="font-family: 'HGP明朝B', serif;">こちらはTS FTPソフトのオンラインマニュアル版です。</p>
+<i><p style="font-family: 'HGP明朝B', serif;">© Copyright 2026 HomeMade Tools Project All Rights Reserved.</p></i>
+</font></font></font></center><font color="red"><font color="black"><font color="black">
+<script>
+        // 全リソースの読み込みが完了したら実行
+        window.onload = function() {
+            const loader = document.getElementById('mini-loader');
+            loader.classList.add('hidden');
+        };
+</script>
+
+
+</font></font></font></body></html>
