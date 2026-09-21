@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>自作タイピングゲーム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>タイピングゲーム 🍣</h1>
+
+<div id="fatalWarning" style="display:none; background:#200; color:#fff; padding:2em; text-align:center;">
+  <p style="font-family:'ＭＳ Ｐゴシック',serif; font-size:14px;">
+    タイピングゲームも、時代を越えることはできなかったようです。<br>
+    寿司タイピングはここで静かに幕を閉じます。<font color="FF0000">error:ブラウザは対応していません<font color="black">
+  </p>
+</div>
+
+<script>
+function checkFatalBrowser() {
+  var ua = navigator.userAgent.toLowerCase();
+  var isIE5OrEarlier = ua.indexOf("msie 5.0") >= 0 || ua.indexOf("msie 4.0") >= 0;
+  var isOldChrome = ua.indexOf("chrome/") >= 0 && parseInt(ua.split("chrome/")[1]) < 50;
+  var isOldFirefox = ua.indexOf("firefox/") >= 0 && parseInt(ua.split("firefox/")[1]) < 50;
+
+  if (isIE5OrEarlier || isOldChrome || isOldFirefox) {
+    var warning = document.getElementById("fatalWarning");
+    warning.style.display = "block";
+
+    setTimeout(function() {
+      // 強制終了（ウィンドウを閉じる）
+      window.open('', '_self');
+      window.close();
+    }, 2000); // 2秒後に終了
+  }
+}
+
+checkFatalBrowser();
+</script>
+  <div id="countdown" style="font-size: 2.5em; margin-bottom: 20px;"></div>
+　<!-- UI表示要素 -->
+  <div id="sushi-static">ここに問題が表示されます</div>
+  <div id="typed-progress"></div>
+  <div id="result"></div>
+  <div id="score">ここに点数表示</div>
+  <div id="timer">ここに残り時間表示</div>
+  <div id="score-comment">ここにスコアコメント表示</div>
+  <div id="countdown"></div>
+<br>
+<!-- 終了後ボタン -->
+<button id="retry-button" style="display: none;">もう一度挑戦する 🔁</button>&nbsp
+  <button id="back-button" style="display: none;">難易度選択に戻る 🧭</button>
+</div>
+
+<!-- エラー表示領域 -->
+<div id="errorDisplay" style="display:none;">
+  <span id="errorMessage"></span>
+</div>
+   <script src="typing-game.js"></script>
+<hr>
+<script src="OSsupport.js"></script>
+<script>
+  showDetectedOS(); // 必要なら detectOS() を直接使って分岐してもOK
+</script>
+    <script src="BrowserDetect.js"></script>
+<script>
+  showBrowserStatus();
+</script>
+<hr>
+<small>
+<p>2025&nbsp自作タイピングゲーム(ver1.05)</p>
+</small>
+</body>
+</html>

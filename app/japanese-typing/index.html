@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本語タイピングゲーム 完全版 Ver.33（不具合修正版）</title>
+<style>
+    /* デザイン設定 (変更なし) */
+    body {
+        background-color: #f5deb3; color: #5d4037;
+        font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+        text-align: center; margin: 0; padding: 0; overflow: hidden; user-select: none;
+    }
+    h1 { margin: 15px 0; font-size: 36px; } 
+    button {
+        background-color: #8b4513; color: #fff;
+        border: 2px solid #5d4037; padding: 12px 25px; 
+        font-size: 18px; 
+        cursor: pointer; margin: 10px;
+        border-radius: 5px; font-family: inherit; transition: 0.2s;
+    }
+    button:hover { background-color: #a0522d; transform: scale(1.05); }
+    
+    .screen { 
+        display: none; 
+        height: 100vh; 
+        flex-direction: column; 
+        justify-content: center; 
+        align-items: center; 
+        position: relative; 
+    }
+    .active { display: flex; }
+
+    /* Ready & Countdown Screen */
+    #ready-screen { background-color: #fff8dc; }
+
+    /* 設定画面 */
+    #settings-screen { 
+        overflow-y: auto; 
+        position: relative; 
+        justify-content: flex-start; 
+        height: 100vh; 
+        box-sizing: border-box; 
+        padding-top: 100px; 
+        padding-bottom: 50px; 
+    }
+    .setting-group { 
+        margin-bottom: 30px; 
+        padding: 20px; 
+        border: 2px solid #a0522d; 
+        border-radius: 8px; 
+        width: 450px; 
+        text-align: left; 
+        background-color: #fffaf0; 
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1); 
+    }
+    .setting-group label { font-size: 20px; } 
+    
+    #settings-action-bar { 
+        position: absolute; 
+        top: 20px; 
+        right: 40px; 
+        z-index: 10;
+    }
+    
+    /* マニュアル画面用スタイル */
+    #manual-screen {
+        overflow-y: auto; 
+        justify-content: flex-start; 
+        padding-top: 50px; 
+        padding-bottom: 120px;
+        text-align: left;
+        box-sizing: border-box;
+    }
+    #manual-screen h2 {
+        font-size: 28px;
+        color: #8b4513;
+        border-bottom: 2px solid #8b4513;
+        padding-bottom: 5px;
+        margin-top: 30px;
+    }
+    #manual-screen h3 {
+        font-size: 22px;
+        color: #5d4037;
+        margin-top: 25px;
+    }
+    #manual-screen ul {
+        list-style-type: disc;
+        padding-left: 40px;
+    }
+    #manual-screen li {
+        margin-bottom: 8px;
+        font-size: 18px;
+    }
+    #manual-screen table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 16px;
+    }
+    #manual-screen th, #manual-screen td {
+        border: 1px solid #a0522d;
+        padding: 10px 8px;
+        text-align: center;
+    }
+    #manual-screen th {
+        background-color: #a0522d;
+        color: #fff;
+        font-weight: bold;
+    }
+    #manual-screen tbody tr:nth-child(even) {
+        background-color: #fffaf0;
+    }
+
+    /* ゲームエリア */
+    #furigana-text { 
+        font-size: 28px; 
+        min-height: 35px; 
+        color: #8b4513; 
+        font-weight: bold; 
+        font-family: "Courier New", Consolas, monospace; /* 等幅フォント指定でずれ防止 */
+    }
+    #japanese-text { 
+        font-size: 72px; 
+        font-weight: bold; margin-bottom: 10px; min-height: 90px; 
+        text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+        font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+    }
+    
+    /* ローマ字表示 */
+    #romaji-container { 
+        font-size: 32px; 
+        color: #aaa; margin-bottom: 30px; min-height: 40px; 
+        letter-spacing: 2px; font-family: "Courier New", Consolas, monospace; 
+        background: rgba(255, 255, 255, 0.4); padding: 15px; border-radius: 10px;
+        width: 800px; 
+        max-width: 95%; 
+        margin: 0 auto 30px auto; 
+        overflow-x: hidden; 
+        white-space: nowrap; 
+        text-align: center; 
+        box-sizing: border-box;
+    }
+    #romaji-full-string {
+        display: inline-block; 
+        transition: transform 0.1s ease-out; 
+        will-change: transform;
+        white-space: nowrap;
+    }
+    
+    .kana-mode-display { font-family: inherit; color: #8b4513; font-weight: bold; }
+    .typed { color: #d2691e; font-weight: bold; } 
+    .current { color: #ff4500; font-weight: bold; text-decoration: underline; } 
+    .untyped { color: #999; } 
+
+    /* フィードバック表示 */
+    #feedback { 
+        height: 100px; 
+        font-weight: bold; 
+        color: red; 
+        font-size: 26px; 
+        margin-top: 10px;
+        white-space: pre; 
+    } 
+    
+    /* HUD & ゲージ */
+    #hud { display: flex; justify-content: space-between; width: 100%; padding: 10px 40px; box-sizing: border-box; position: absolute; top: 0; font-size: 26px; font-weight: bold; } 
+    #hud-left { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: flex-start;
+    }
+    #hud-left > div { display: flex; align-items: baseline; }
+    #time-bonus-display {
+        font-size: 18px;
+        font-weight: normal;
+        color: #008000;
+        margin-top: 3px;
+    }
+    
+    /* 速度勝負モードのタイマー表示 */
+    #problem-timer {
+        font-size: 20px; 
+        color: #4169e1; 
+        font-weight: normal;
+        margin-left: 10px;
+        vertical-align: top;
+        display: none;
+    }
+    #problem-timer.warning {
+        color: #ff4500; 
+        font-weight: bold;
+    }
+    /* 問題番号表示 */
+    #problem-number {
+        font-size: 20px; 
+        color: #5d4037; 
+        font-weight: normal;
+        margin-left: 5px;
+        vertical-align: top;
+    }
+
+    #gauge-area { position: absolute; top: 50px; right: 40px; text-align: right; }
+    #gauge-container { width: 250px; height: 18px; background: #ddd; border: 2px solid #5d4037; border-radius: 10px; overflow: hidden; display: inline-block; }
+    #gauge-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ffcc00, #ff4500); transition: width 0.2s; }
+    #gauge-status-message { 
+        font-size: 16px; 
+        color: #a0522d; 
+        font-weight: bold; 
+        margin-top: 5px; 
+        min-height: 20px;
+    }
+    
+    /* 季節問題の強調 */
+    .seasonal-problem-mark {
+        font-size: 20px;
+        color: #008000;
+        font-weight: bold;
+        margin-left: 10px;
+        vertical-align: top;
+    }
+
+    /* 結果画面 - ランク表示 */
+    #result-rank { 
+        font-size: 120px; 
+        font-family: "Gyoshu", serif; font-weight: bold; 
+        margin: 10px; 
+    }
+    table { font-size: 20px; } 
+    th, td { padding: 8px; }
+</style>
+</head>
+<body>
+
+<div id="title-screen" class="screen active">
+    <h1>日本語タイピング Ver.33</h1>
+    <p>～ マニュアル機能統合版 ～</p>
+    
+    <div class="mode-grid">
+        <button onclick="startGame('practice')">練習モード<br><span style="font-size:14px">65秒制限・2～5文字 (超初級)</span></button>
+        <button onclick="startGame('standard')">標準モード<br><span style="font-size:14px">60秒制限・4～9文字 (中級)</span></button>
+        <button onclick="startGame('accuracy')">正確度勝負<br><span style="font-size:14px">60秒制限・8文字以上 (上級/長文)</span></button>
+        <button onclick="startGame('oneshot')">一発勝負<br><span style="font-size:14px">60秒制限・ミス即終了</span></button>
+        <button onclick="startGame('endurance')">5分耐久モード<br><span style="font-size:14px">300秒制限・単語連続</span></button>
+        <button onclick="startGame('speedcontest')">速度勝負モード<br><span style="font-size:14px">60秒制限・20秒ごとの切り替わり</span></button>
+        <button onclick="startGame('shiken')">腕試しモード<br><span style="font-size:14px">120秒制限・15文字以上 (長文)</span></button>
+        <button onclick="startGame('variety')">長文チャレンジ<br><span style="font-size:14px">一問勝負・25文字以上</span></button>
+        <button onclick="startGame('super')">超長文チャレンジ<br><span style="font-size:14px">一問勝負・300文字以上 (タイピングに自信がある方に)</span></button>
+    </div>
+    <button onclick="showSettings()">設定</button>
+    <button onclick="showManual()">マニュアル</button>
+    <button onclick="showRanking()">ランキング</button>
+</div>
+
+<div id="settings-screen" class="screen">
+    <h2>ゲーム設定</h2>
+    <div id="settings-action-bar">
+        <button onclick="saveAndCloseSettings()">決定</button>
+    </div>
+    <div class="setting-group">
+        <label style="font-weight: bold; margin-bottom: 10px; display: block;">■ 表示形式設定</label>
+        <input type="radio" name="mainTextType" id="type-original" value="original" onchange="saveSettings()">
+        <label for="type-original">オリジナル (漢字・カナ混在)</label><br>
+        <input type="radio" name="mainTextType" id="type-full-reading" value="full_reading" onchange="saveSettings()">
+        <label for="type-full-reading">総ルビモード</label>
+        <p style="margin-left: 15px; color:#a0522d; margin-top: 2px; margin-bottom: 10px; font-size: 16px;">(漢字やカタカナに、すべてのひらがな読みをフリガナ表示)</p>
+        <input type="radio" name="mainTextType" id="type-hiragana" value="hiragana_only" onchange="saveSettings()">
+        <label for="type-hiragana">ひらがなモード</label>
+        <p style="margin-left: 15px; color:#a0522d; margin-top: 2px; font-size: 16px;">(問題文全体を漢字・カタカナを使わず、ひらがなで表示)</p>
+    </div>
+    <div class="setting-group">
+        <label style="font-weight: bold; margin-bottom: 10px; display: block;">■ フリガナ・送りモード設定</label>
+        <label for="furigana-overlay-toggle">フリガナ（小文字の読み）の表示</label>
+        <input type="checkbox" id="furigana-overlay-toggle" onchange="saveSettings()">
+        <span style="display: block; margin-left: 5px; color:#a0522d; font-size: 16px;">「オリジナル」モード選択時のみ、問題文の上にひらがなの読みを小さく表示します。</span>
+        <p style="font-weight: bold; margin-top: 20px; margin-bottom: 10px;">次への送りモード</p>
+        <input type="radio" name="advanceMode" id="mode-manual" value="manual" onchange="saveSettings()">
+        <label for="mode-manual">手動 (Enter必須)</label><br>
+        <input type="radio" name="advanceMode" id="mode-auto" value="auto" onchange="saveSettings()">
+        <label for="mode-auto">自動 (Auto)</label>
+        <p style="margin-left: 15px; color:#a0522d; margin-top: 2px; font-size: 16px;">最後まで入力すると、自動で次の問題に進みます。(デフォルト)</p>
+    </div>
+    <div class="setting-group">
+        <label style="font-weight: bold; margin-bottom: 10px; display: block;">■ 打ち方設定 Advanced</label>
+        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">入力方式</p>
+        <input type="radio" name="inputMethod" id="input-romaji" value="romaji" onchange="saveSettings()">
+        <label for="input-romaji">ローマ字入力 (英字を組み合わせて入力)</label><br>
+        <input type="radio" name="inputMethod" id="input-kana" value="kana" onchange="saveSettings()">
+        <label for="input-kana">かな入力 (キーボードのかな配列で直接入力)</label>
+        <p style="margin-left: 15px; color:brown; margin-top: 2px; font-size: 16px;">※かな入力は簡易的なエミュレーションです。</p>
+        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">「ん」の打ち方ルール (ローマ字入力時)</p>
+        <input type="radio" name="nRule" id="n-mixed" value="mixed" onchange="saveSettings()">
+        <label for="n-mixed">混在 (n, nn の両方可)</label><br>
+        <input type="radio" name="nRule" id="n-n-only" value="n_only" onchange="saveSettings()">
+        <label for="n-n-only">n固定</label><br>
+        <input type="radio" name="nRule" id="n-nn-only" value="nn_only" onchange="saveSettings()">
+        <label for="n-nn-only">nn固定</label>
+    </div>
+    <button onclick="toTitle()">キャンセル（保存せずに戻る）</button>
+</div>
+
+<div id="ready-screen" class="screen">
+    <div id="ready-instruction"></div>
+</div>
+
+<div id="game-screen" class="screen">
+    <div id="hud">
+        <div id="hud-left">
+            <div>
+                時間: <span id="timer">60</span>
+                <span id="problem-number"></span>
+                <span id="problem-timer"></span>
+                <span id="seasonal-problem-indicator" class="seasonal-problem-mark" style="display:none;"></span>
+            </div>
+            <div id="time-bonus-display">日常ゲージによる制限時間延長(累計): 0秒</div>
+        </div>
+        <div>Score: <span id="score">0</span></div>
+        <div>Combo: <span id="combo">0</span></div>
+    </div>
+    
+    <div id="gauge-area">
+        <div style="font-size:14px">日常ゲージ (Maxで時間延長)</div>
+        <div id="gauge-container"><div id="gauge-bar"></div></div>
+        <div id="gauge-rate-display" style="font-size: 14px; margin-top: 5px; color: #8b4513;"></div>
+        <div id="gauge-status-message"></div>
+    </div>
+
+    <div id="game-area">
+        <div id="furigana-text"></div> 
+        <div id="japanese-text">読み込み中...</div>
+        
+        <div id="romaji-container">
+            <span id="romaji-full-string">
+                <span id="display-typed" class="typed"></span>
+                <span id="display-current" class="current"></span>
+                <span id="display-untyped" class="untyped"></span>
+            </span>
+        </div>
+        
+        <div id="feedback"></div>
+        <div id="enter-instruction" style="font-size: 18px; margin-top: 30px; color:#5d4037;">
+            入力完了後 <span style="font-weight:bold; border:1px solid #5d4037; padding:2px 6px;">Enter</span> で次へ
+        </div>
+    </div>
+</div>
+
+<div id="result-screen" class="screen">
+    <h2>結果発表</h2>
+    <div id="result-rank">A</div>
+    <div id="rank-comment"></div>
+    <table id="result-table">
+        <tr><td>モード</td><td id="res-mode"></td></tr>
+        <tr><td>完了時間</td><td id="res-time-taken"></td></tr> 
+        <tr><td>正確率</td><td id="res-acc"></td></tr>
+        <tr><td>タイプ数（正解）</td><td id="res-kpm"></td></tr>
+        <tr id="clear-status-row"><td><span style="font-weight: bold;">結果</span></td><td id="res-clear-status" style="font-weight: bold;"></td></tr> 
+    </table>
+    <button onclick="toTitle()">タイトルへ</button>
+</div>
+
+<div id="ranking-screen" class="screen">
+    <h2>ランキング</h2>
+    <p style="font-size: 14px; color:#a0522d;">※長文チャレンジモードの「スコア」欄には、実用性重視の**Net KPM (NKPM)**が表示されます。</p>
+    <table id="ranking-table"><thead><tr><th>順位</th><th>モード</th><th>ランク</th><th>スコア</th></tr></thead><tbody></tbody></table>
+    <button onclick="downloadCSV()">CSV出力</button>
+    <button onclick="toTitle()">戻る</button>
+</div>
+
+<div id="manual-screen" class="screen">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h1 id="manual-title" style="font-size: 32px; border: none; padding-bottom: 0;">日本語タイピングゲーム 完全版 – マニュアル</h1>
+        <div id="manual-content">
+            </div>
+        <button onclick="toTitle()" style="margin-top: 30px;">タイトルへ戻る</button>
+    </div>
+</div>
+
+<script>
+// --- 1. 柔軟な変換テーブル ---
+const romanTable = {
+    'あ': ['a'], 'い': ['i', 'yi'], 'う': ['u', 'wu', 'whu'], 'え': ['e'], 'お': ['o', 'wo'],
+    'か': ['ka', 'ca'], 'き': ['ki'], 'く': ['ku', 'cu', 'qu'], 'け': ['ke'], 'こ': ['co', 'ko'],
+    'さ': ['sa'], 'し': ['shi', 'si', 'ci', 'syi'], 
+    'す': ['su'], 'せ': ['se', 'ce'], 'そ': ['so'],
+    'た': ['ta'], 'ち': ['chi', 'ti', 'tyi'], 
+    'つ': ['tsu', 'tu', 'du'], 
+    'て': ['te'], 'と': ['to'],
+    'な': ['na'], 'に': ['ni'], 'ぬ': ['nu'], 'ね': ['ne'], 'の': ['no'],
+    'は': ['ha'], 'ひ': ['hi'], 'ふ': ['fu', 'hu'], 'へ': ['he'], 'ほ': ['ho'],
+    'ま': ['ma'], 'み': ['mi'], 'む': ['mu'], 'め': ['me'], 'も': ['mo'],
+    'や': ['ya'], 'ゆ': ['yu'], 'よ': ['yo'],
+    'ら': ['ra', 'la'], 'り': ['ri', 'li'], 'る': ['ru', 'lu'], 'れ': ['re', 'le'], 'ろ': ['ro', 'lo'], 
+    'わ': ['wa'], 'を': ['wo', 'o'],
+    'ー': ['-'], '、': [',', '/'], '。': ['.'], 
+    'が': ['ga'], 'ぎ': ['gi'], 'ぐ': ['gu'], 'げ': ['ge'], 'ご': ['go'],
+    'ざ': ['za'], 'じ': ['ji', 'zi', 'jyi', 'zyi'], 
+    'ず': ['zu', 'du'], 'ぜ': ['ze'], 'ぞ': ['zo'],
+    'だ': ['da'], 'ぢ': ['ji', 'di', 'dyi'], 
+    'づ': ['zu', 'du'], 'で': ['de'], 'ど': ['do'],
+    'ば': ['ba'], 'び': ['bi'], 'ぶ': ['bu'], 'べ': ['be'], 'ぼ': ['bo'],
+    'ぱ': ['pa'], 'ぴ': ['pi'], 'ぷ': ['pu'], 'ぺ': ['pe'], 'ぽ': ['po'],
+    'ゃ': ['lya', 'xya'], 'ゅ': ['lyu', 'xyu'], 'ょ': ['lyo', 'xyo'],
+    'っ': ['ltsu', 'xtsu'], 'ん': ['nn', 'xn'] 
+};
+
+const compoundTable = {
+    'きゃ': ['kya', 'kilya', 'kixya'], 
+    'きゅ': ['kyu', 'kilyu', 'kixyu'], 
+    'きょ': ['kyo', 'kilyo', 'kixyo'],
+    'しゃ': ['sha', 'sya', 'sxa', 's\'a', 'shi a'], 'しゅ': ['shu', 'syu', 'sxu', 's\'u', 'shi u'], 'しょ': ['sho', 'syo', 'sxo', 's\'o', 'shi o'],
+    'ちゃ': ['cha', 'tya', 'cya', 'txa', 't\'a', 'chi a'], 'ちゅ': ['chu', 'tyu', 'txu', 't\'u', 'chi u'], 'ちょ': ['cho', 'tyo', 'txo', 't\'o', 'chi o'],
+    'じゃ': ['ja', 'zya', 'jya', 'zi ya', 'di ya'], 'じゅ': ['ju', 'zyu', 'jyu', 'zi yu', 'di yu'], 'じょ': ['jo', 'zyo', 'jyo', 'zi yo', 'di yo'],
+    'ひゃ': ['hya', 'hilya', 'hixya'], 
+    'ひゅ': ['hyu', 'hilyu', 'hixyu'], 
+    'ひょ': ['hyo', 'hilyo', 'hixyo'],
+    'みゃ': ['mya', 'milya', 'mixya'], 
+    'みゅ': ['myu', 'milyu', 'mixyu'], 
+    'みょ': ['myo', 'milyo', 'mixyo'],
+    'りゃ': ['rya', 'rlya', 'rilya', 'rixya', 'lrya', 'lilya', 'lixya'], 
+    'りゅ': ['ryu', 'rlyu', 'rilyu', 'rixyu', 'lryu', 'lilyu', 'lixyu'], 
+    'りょ': ['ryo', 'rlyo', 'rilyo', 'rixyo', 'lryo', 'lilya', 'lixyo'], 
+    
+    'ぴゃ': ['pya', 'pilya', 'pixya'], 
+    'ぴゅ': ['pyu', 'pilyu', 'pixyu'], 
+    'ぴょ': ['pyo', 'pio', 'pilyo', 'pixyo'], 
+
+    'びゃ': ['bya', 'bilya', 'bixya'], 
+    'びゅ': ['byu', 'bilyu', 'bixyu'], 
+    'びょ': ['byo', 'bio', 'bilyo', 'bixyo'], 
+
+    'ぎゃ': ['gya', 'gilya', 'gixya'], 
+    'ぎゅ': ['gyu', 'gilyu', 'gixyu'], 
+    'ぎょ': ['gyo', 'gio', 'gilyo', 'gixyo'], 
+
+    'ふぁ': ['fa', 'fwa'], 'ふぃ': ['fi', 'fwi'], 'ふぇ': ['fe', 'fwe'], 'ふぉ': ['fo', 'fwo'],
+    'うぃ': ['wi', 'uxi'], 
+    'うぇ': ['we', 'whe', 'uxe'], 
+    'てぃ': ['thi', 'teli', 'tyi', 'texi'], 'でぃ': ['dhi', 'deli', 'dyi', 'dexi'],
+    'つぁ': ['tsa', 'tuxa'], 'つぃ': ['tsi', 'tuxi'], 'つぇ': ['tse', 'tuxe'], 'つぉ': ['tso', 'tuxo'],
+    'しぇ': ['she', 'sye', 'sixe'], 'ちぇ': ['che', 'tye', 'chixe'], 'じぇ': ['je', 'zye', 'jye', 'zixe'],
+    'くぁ': ['kwa', 'kuxa'], 'くぃ': ['kwi', 'kuxi'], 'くぇ': ['kwe', 'kuxe'], 'くぉ': ['kwo', 'kuxo'],
+    'ぐぁ': ['gwa', 'guxa'], 'ぐぃ': ['gwi', 'guxi'], 'ぐぇ': ['gwe', 'guxe'], 'ぐぉ': ['gwo', 'guxo'],
+    '「': ['[', '{'], '」': [']', '}'],'（': ['[', '{', 'かっこ'], '）': [']', '}', 'とじかっこ'],'？': ['?', '.', 'はてな'], '！': [']', '.', 'びっくりまーく'],
+    '％': ['%', 'ぱーせんと'], '＋': ['+', 'ぷらす'],
+};
+
+const modeMap = {
+    'practice': '練習', 'standard': '標準', 'accuracy': '正確度勝負', 'oneshot': '一発勝負', 'endurance': '5分耐久', 'speedcontest': '速度勝負',
+    'shiken': '腕試し', 
+    'variety': '長文チャレンジ',
+    'super': '超長文チャレンジ'
+};
+
+const sRankStandard = {
+    'practice': 100, 'standard': 150, 'endurance': 150, 'accuracy': 200, 'oneshot': 15, 'speedcontest': 300,
+    'shiken': 1000,
+    'variety': 350,
+    'super': 400 
+};
+
+const clearTargets = {
+    'practice': { score: 500, kpm: 100 },
+    'standard': { score: 1000, kpm: 200 },
+    'accuracy': { score: 1500, kpm: 250 },
+    'oneshot': { score: 10, kpm: 300 }, 
+    'endurance': { score: 3000, kpm: 300 },
+    'speedcontest': { score: 2000, kpm: 350 },
+    'shiken': { score: 1500, kpm: 300 },
+    'variety': { score: 300, kpm: 300 },
+    'super': { score: 600, kpm: 400 }
+};
+
+const rankOrderForDemotion = ['E', 'D', 'C', 'B', 'A', 'S', 'SS']; 
+const rankIndexMap = { 'E': 0, 'D': 1, 'C': 2, 'B': 3, 'A': 4, 'S': 5, 'SS': 6, 'Super!': 7, 'Perfect!': 8 }; 
+
+const kanaMap = {
+    'q': 'た', 'w': 'て', 'e': 'い', 'r': 'す', 't': 'か', 'y': 'ん', 'u': 'な', 'i': 'に', 'o': 'ら', 'p': 'せ', '@': '゛',
+    'a': 'ち', 's': 'と', 'd': 'し', 'f': 'は', 'g': 'き', 'h': 'く', 'j': 'ま', 'k': 'の', 'l': 'り', ':': 'れ',
+    'z': 'つ', 'x': 'さ', 'c': 'そ', 'v': 'ひ', 'b': 'こ', 'n': 'み', 'm': 'も', ',': 'ね', '.': 'る', '/': 'め', 
+    ' ': ' ', '-': 'ー', '[': 'ほ', ']': 'け', ';': 'む', "'": 'ろ', '\\': 'ー' 
+};
+
+
+// --- 2. 問題リストの定義 ---
+const baseQuestions = [
+    { t: "あめ", k: "あめ" }, { t: "ゆき", k: "ゆき" }, { t: "つき", k: "つき" },
+    { t: "くも", k: "くも" }, { t: "はな", k: "はな" }, { t: "みち", k: "みち" },
+    { t: "いえ", k: "いえ" }, { t: "きっぷ", k: "きっぷ" }, { t: "つくえ", k: "つくえ" },
+    { t: "いす", k: "いす" }, { t: "でんき", k: "でんき" }, { t: "かぎ", k: "かぎ" },
+    { t: "りんご", k: "りんご" }, { t: "みかん", k: "みかん" }, { t: "ぶどう", k: "ぶどう" },
+    { t: "ばなな", k: "ばなな" }, { t: "くるま", k: "くるま" }, { t: "じてんしゃ", k: "じてんしゃ" },
+    { t: "でんわ", k: "でんわ" }, { t: "おかし", k: "おかし" }, { t: "おにぎり", k: "おにぎり" },
+    { t: "さかな", k: "さかな" }, { t: "あさ", k: "あさ" }, { t: "ひる", k: "ひる" },
+    { t: "よる", k: "よる" },
+    
+    { t: "えきまえ", k: "えきまえ" }, { t: "かいしゃ", k: "かいしゃ" }, { t: "がっこう", k: "がっこう" },
+    { t: "デパート", k: "でぱーと" }, { t: "れきし", k: "れきし" }, { t: "かがく", k: "かがく" },
+    { t: "すうがく", k: "すうがく" }, { t: "たいよう", k: "たいよう" }, { t: "ちきゅう", k: "ちきゅう" },
+    { t: "うちゅう", k: "うちゅう" }, { t: "おんがく", k: "おんがく" }, { t: "えいが", k: "えいが" },
+    { t: "りょうり", k: "りょうり" }, { t: "せんたく", k: "せんたく" }, { t: "そうじ", k: "そうじ" },
+    { t: "まどぐち", k: "まどぐち" }, { t: "おとこのこ", k: "おとこのこ" }, { t: "おんなのこ", k: "おんなのこ" },
+    { t: "きょうだい", k: "きょうだい" }, { t: "しんせき", k: "しんせき" }, { t: "かぞく", k: "かぞく" },
+    { t: "となりのひと", k: "となりのひと" }, { t: "せんせい", k: "せんせい" }, { t: "ゆうびんきょく", k: "ゆうびんきょく" },
+    { t: "びょういん", k: "びょういん" }, { t: "こうえん", k: "こうえん" }, { t: "コンビニ", k: "こんびに" },
+    { t: "ホテル", k: "ほてる" }, { t: "レストラン", k: "れすとらん" }, { t: "インターネット", k: "いんたーねっと" },
+    { t: "ウェブサイト", k: "うぇぶさいと" }, { t: "メールアドレス", k: "めーるあどれす" }, { t: "パスワード", k: "ぱすわーど" },
+    { t: "ファイル", k: "ふぁいる" }, { t: "フォルダ", k: "ふぉるだ" }, { t: "ソフトウェア", k: "そふとぅぇあ" },
+    { t: "スマートフォン", k: "すまーとふぉん" }, { t: "キーボード", k: "きーぼーど" }, { t: "マウス", k: "まうす" },
+    { t: "プリンター", k: "ぷりんたー" }, { t: "でんたく", k: "でんたく" }, { t: "カメラ", k: "かめら" },
+    { t: "テレビ", k: "てれび" }, { t: "エアコン", k: "えあこん" }, { t: "ひっこし", k: "ひっこし" },
+    { t: "おまつり", k: "おまつり" }, { t: "はつもうで", k: "はつもうで" }, { t: "とうろく", k: "とうろく" },
+    { t: "かくにん", k: "かくにん" }, { t: "へんしん", k: "へんしん" },
+
+    { t: "アルゴリズム", k: "あるごりずむ" }, { t: "プログラミング", k: "ぷろぐらみんぐ" },
+    { t: "データベース", k: "でーたべーす" }, { t: "コンピューター", k: "こんぴゅーたー" },
+    { t: "オブジェクト指向", k: "おぶじぇくとしこう" }, { t: "テクノロジー", k: "てくのろじー" },
+    { t: "インフラストラクチャー", k: "いんふらすとらくちゃー" }, { t: "コミュニケーション", k: "こみゅにけーしょん" },
+    { t: "モチベーション", k: "もちべーしょん" }, { t: "プレゼンテーション", k: "ぷれぜんてーしょん" },
+    { t: "マネージメント", k: "まねーじめんと" }, { t: "クリエイティブ", k: "くりえいてぃぶ" },
+    { t: "サプライズ", k: "さぷらいず" }, { t: "フィロソフィー", k: "ふぃろそふぃー" },
+    { t: "アンビバレンス", k: "あんびばれんす" }, { t: "エキゾチック", k: "えきぞちっく" },
+    { t: "コンプライアンス", k: "こんぷらいあんす" }, { t: "サステナビリティ", k: "さすてなびりてぃ" },
+    { t: "ソリューション", k: "そりゅーしょん" }, { t: "イノベーション", k: "いのべーしょん" },
+    { t: "一石二鳥", k: "いっせきにちょう" }, { t: "七転八起", k: "しちてんはっき" },
+    { t: "十人十色", k: "じゅうにんといろ" }, { t: "花鳥風月", k: "かちょうふうげつ" },
+    { t: "焼肉定食", k: "やきにくていしょく" },
+    { t: "インフラストラクチャーの構築", k: "いんふらすとらくちゃーのこうちく" }, 
+    { t: "カスタマーエクスペリエンスの向上", k: "かすたまーえくすぺりえんすのこうじょう" }, 
+    { t: "ディストリビューテッドコンピューティング", k: "でぃすとりびゅーてっどこんぴゅーてぃんぐ" }, 
+    { t: "パラダイムシフトの真っただ中", k: "ぱらだいますしふとのまっただなか" }, 
+    { t: "サステナビリティとコンプライアンス", k: "さすてなびりてぃとこんぷらいあんす" }, 
+    { t: "情報アーキテクチャの標準化", k: "じょうほうあーきてくちゃのひょうじゅんか" }, 
+    
+    { t: "郷土料理の種類は様々なものがあるが、それぞれの料理には独自の歴史と文化が息づいています。", k: "きょうどりょうりのしゅるいはさまざまなものがあるが、それぞれのりょうりにはどくじのれきしとぶんかがいきづいています。" }, 
+    { t: "人工知能が進化を続ける現代において、その倫理的な側面の議論は避けて通れません。", k: "じんこうちのうがしんかをつづけるげんだいにおいて、そのりんりてきなそくめんのぎろんはさけてとおれません。" }, 
+    { t: "技術革新は、私たちの働き方だけでなく、生活様式全体を根本的に変えつつある。", k: "ぎゅじゅつかくしんは、わたしたちのはたらきかただけでなく、せいかつようしきぜんたいをこんぽんてきにかえつつある。" }, 
+    { t: "量子コンピュータの実現に向けた研究開発は、世界中で急速に進められています。", k: "りょうしこんぴゅーたのじつげんにむけたけんきゅうかいはつは、せかいじゅうできゅうそくにすすめられています。" }, 
+    { t: "最新のセキュリティ対策とユーザビリティの両立が、今後のサービス提供の鍵となります。", k: "さいしんのせきゅりてぃたいさくとゆーざびりてぃのりょうりつが、こんごのさーびすていきょうのかぎとなります。" },
+    { t: "持続可能な開発目標、SDGsを達成するためには、国際社会全体の協力が不可欠です。", k: "じぞくかのうなかいはつもくひょう、えすでぃーじーずをたっせいするためには、こくさいしゃかいぜんたいのきょうりょくがふかけつです。" }, 
+    { t: "顧客満足度を向上させるためには、製品の品質だけでなく、アフターサービスも重要となります。", k: "こきゃくまんぞくどをこうじょうさせるためには、せいひんのひんしつだけでなく、あふたーさーびすもじゅうようとなります。" }, 
+    { t: "デジタルネイティブ世代の台頭により、マーケティング戦略は大きな変革期を迎えています。", k: "でじたるねいてぃぶせだいのだいとうにより、まーけてぃんぐせんりゃくはおおきなへんかくきをむかえています。" }, 
+    { t: "哲学的な問いは、人間の存在意義や世界の構造について深く考察する機会を与えてくれます。", k: "てつがくてきなといは、にんげんのそんざいいぎやせかいのこうぞうについてふかくこうさつするきかいをあたえてくれます。" },
+    { t: "過去の経験から学び、未来の予期せぬリスクに備えるレジリエンスの構築が求められています。", k: "かこのけいけんからまなび、みらいのよきせぬりすくにそなえるれじりえんすのこうちくがもとめられています。" },
+
+    { t: "植物は、動くことができない代わりに、太陽の光や周囲の環境を最大限に利用して生き抜く驚くべき仕組みを持っています。その生態の基本となるのが「光合成」です。葉に含まれる葉緑体という器官が、太陽光のエネルギーを使って、水と二酸化炭素から自らの成長に必要な栄養分（デンプンなど）を作り出し、同時に酸素を放出します。また、根の役割も非常に重要です。根は地面に体を固定するだけでなく、土壌から水分やミネラルを吸い上げ、茎の中にある「道管」を通して全身へ運びます。逆に、葉で作られた栄養は「師管」を通って植物全体に行き渡ります。この循環システムによって、植物は巨大な樹木へと成長することができるのです。繁殖の戦略も多様です。多くの植物は花を咲かせ、蜜や香りで昆虫を誘って花粉を運んでもらう「虫媒花」や、風の力を借りる「風媒花」など、周囲の環境に適応した方法で受粉を行います。その後、種子を作って遠くへ運ばせるために、果実を動物に食べさせたり、綿毛のように風に乗せたりと、次世代を残すための工夫を凝らしています。", k: "しょくぶつは、うごくことができないかわりに、たいようのひかりやしゅういのかんきょうをさいだいげんにりようしていきぬくおどろくべきしくみをもっています。そのせいたいのきほんとなるのが「こうごうせい」です。はにふくまれるようりょくたいというきかんが、たいようこうのえねるぎーをつかって、みずとにさんかたんそからみずからのせいちょうにひつようなえいようぶん（でんぷんなど）をつくりだし、どうじにさんそをほうしゅつします。また、ねのやくわりもひじょうにじゅうようです。ねはじめんにからだをこていするだけでなく、どじょうからすいぶんやみねらるをすいあげ、くきのなかにある「どうかん」をとおしてぜんしんへはこびます。ぎゃくに、はでつくられたえいようは「しかん」をとおってしょくぶつぜんたいにいきわたります。このじゅんかんしすてむによって、しょくぶつはきょだいなじゅもくへとせいちょうすることができるのです。はんしょくのせんりゃくもたようです。おおくのしょくぶつははなをさかせ、みつやかおりでこんちゅうをさそってかふんをはこんでもらう「ちゅうばいか」や、かぜのちからをかりる「ふうばいか」など、しゅういのかんきょうにてきおうしたほうほうでじゅふんをおこないます。そのご、しゅしをつくってとおくへはこばせるために、かじつをどうぶつにたべさせたり、わたげのようにかぜにのせたりと、じせだいをのこすためのくふうをこらしています。" }
+];
+
+const TARGET_PROBLEM_COUNT = 500; 
+let allQuestions = [];
+for (let i = 0; i < TARGET_PROBLEM_COUNT; i++) {
+    const original = baseQuestions[i % baseQuestions.length];
+    allQuestions.push({
+        id: i, 
+        t: original.t,
+        k: original.k,
+        isUsed: false 
+    });
+}
+
+const seasonalQuestions = {
+    spring: [
+        { t: "さくら", k: "さくら" }, { t: "はるいちばん", k: "はるいちばん" },
+        { t: "つくし", k: "つくし" }, { t: "にゅうがくしき", k: "にゅうがくしき" },
+        { t: "おはなみ", k: "おはなみ" }, { t: "うぐいす", k: "うぐいす" }
+    ],
+    summer: [
+        { t: "あさがお", k: "あさがお" }, { t: "なつやすみ", k: "なつやすみ" },
+        { t: "かきごおり", k: "かきごおり" }, { t: "かみなり", k: "かみなり" },
+        { t: "ひまわり", k: "ひまわり" }, { t: "せんこうはなび", k: "せんこうはなび" }
+    ],
+    autumn: [
+        { t: "もみじ", k: "もみじ" }, { t: "いがぐり", k: "いがぐり" },
+        { t: "しょくよくのあき", k: "しょくよくのあき" }, { t: "たいふう", k: "たいふう" },
+        { t: "つきみ", k: "つきみ" }, { t: "あきまつり", k: "あきまつり" }
+    ],
+    winter: [
+        { t: "ゆきだるま", k: "ゆきだるま" }, { t: "こたつ", k: "こたつ" },
+        { t: "おしょうがつ", k: "おしょうがつ" }, { t: "ふゆげしき", k: "ふゆげしき" },
+        { t: "もちつき", k: "もちつき" }, { t: "かまくら", k: "かまくら" }
+    ]
+};
+
+// --- ゲーム状態と設定状態 ---
+let gameState = {
+    mode: '', timer: 65, score: 0, combo: 0, miss: 0, correct: 0, gauge: 0,
+    isPlaying: false, problemList: [],
+    targetText: "", targetKana: "", currentTyped: "", typedHistory: "",
+    lastProblemIndex: -1,
+    fixedProblem: null,
+    problemTimer: 0, 
+    problemTimerInterval: null,
+    speedContestFailed: false,
+    problemsCleared: 0,
+    dynamicGaugeRateMultiplier: 1.0,
+    initialTimer: 0,
+    timeBonusAccumulated: 0,
+    currentSeasonalProblems: [], 
+    seasonalProblemCounter: 0, 
+    currentSeason: '',
+    startTime: 0,
+    textOffsetIndex: 0
+};
+let gameSettings = {
+    mainTextType: 'original',
+    showFuriganaOverlay: false, 
+    advanceMode: 'auto', 
+    nRule: 'mixed', 
+    inputMethod: 'romaji'
+};
+let timerInterval;
+const $ = (id) => document.getElementById(id);
+
+let screenHistory = [];
+
+function changeScreen(screenId, isBack = false) {
+    const currentActive = document.querySelector('.screen.active');
+    if (currentActive && currentActive.id !== screenId && !isBack) {
+        screenHistory.push(currentActive.id);
+    }
+    
+    if (currentActive && currentActive.id === 'game-screen' && screenId !== 'game-screen') {
+        gameState.isPlaying = false;
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        if (gameState.problemTimerInterval) { clearInterval(gameState.problemTimerInterval); gameState.problemTimerInterval = null; }
+    }
+
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    $(screenId).classList.add('active');
+}
+
+function goBackScreen() {
+    if (screenHistory.length > 0) {
+        const prevScreen = screenHistory.pop();
+        changeScreen(prevScreen, true);
+    } else {
+        toTitle();
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const currentActive = document.querySelector('.screen.active');
+        if (currentActive && currentActive.id !== 'title-screen') {
+            e.preventDefault();
+            goBackScreen();
+        }
+    }
+});
+
+// --- ヘルパー関数 ---
+function getNextKanaChunk(kanaStr) {
+    if (!kanaStr) return null;
+    
+    if (['ー', '、', '。'].includes(kanaStr.substring(0, 1))) {
+        return kanaStr.substring(0, 1);
+    }
+    
+    for (let len = 3; len >= 2; len--) {
+        const chunk = kanaStr.substring(0, len);
+        if (compoundTable[chunk]) return chunk;
+    }
+    
+    if (['っ', 'ん'].includes(kanaStr.substring(0, 1))) {
+        return kanaStr.substring(0, 1);
+    }
+
+    if (romanTable[kanaStr.substring(0, 1)]) return kanaStr.substring(0, 1);
+    
+    return kanaStr.substring(0, 1); 
+}
+function isVowelOrYorN(kana) {
+    return ['あ','い','う','え','お','や','ゆ','よ','ん'].includes(kana);
+}
+function getStandardRomajiString(kanaStr) {
+    let str = "";
+    let temp = kanaStr;
+    while(temp.length > 0) {
+        let c = getNextKanaChunk(temp);
+        let rList = getValidRomajis(c, temp);
+        const rIndex = rList.findIndex(r => r.startsWith('r'));
+        str += rList[rIndex !== -1 ? rIndex : 0] || "?";
+        temp = temp.substring(c.length);
+    }
+    return str;
+}
+function getValidRomajis(chunk, fullKanaStr) {
+    if (chunk === 'ん') {
+        const restKana = fullKanaStr.substring(1);
+        const isEndOfWord = restKana.length === 0 || ['、', '。'].includes(restKana.substring(0, 1)); 
+
+        const nextChunk = getNextKanaChunk(restKana);
+        const isVowelNext = nextChunk && isVowelOrYorN(nextChunk.substring(0, 1));
+            
+        if (isEndOfWord || isVowelNext) {
+             if (gameSettings.nRule === 'n_only') { return ['n', 'xn']; }
+             else if (gameSettings.nRule === 'nn_only') { return ['nn', 'xn']; }
+             else { return ['n', 'nn', 'xn']; }
+        } else {
+             if (gameSettings.nRule === 'n_only') { return ['n', 'xn']; }
+             else if (gameSettings.nRule === 'nn_only') { return ['nn', 'xn']; }
+             else { return ['nn', 'xn']; }
+        }
+    }
+    
+    if (compoundTable[chunk]) {
+        return compoundTable[chunk];
+    }
+    
+    if (romanTable[chunk]) {
+        if (chunk === 'っ') {
+            const nextChunk = getNextKanaChunk(fullKanaStr.substring(1));
+            if (nextChunk) {
+                const nextRomaji = getValidRomajis(nextChunk, fullKanaStr.substring(1))[0];
+                if (nextRomaji && nextRomaji.length > 0) {
+                    const firstLetter = nextRomaji[0];
+                    return [firstLetter, 'ltsu', 'xtsu'];
+                }
+            }
+        }
+        return romanTable[chunk];
+    }
+    
+    return [];
+}
+
+function checkMatch(input, validList) {
+    let match = false, complete = false;
+    for (let r of validList) {
+        if (r === input) { match = true; complete = true; break; }
+        else if (r.startsWith(input)) { match = true; }
+    }
+    return { match, complete };
+}
+function getAccuracyRank(acc) {
+    if (acc === 100) return 'SS';
+    if (acc >= 99.5) return 'S';
+    if (acc >= 98) return 'A';
+    if (acc >= 95) return 'B';
+    if (acc >= 90) return 'C';
+    if (acc >= 80) return 'D';
+    return 'E';
+}
+
+// --- 設定機能 ---
+function loadSettings() {
+    const saved = localStorage.getItem('typingV12_settings'); 
+    if (saved) {
+        Object.assign(gameSettings, JSON.parse(saved));
+    }
+
+    document.querySelectorAll('input[name="mainTextType"]').forEach(el => el.checked = el.value === gameSettings.mainTextType);
+    document.querySelectorAll('input[name="advanceMode"]').forEach(el => el.checked = el.value === gameSettings.advanceMode);
+    document.querySelectorAll('input[name="nRule"]').forEach(el => el.checked = el.value === gameSettings.nRule);
+    document.querySelectorAll('input[name="inputMethod"]').forEach(el => el.checked = el.value === gameSettings.inputMethod);
+    $('furigana-overlay-toggle').checked = gameSettings.showFuriganaOverlay;
+}
+function saveSettings() {
+    const mainTextTypeEl = document.querySelector('input[name="mainTextType"]:checked');
+    if (mainTextTypeEl) gameSettings.mainTextType = mainTextTypeEl.value;
+    const advanceModeEl = document.querySelector('input[name="advanceMode"]:checked');
+    if (advanceModeEl) gameSettings.advanceMode = advanceModeEl.value;
+    const nRuleEl = document.querySelector('input[name="nRule"]:checked');
+    if (nRuleEl) gameSettings.nRule = nRuleEl.value;
+    const inputMethodEl = document.querySelector('input[name="inputMethod"]:checked');
+    if (inputMethodEl) gameSettings.inputMethod = inputMethodEl.value;
+    gameSettings.showFuriganaOverlay = $('furigana-overlay-toggle').checked;
+}
+function saveAndCloseSettings() {
+    saveSettings();
+    localStorage.setItem('typingV12_settings', JSON.stringify(gameSettings)); 
+    toTitle();
+}
+function showSettings() {
+    loadSettings();
+    changeScreen('settings-screen');
+}
+function toTitle() {
+    screenHistory = [];
+    changeScreen('title-screen');
+}
+
+// --- マニュアル画面表示機能 ---
+function showManual() {
+    changeScreen('manual-screen');
+    
+    const modeDetails = {
+        'practice': { limit: '65秒', length: '2～5文字', level: '超初級', goal: '気軽にウォーミングアップ。短文でタイピングに慣れます。', s_kpm: 100 },
+        'standard': { limit: '60秒', length: '4～9文字', level: '中級', goal: '基本単語・熟語を中心に、正確さと速度のバランスを鍛えます。', s_kpm: 150 },
+        'accuracy': { limit: '60秒', length: '8文字以上', level: '上級/長文', goal: '長めの単語や熟語で、ミスをしない高い正確性を追求します。', s_kpm: 200 },
+        'oneshot': { limit: '60秒', length: '自由', level: 'スリル', goal: 'ミスを一度でもすると終了。極度の集中力が試される一発勝負です。', s_kpm: 'N/A' },
+        'endurance': { limit: '300秒(5分)', length: '自由', level: '耐久', goal: '長時間の集中力と持続的な速度を鍛えるモードです。', s_kpm: 150 },
+        'speedcontest': { limit: '60秒', length: '自由', level: '速度特化', goal: '20秒ごとに問題傾向が切り替わり、即応性と爆発的な速度が求められます。', s_kpm: 300 },
+        'shiken': { limit: '120秒', length: '15文字以上', level: '長文/腕試し', goal: '長文タイピングの総合的な実力を試すための試験的なモードです。', s_kpm: 250 },
+        'variety': { limit: '無限 (一問勝負)', length: '25文字以上', level: '長文/無限', goal: '比較的長い文章に挑み、打ちきりを目指します。結果はNKPMで評価されます。', s_kpm: 350 },
+        'super': { limit: '無限 (一問勝負)', length: '300文字以上', level: '超長文/無限', goal: '非常に長い文章(超長文)に挑み、打ちきりを目指します。結果はNKPMで評価されます。', s_kpm: 350 }
+    };
+
+    let modeHtml = '<h2>1. モード別詳細説明</h2>';
+    modeHtml += '<table><thead><tr><th>モード名</th><th>制限時間</th><th>問題文字数</th><th>特徴・目標</th><th>Sランク目安(KPM)</th></tr></thead><tbody>';
+    for (const id in modeDetails) {
+        const detail = modeDetails[id];
+        const modeName = modeMap[id] || id;
+        modeHtml += `
+            <tr>
+                <td><strong>${modeName}</strong><br>(${detail.level})</td>
+                <td>${detail.limit}</td>
+                <td>${detail.length}</td>
+                <td>${detail.goal}</td>
+                <td>${detail.s_kpm}</td>
+            </tr>
+        `;
+    }
+    modeHtml += '</tbody></table>';
+
+    const rankHtml = `
+        <h2 style="margin-top: 50px;">2. ランク一覧と評価基準</h2>
+        <p>最終ランクは、主に**平均KPM** (Key Per Minute / 1分間のキータイプ数) と**正確率**によって総合的に決定されます。特に正確性が低い場合、KPMが高くてもランクが下がる仕組みです。</p>
+        <p>練習モード・標準モード・正確度勝負モードではS/A/B/C/D/Eランクの6段階評価、Perfect!評価のみとなっているため、SS/Super!ランクは登場しません。</p>
+        
+        <h3>ランク基準（KPM基準の目安）</h3>
+        <table>
+            <thead><tr><th>ランク</th><th>評価</th><th>概ねのKPM</th><th>正確率の要件</th></tr></thead>
+            <tbody>
+                <tr><td><strong style="color: #ff4500;">Perfect!</strong></td><td>究極のタイピスト</td><td>設定なし</td><td>**正確率100%** (ノーミス達成)</td></tr>
+                <tr><td><strong style="color: #4169e1;">Super!</strong></td><td>神業</td><td>非常に高い</td><td>正確率99.5%以上</td></tr>
+                <tr><td><strong style="color: #d2691e;">SS</strong></td><td>達人級</td><td>約300～400以上</td><td>正確率99%以上</td></tr>
+                <tr><td><strong style="color: #d2691e;">S</strong></td><td>プロ級</td><td>約200～300</td><td>正確率98%以上</td></tr>
+                <tr><td><strong>A</strong></td><td>上級者</td><td>約150～200</td><td>正確率95%以上</td></tr>
+                <tr><td><strong>B</strong></td><td>中級者</td><td>約100～150</td><td>正確率90%以上</td></tr>
+                <tr><td><strong>C</strong></td><td>初級者</td><td>約50～100</td><td>正確率80%以上</td></tr>
+                <tr><td><strong>D</strong></td><td>練習中</td><td>約30～50</td><td>正確率70%以上</td></tr>
+                <tr><td><strong>E</strong></td><td>入門</td><td>約30未満</td><td>その他</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top: 30px;">キーメトリックスの説明</h3>
+        <ul>
+            <li>**KPM (Key Per Minute)**: 1分間にタイプしたキーの総数です。速度の基本的な指標。</li>
+            <li>**正確率**: (正タイプ数 / 総タイプ数) × 100 です。ミスの少なさの指標で、ランクに大きく影響します。</li>
+            <li>**NKPM (Net KPM)**: **長文チャレンジ**モードで採用される実用速度の指標で、KPMからミスによるロスを差し引いた値です。</li>
+            <li>**日常ゲージ**: ミスなしで進行すると増加し、MAXになるとランダムで制限時間が**1～3秒延長**されます。耐久戦を助けるボーナス要素です。</li>
+        </ul>
+    `;
+
+    const basicHtml = `
+        <h2 style="margin-top: 50px;">3. その他の主な機能</h2>
+        <ul>
+            <li>**柔軟なローマ字変換**: 「ら行」のL/R両対応、文末の「ん」の「n」「nn」混在対応など、様々な打ち方に柔軟に対応しています。</li>
+            <li>**長文スライド表示**: ローマ字入力ガイドが問題文に合わせて左右にスライドし、長い文章でも打ちやすくなっています。</li>
+            <li>**ゲーム内設定**: 問題文の**表示形式**（オリジナル、総ルビ、ひらがなのみ）、次の問題への**送りモード**（自動/Enter必須）、**かな入力モード**への切り替えなどが可能です。</li>
+            <li>**ランキング機能**: モードごとのランキング（上位10位）を記録し、CSVファイルとしてエクスポートできます。</li>
+            <li>**季節の特別問題**: 季節（春・夏・秋・冬）に合わせて、特定の問題が出題されやすくなります。</li>
+        </ul>
+    `;
+
+    $('manual-content').innerHTML = modeHtml + rankHtml + basicHtml;
+}
+
+// --- 季節判定・フィルタリング ---
+function getCurrentSeason() {
+    const month = new Date().getMonth() + 1; 
+    if (month >= 3 && month <= 5) return 'spring';
+    if (month >= 6 && month <= 8) return 'summer';
+    if (month >= 9 && month <= 11) return 'autumn';
+    return 'winter'; 
+}
+
+function filterSeasonalProblems(mode, season) {
+    const problems = seasonalQuestions[season] || [];
+    let minLength = 0;
+    let maxLength = Infinity;
+
+    if (mode === 'practice') { minLength = 2; maxLength = 5; }
+    else if (mode === 'standard') { minLength = 4; maxLength = 9; }
+    else if (mode === 'accuracy') { minLength = 8; } 
+    else if (mode === 'speedcontest' || mode === 'oneshot' || mode === 'endurance') { 
+        minLength = (mode === 'endurance') ? 2 : 4;
+    }
+    else if (mode === 'shiken') { minLength = 8; } 
+
+    let filtered = problems.filter(q => q.k.length >= minLength && q.k.length <= maxLength);
+    
+    return filtered.map((q, index) => ({
+        ...q,
+        id: `S${season.substring(0,1).toUpperCase()}${index}`, 
+        isUsed: false,
+        isSeasonal: true 
+    }));
+}
+
+// --- 問題のフィルタリング ---
+function filterProblems(mode) {
+    let filtered;
+    if (mode === 'practice') { 
+        filtered = allQuestions.filter(q => q.k.length >= 2 && q.k.length <= 5);
+    }
+    else if (mode === 'standard') { 
+        filtered = allQuestions.filter(q => q.k.length >= 4 && q.k.length <= 9);
+    }
+    else if (mode === 'accuracy') { 
+        filtered = allQuestions.filter(q => q.k.length >= 8);
+    }
+    else if (mode === 'speedcontest' || mode === 'oneshot' || mode === 'endurance') { 
+        let min = 4;
+        if(mode === 'endurance') min = 2;
+        filtered = allQuestions.filter(q => q.k.length >= min);
+    }
+    else if (mode === 'shiken') { 
+        filtered = allQuestions.filter(q => q.k.length >= 15);
+    }
+    else if (mode === 'variety') { 
+        filtered = allQuestions.filter(q => q.k.length >= 25 && q.k.length < 300);
+    }
+    else if (mode === 'super') {
+        filtered = allQuestions.filter(q => q.k.length >= 300);
+    }
+    return filtered.length > 0 ? filtered : allQuestions;
+}
+
+// --- スタート処理 ---
+function startGame(mode) {
+    loadSettings();
+    gameState.mode = mode;
+    gameState.score = 0; gameState.combo = 0; gameState.miss = 0; gameState.correct = 0; gameState.gauge = 0;
+    gameState.lastProblemIndex = -1; 
+    gameState.fixedProblem = null; 
+    gameState.problemsCleared = 0; 
+    gameState.dynamicGaugeRateMultiplier = 1.0; 
+    gameState.timeBonusAccumulated = 0; 
+    
+    if (gameState.problemTimerInterval) {
+        clearInterval(gameState.problemTimerInterval);
+        gameState.problemTimerInterval = null;
+    }
+    gameState.speedContestFailed = false;
+
+    if (mode === 'practice') { gameState.timer = 65; }
+    else if (mode === 'endurance') { gameState.timer = 300; } 
+    else if (mode === 'shiken') { gameState.timer = 120; } 
+    else if (mode === 'variety' || mode === 'super') { gameState.timer = 9999; } 
+    else { gameState.timer = 60; }
+    
+    gameState.initialTimer = gameState.timer; 
+    
+    allQuestions.forEach(q => q.isUsed = false);
+
+    const currentSeason = getCurrentSeason();
+    gameState.currentSeason = currentSeason;
+    gameState.currentSeasonalProblems = (mode === 'variety' || mode === 'super') ? [] : filterSeasonalProblems(mode, currentSeason); 
+    gameState.seasonalProblemCounter = 0; 
+
+    if (mode === 'endurance') {
+        const listForSelection = allQuestions.filter(q => q.k.length >= 2);
+        const r = Math.floor(Math.random() * listForSelection.length);
+        gameState.fixedProblem = listForSelection[r];
+        gameState.problemList = [gameState.fixedProblem]; 
+        
+        const t = gameState.fixedProblem.t;
+        $('ready-instruction').style.fontFamily = "inherit";
+        $('ready-instruction').innerHTML = `「**${modeMap[mode]}**」モードへようこそ。<br>今回のターゲット単語は...<br><span style="font-size: 80px; color: #8b4513; margin: 20px 0; display: block;">${t}</span><br>**Enter または Space キーを押して開始。**`;
+        
+    } else {
+        gameState.problemList = filterProblems(mode);
+        gameState.problemList.sort((a, b) => a.id - b.id);
+
+        $('ready-instruction').style.fontFamily = "inherit";
+        if (mode === 'variety' || mode === 'super') {
+             $('ready-instruction').innerHTML = `「**${modeMap[mode]}**」モードへようこそ。<br>長文を一問だけ打ち終えてください。<br>制限時間は**無限**です。<br><br>**Enter または Space キーを押して開始。**`;
+        } else {
+             $('ready-instruction').innerHTML = `「**${modeMap[mode]}**」モードへようこそ。<br>**現在の季節は「${currentSeason}」です。**<br><br>**Enter または Space キーを押して開始。**`;
+        }
+    }
+    
+    changeScreen('ready-screen');
+    
+    document.removeEventListener('keydown', handleReadyKey);
+    document.addEventListener('keydown', handleReadyKey);
+}
+
+function handleReadyKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        document.removeEventListener('keydown', handleReadyKey);
+        startCountdown();
+    }
+}
+
+function startCountdown() {
+    let count = 3;
+    const instructionEl = $('ready-instruction');
+    
+    const countdownInterval = setInterval(() => {
+        if (count > 0) {
+            instructionEl.innerHTML = `<span style="font-size: 100px; color: #8b4513;">${count}</span>`;
+            count--;
+        } else {
+            clearInterval(countdownInterval);
+            instructionEl.innerHTML = `<span style="font-size: 100px; color: #d2691e; font-family: 'Yu Kyokasho', 'Yu Mincho', serif; font-weight: bold;">スタート！</span>`;
+            
+            setTimeout(() => {
+                changeScreen('game-screen');
+                
+                gameState.isPlaying = true;
+                updateHUD(); 
+                updateGauge();
+                nextProblem();
+                
+                if(timerInterval) clearInterval(timerInterval);
+                if (gameState.mode !== 'variety' && gameState.mode !== 'super') { 
+                    timerInterval = setInterval(() => {
+                        if(!gameState.isPlaying) return;
+                        gameState.timer--;
+                        $('timer').innerText = gameState.timer;
+                        updateHUD(); 
+                        if(gameState.timer <= 0) endGame();
+                    }, 1000);
+                } else {
+                    gameState.startTime = Date.now();
+                    timerInterval = setInterval(() => {
+                        if(!gameState.isPlaying) return;
+                        const elapsed = (Date.now() - gameState.startTime) / 1000;
+                        $('timer').innerText = elapsed.toFixed(1);
+                    }, 100);
+                }
+            }, 800);
+        }
+    }, 1000);
+}
+
+// --- 問題選択と出題ロジック ---
+function nextProblem() {
+    if (gameState.problemTimerInterval) {
+        clearInterval(gameState.problemTimerInterval);
+        gameState.problemTimerInterval = null;
+    }
+
+    let q = null;
+    let list = gameState.problemList;
+    
+    if (gameState.mode === 'endurance') {
+        q = gameState.fixedProblem; 
+    } else if (gameState.mode === 'variety' || gameState.mode === 'super') { 
+        let problemPool = list.filter(p => !p.isUsed);
+        if (problemPool.length === 0) {
+             list.forEach(p => p.isUsed = false); 
+             problemPool = list;
+        }
+        
+        const random = Math.floor(Math.random() * problemPool.length);
+        q = problemPool[random];
+        q.isUsed = true;
+        
+    } else {
+        const unusedSeasonalProblems = gameState.currentSeasonalProblems.filter(p => !p.isUsed);
+
+        if (unusedSeasonalProblems.length > 0 && gameState.seasonalProblemCounter >= 4) {
+            const random = Math.floor(Math.random() * unusedSeasonalProblems.length);
+            q = unusedSeasonalProblems[random];
+            q.isUsed = true; 
+            gameState.seasonalProblemCounter = 0; 
+        } else {
+            let unusedProblems = list.filter(p => !p.isUsed);
+
+            if (unusedProblems.length === 0) {
+                list.forEach(p => p.isUsed = false);
+                unusedProblems = list; 
+                $('feedback').style.color = "blue";
+                $('feedback').innerText = "問題リストをリフレッシュしました";
+                setTimeout(() => { 
+                    if($('feedback').innerText.includes("リフレッシュ")) {
+                        $('feedback').innerText = "";
+                    }
+                }, 1000);
+            } 
+            
+            const selectionPoolSize = Math.min(Math.ceil(unusedProblems.length * 0.2), unusedProblems.length);
+            const preferredRange = selectionPoolSize > 0 ? selectionPoolSize : 1; 
+            const selectionPool = unusedProblems.slice(0, preferredRange);
+
+            const random = Math.floor(Math.random() * selectionPool.length);
+            q = selectionPool[random];
+            
+            q.isUsed = true;
+            
+            gameState.seasonalProblemCounter++;
+        }
+    }
+    
+    gameState.targetText = q.t;
+    gameState.targetKana = q.k;
+    gameState.currentTyped = "";
+    gameState.typedHistory = "";
+    gameState.textOffsetIndex = 0;
+    renderProblem();
+
+    if (q.isSeasonal) {
+        const seasonName = { 'spring': '春', 'summer': '夏', 'autumn': '秋', 'winter': '冬' }[gameState.currentSeason];
+        $('seasonal-problem-indicator').innerText = `【${seasonName}の特別問題】`;
+        $('seasonal-problem-indicator').style.display = 'inline';
+    } else {
+        $('seasonal-problem-indicator').style.display = 'none';
+    }
+
+    if (gameState.mode === 'speedcontest') {
+        gameState.problemTimer = 20; 
+        
+        gameState.problemTimerInterval = setInterval(() => {
+            if (!gameState.isPlaying) {
+                clearInterval(gameState.problemTimerInterval);
+                return;
+            }
+            gameState.problemTimer--;
+            updateHUD(); 
+            
+            if (gameState.problemTimer <= 5) {
+                $('problem-timer').classList.add('warning');
+            } else {
+                $('problem-timer').classList.remove('warning');
+            }
+            
+            if (gameState.problemTimer <= 0) {
+                clearInterval(gameState.problemTimerInterval);
+                handleProblemTimeout();
+            }
+        }, 1000);
+    } else {
+        $('problem-timer').style.display = 'none';
+    }
+}
+
+// --- 描画と入力処理 (文字ズレおよびスライド補正版) ---
+function renderProblem() {
+    let mainText = '';
+    let furiganaText = '';
+    const isManualAdvance = (gameSettings.advanceMode === 'manual');
+    const isKanaInput = (gameSettings.inputMethod === 'kana');
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+    
+    if (gameSettings.mainTextType === 'hiragana_only') {
+        mainText = gameState.targetKana;
+        furiganaText = ''; 
+    } else if (gameSettings.mainTextType === 'full_reading') {
+        mainText = gameState.targetText;
+        furiganaText = (gameState.targetText !== gameState.targetKana) ? gameState.targetKana : ''; 
+    } else { 
+        mainText = gameState.targetText;
+        if (gameSettings.showFuriganaOverlay && gameState.targetText !== gameState.targetKana) {
+            furiganaText = gameState.targetKana;
+        } else {
+            furiganaText = '';
+        }
+    }
+
+    // 日本語表示側の文字送り幅設定
+    const WINDOW_SIZE = 30;
+    
+    // 入力進行に合わせた画面の切り出し制御（文字ズレの緩和）
+    let currentOffset = 0;
+    if (gameState.targetText.length > 0 && gameState.targetKana.length > 0) {
+        const kanaProgressRatio = gameState.typedHistory.length / (gameState.typedHistory.length + gameState.targetKana.length);
+        currentOffset = Math.floor(mainText.length * kanaProgressRatio);
+    }
+
+    if (mainText.length > WINDOW_SIZE) {
+        let startIdx = Math.max(0, currentOffset - 5);
+        if (startIdx + WINDOW_SIZE > mainText.length) {
+            startIdx = Math.max(0, mainText.length - WINDOW_SIZE);
+        }
+        const visibleMain = mainText.substring(startIdx, startIdx + WINDOW_SIZE);
+        $('japanese-text').innerText = (startIdx > 0 ? "…" : "") + visibleMain + (startIdx + WINDOW_SIZE < mainText.length ? "…" : "");
+        $('japanese-text').style.fontSize = '36px';
+    } else {
+        $('japanese-text').innerText = mainText;
+        $('japanese-text').style.fontSize = '72px';
+    }
+
+    if (furiganaText.length > WINDOW_SIZE) {
+        let startIdx = Math.max(0, currentOffset - 5);
+        if (startIdx + WINDOW_SIZE > furiganaText.length) {
+            startIdx = Math.max(0, furiganaText.length - WINDOW_SIZE);
+        }
+        const visibleFurigana = furiganaText.substring(startIdx, startIdx + WINDOW_SIZE);
+        $('furigana-text').innerText = (startIdx > 0 ? "…" : "") + visibleFurigana + (startIdx + WINDOW_SIZE < furiganaText.length ? "…" : "");
+        $('furigana-text').style.fontSize = '20px';
+    } else {
+        $('furigana-text').innerText = furiganaText;
+        $('furigana-text').style.fontSize = '28px';
+    }
+    
+    if (gameState.targetKana === "") {
+        $('display-typed').innerText = gameState.typedHistory;
+        $('display-current').innerText = "";
+        $('display-untyped').innerText = "";
+        
+        $('romaji-full-string').style.transform = 'translateX(0)';
+        $('romaji-container').style.textAlign = 'center';
+        
+        if (isKanaInput) {
+            $('romaji-container').innerText = "【かな入力モード】";
+            $('romaji-container').classList.add('kana-mode-display');
+        } else {
+             $('romaji-container').classList.remove('kana-mode-display');
+        }
+        
+        if (isManualAdvance || isVarietyMode) { 
+            $('feedback').innerText = "Press Enter!";
+            $('feedback').style.color = "blue";
+            $('enter-instruction').style.display = 'block';
+        } else {
+            $('feedback').innerText = "";
+            $('enter-instruction').style.display = 'none';
+        }
+    } else {
+        $('romaji-container').classList.remove('kana-mode-display');
+
+        if (isKanaInput) {
+            $('romaji-container').innerText = "【かな入力モード】 次の文字: " + getNextKanaChunk(gameState.targetKana);
+            $('romaji-container').classList.add('kana-mode-display');
+            $('display-typed').innerText = gameState.typedHistory;
+            $('display-current').innerText = "";
+            $('display-untyped').innerText = "";
+            
+            $('romaji-full-string').style.transform = 'translateX(0)';
+            $('romaji-container').style.textAlign = 'center';
+
+        } else {
+            const fullRomaji = getStandardRomajiString(gameState.targetKana); 
+            const nextChunk = getNextKanaChunk(gameState.targetKana);
+            
+            const standardForNext = getValidRomajis(nextChunk, gameState.targetKana).find(r => r.startsWith('r')) || getValidRomajis(nextChunk, gameState.targetKana)[0] || ''; 
+
+            let currentDisplay = '';
+            let untypedDisplay = '';
+            
+            const nextChunkRomajis = getValidRomajis(nextChunk, gameState.targetKana);
+            let bestMatchRomaji = nextChunkRomajis.find(r => r.startsWith(gameState.currentTyped)) || standardForNext;
+
+            if (gameState.currentTyped.length === 0) {
+                currentDisplay = standardForNext; 
+                untypedDisplay = fullRomaji.substring(standardForNext.length);
+            } else {
+                currentDisplay = gameState.currentTyped;
+                let remainingCurrentChunk = bestMatchRomaji.substring(gameState.currentTyped.length);
+                let remainingProblemRoman = fullRomaji.substring(standardForNext.length);
+                untypedDisplay = remainingCurrentChunk + remainingProblemRoman;
+            }
+
+            $('display-typed').innerText = gameState.typedHistory;
+            $('display-current').innerText = currentDisplay;
+            $('display-untyped').innerText = untypedDisplay;
+            
+            // スライド処理の正確化
+            if (isVarietyMode || fullRomaji.length > 30) {
+                $('romaji-container').style.textAlign = 'left'; 
+                
+                requestAnimationFrame(() => {
+                    const typedEl = $('display-typed');
+                    const fullStringEl = $('romaji-full-string');
+                    const containerEl = $('romaji-container');
+
+                    if (!typedEl || !fullStringEl || !containerEl) return;
+
+                    const typedWidth = typedEl.offsetWidth; 
+                    const containerWidth = containerEl.clientWidth; 
+                    const totalContentWidth = fullStringEl.scrollWidth; 
+
+                    const targetOffset = containerWidth * 0.3; 
+                    let idealShift = typedWidth - targetOffset;
+
+                    let finalShift = Math.max(0, idealShift);
+                    const maxShift = Math.max(0, totalContentWidth - containerWidth + 40);
+                    finalShift = Math.min(finalShift, maxShift);
+
+                    fullStringEl.style.transform = `translateX(${-finalShift}px)`;
+                }); 
+            } else {
+                 $('romaji-container').style.textAlign = 'center';
+                 $('romaji-full-string').style.transform = 'translateX(0)';
+            }
+        }
+
+        $('feedback').innerText = "";
+        $('enter-instruction').style.display = 'none'; 
+    }
+    
+    $('feedback').style.fontSize = "26px"; 
+    $('feedback').style.textShadow = "none";
+}
+
+function handleInput(key) {
+    if (!gameState.isPlaying) return;
+
+    const isPracticeOrOneshotOrShikenOrVariety = gameState.mode === 'practice' || gameState.mode === 'oneshot' || gameState.mode === 'shiken' || gameState.mode === 'variety' || gameState.mode === 'super';
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+    
+    const shouldUpdateGauge = !isVarietyMode; 
+    
+    let baseRate = 5;
+    let currentMultiplier = 1.0;
+    
+    if (gameState.mode === 'endurance') {
+        currentMultiplier = 0.1;
+    } else if (isPracticeOrOneshotOrShikenOrVariety) { 
+        currentMultiplier = gameState.dynamicGaugeRateMultiplier;
+    }
+    const gaugeIncrement = baseRate * currentMultiplier;
+    
+    if (key === 'Enter') {
+        if (gameState.targetKana.length === 0 && (gameSettings.advanceMode === 'manual' || isVarietyMode)) { 
+            gameState.score += 50 + (gameState.targetText.length * 5);
+            gameState.problemsCleared++; 
+            
+            if (isVarietyMode) { 
+                updateHUD();
+                endGame();
+                return;
+            }
+            
+            if (isPracticeOrOneshotOrShikenOrVariety && gameState.problemsCleared > 0 && gameState.problemsCleared % 10 === 0) {
+                gameState.dynamicGaugeRateMultiplier = Math.round((gameState.dynamicGaugeRateMultiplier * 10) + 1) / 10;
+                
+                $('feedback').style.color = "purple";
+                $('feedback').innerText = `Rate Up! x${gameState.dynamicGaugeRateMultiplier.toFixed(1)}`;
+                setTimeout(() => { 
+                    if($('feedback').innerText.includes("Rate Up!")) {
+                        $('feedback').innerText = "";
+                    }
+                }, 1500);
+            }
+            
+            if (gameState.mode === 'speedcontest' && gameState.problemTimerInterval) {
+                clearInterval(gameState.problemTimerInterval);
+                gameState.problemTimerInterval = null;
+            }
+            updateHUD(); 
+            updateGaugeStatusMessage(); 
+            nextProblem();
+        }
+        return;
+    }
+    if (gameState.targetKana.length === 0) return;
+
+    if (gameSettings.inputMethod === 'kana') {
+        const nextChunk = getNextKanaChunk(gameState.targetKana);
+        
+        if (kanaMap[key]) {
+            let typedKana = kanaMap[key];
+            let actualNextKana = nextChunk.substring(0, 1); 
+
+            if (typedKana === actualNextKana) {
+                gameState.correct++; gameState.combo++; 
+                
+                if (shouldUpdateGauge) { 
+                    gameState.gauge = Math.min(gameState.gauge + gaugeIncrement, 100);
+                    if (gameState.gauge === 100) triggerGaugeBonus();
+                }
+                
+                gameState.typedHistory += actualNextKana;
+                gameState.targetKana = gameState.targetKana.substring(actualNextKana.length);
+                gameState.textOffsetIndex += actualNextKana.length;
+                gameState.currentTyped = ""; 
+
+                if (gameState.targetKana.length === 0) {
+                    gameState.score += 50 + (gameState.targetText.length * 5);
+                    gameState.problemsCleared++; 
+                    
+                    if (isVarietyMode) { 
+                        updateHUD();
+                        endGame();
+                        return;
+                    }
+                    
+                    if (gameSettings.advanceMode === 'auto') {
+                        if (isPracticeOrOneshotOrShikenOrVariety && gameState.problemsCleared > 0 && gameState.problemsCleared % 10 === 0) {
+                            gameState.dynamicGaugeRateMultiplier = Math.round((gameState.dynamicGaugeRateMultiplier * 10) + 1) / 10;
+                            
+                            $('feedback').style.color = "purple";
+                            $('feedback').innerText = `Rate Up! x${gameState.dynamicGaugeRateMultiplier.toFixed(1)}`;
+                            setTimeout(() => { 
+                                if($('feedback').innerText.includes("Rate Up!")) {
+                                    $('feedback').innerText = "";
+                                }
+                            }, 1500);
+                        }
+                        
+                        if (gameState.mode === 'speedcontest' && gameState.problemTimerInterval) {
+                            clearInterval(gameState.problemTimerInterval);
+                            gameState.problemTimerInterval = null;
+                        }
+
+                        updateHUD(); 
+                        updateGaugeStatusMessage(); 
+                        nextProblem();
+                        return;
+                    }
+                }
+                updateHUD();
+                updateGaugeStatusMessage(); 
+                renderProblem();
+                return;
+            } else {
+                processMiss();
+                return;
+            }
+        } else {
+            return; 
+        }
+    }
+
+    // ローマ字入力処理
+    let originalKana = gameState.targetKana;
+    let originalHistory = gameState.typedHistory;
+    let nextChunk = getNextKanaChunk(gameState.targetKana);
+    let skippedHyphen = false;
+    let skippedSokuon = false;
+
+    if (nextChunk === 'っ') {
+        let restAfterSokuon = gameState.targetKana.substring(1);
+        let nextNextChunk = getNextKanaChunk(restAfterSokuon);
+        if (nextNextChunk) {
+            let validNextList = getValidRomajis(nextNextChunk, restAfterSokuon);
+            if (validNextList.some(r => key === r[0])) { 
+                gameState.targetKana = restAfterSokuon;
+                gameState.typedHistory += "っ";
+                nextChunk = nextNextChunk;
+                skippedSokuon = true;
+            }
+        }
+    }
+    
+    if (nextChunk === 'ー' && key !== '-') {
+        let restAfterHyphen = gameState.targetKana.substring(1);
+        let nextNextChunk = getNextKanaChunk(restAfterHyphen);
+        if (nextNextChunk) {
+            let validNextList = getValidRomajis(nextNextChunk, restAfterHyphen);
+            if (validNextList.some(r => key === r[0])) { 
+                gameState.targetKana = restAfterHyphen;
+                gameState.typedHistory += "ー";
+                nextChunk = nextNextChunk;
+                skippedHyphen = true;
+            }
+        }
+    }
+
+    const inputBuffer = gameState.currentTyped + key;
+    
+    let validList = getValidRomajis(nextChunk, gameState.targetKana);
+    let res = checkMatch(inputBuffer, validList);
+    
+    let isValid = res.match;
+    let isComplete = res.complete;
+
+    if (nextChunk === 'っ' && !isComplete && inputBuffer.length === 1) {
+        let restKana = gameState.targetKana.substring(nextChunk.length);
+        let afterSokuon = getNextKanaChunk(restKana);
+        if (afterSokuon) {
+            let nextRomajis = getValidRomajis(afterSokuon, restKana);
+            if (nextRomajis.some(r => key === r[0])) {
+                isValid = true; isComplete = true; 
+            }
+        }
+    }
+
+    if (isValid) {
+        gameState.correct++;
+        gameState.combo++;
+        
+        if (shouldUpdateGauge) { 
+            gameState.gauge = Math.min(gameState.gauge + gaugeIncrement, 100);
+            if (gameState.gauge === 100) triggerGaugeBonus();
+        }
+        
+        if (isComplete) {
+            const wordCompleted = gameState.targetKana.length === nextChunk.length;
+            
+            gameState.typedHistory += nextChunk; 
+            gameState.targetKana = gameState.targetKana.substring(nextChunk.length);
+            gameState.textOffsetIndex += nextChunk.length;
+            gameState.currentTyped = "";
+            
+            if (wordCompleted) {
+                if (isVarietyMode) { 
+                    gameState.score += 50 + (gameState.targetText.length * 5);
+                    gameState.problemsCleared++; 
+                    updateHUD();
+                    endGame();
+                    return;
+                }
+                
+                if (gameSettings.advanceMode === 'auto') {
+                    gameState.score += 50 + (gameState.targetText.length * 5);
+                    gameState.problemsCleared++; 
+                    
+                    if (isPracticeOrOneshotOrShikenOrVariety && gameState.problemsCleared > 0 && gameState.problemsCleared % 10 === 0) {
+                        gameState.dynamicGaugeRateMultiplier = Math.round((gameState.dynamicGaugeRateMultiplier * 10) + 1) / 10;
+                        
+                        $('feedback').style.color = "purple";
+                        $('feedback').innerText = `Rate Up! x${gameState.dynamicGaugeRateMultiplier.toFixed(1)}`;
+                        setTimeout(() => { 
+                            if($('feedback').innerText.includes("Rate Up!")) {
+                                $('feedback').innerText = "";
+                            }
+                        }, 1500);
+                    }
+                    
+                    if (gameState.mode === 'speedcontest' && gameState.problemTimerInterval) {
+                        clearInterval(gameState.problemTimerInterval);
+                        gameState.problemTimerInterval = null;
+                    }
+                    
+                    updateHUD(); 
+                    updateGaugeStatusMessage(); 
+                    nextProblem();
+                    return;
+                }
+            }
+
+        } else {
+            gameState.currentTyped = inputBuffer;
+        }
+        
+        updateHUD();
+        updateGaugeStatusMessage(); 
+        renderProblem();
+        
+    } else {
+        if (skippedHyphen || skippedSokuon) {
+            gameState.targetKana = originalKana;
+            gameState.typedHistory = originalHistory;
+            gameState.currentTyped = ''; 
+        }
+        processMiss();
+    }
+}
+
+function updateHUD() {
+    $('score').innerText = gameState.score;
+    $('combo').innerText = gameState.combo;
+    
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+
+    if (!isVarietyMode) {
+        $('timer').innerText = gameState.timer; 
+    }
+    
+    const problemNumber = gameState.problemsCleared + 1;
+    $('problem-number').innerText = `(${problemNumber}問目)`; 
+    
+    let rate = 1.0;
+    if (gameState.mode === 'endurance') {
+        rate = 0.1;
+    } else if (gameState.mode === 'practice' || gameState.mode === 'oneshot' || gameState.mode === 'shiken') { 
+        rate = gameState.dynamicGaugeRateMultiplier;
+    }
+
+    if (isVarietyMode) {
+        const elapsed = (gameState.startTime) ? ((Date.now() - gameState.startTime) / 1000).toFixed(1) : '0.0';
+        $('time-bonus-display').innerText = `一問勝負 - 経過時間: ${elapsed}秒`;
+        $('gauge-rate-display').innerText = `長文チャレンジモードではゲージは無効です`; 
+    } else {
+        $('time-bonus-display').innerText = `日常ゲージによる制限時間延長(累計): ${gameState.timeBonusAccumulated}秒`;
+        $('gauge-rate-display').innerText = `日常ゲージ上昇率: x${rate.toFixed(1)}`;
+    }
+
+    if (gameState.mode === 'speedcontest' && gameState.isPlaying) {
+        $('problem-timer').innerText = `[${gameState.problemTimer}秒]`;
+        $('problem-timer').style.display = 'inline';
+        if (gameState.problemTimer <= 5) {
+            $('problem-timer').classList.add('warning');
+        } else {
+            $('problem-timer').classList.remove('warning');
+        }
+    } else {
+        $('problem-timer').style.display = 'none';
+    }
+}
+
+function updateGauge() { 
+    $('gauge-bar').style.width = gameState.gauge + "%"; 
+    updateGaugeStatusMessage(); 
+}
+
+function updateGaugeStatusMessage() {
+    const gaugeRemaining = 100 - gameState.gauge;
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+
+    let baseRate = 5;
+    let currentMultiplier = 1.0;
+    if (gameState.mode === 'endurance') {
+        currentMultiplier = 0.1;
+    } else if (gameState.mode === 'practice' || gameState.mode === 'oneshot' || gameState.mode === 'shiken') { 
+        currentMultiplier = gameState.dynamicGaugeRateMultiplier;
+    }
+    const gaugeIncrement = baseRate * currentMultiplier; 
+
+    if (isVarietyMode) {
+         $('gauge-status-message').innerText = `長文チャレンジモードではゲージは無効です`;
+         return;
+    }
+    
+    if (gaugeIncrement > 0) {
+        const neededKeys = Math.ceil(gaugeRemaining / gaugeIncrement); 
+        const nextBonusTime = "1～3"; 
+        
+        if (neededKeys <= 0) {
+            $('gauge-status-message').innerText = `Max! Enterでボーナス確定`;
+        } else {
+            $('gauge-status-message').innerText = `あと${neededKeys}キーで${nextBonusTime}秒延長！`;
+        }
+    } else {
+        $('gauge-status-message').innerText = `ゲージは溜まりません`;
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (!gameState.isPlaying) return;
+
+    if (e.key.length > 1 && e.key !== 'Enter' && e.key !== 'Backspace') return;
+
+    const key = e.key;
+    if (key.length === 1 || key === 'Enter') {
+        e.preventDefault(); 
+        handleInput(key === 'Enter' ? key : key.toLowerCase());
+    }
+});
+
+function processMiss() {
+    gameState.miss++; 
+    gameState.combo = 0; 
+    
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+    if (!isVarietyMode) { 
+        gameState.gauge = 0; 
+    }
+    
+    updateHUD();
+    updateGauge(); 
+
+    if (gameState.mode === 'oneshot' || gameState.mode === 'speedcontest') {
+        const isTimeout = gameState.mode === 'speedcontest' && gameState.speedContestFailed;
+        
+        if (!isTimeout) { 
+            $('feedback').style.color = "red";
+            $('feedback').style.fontSize = "100px"; 
+            $('feedback').style.textShadow = "5px 5px 10px rgba(0,0,0,0.5)"; 
+            $('feedback').innerText = "×";
+        }
+        
+        gameState.isPlaying = false; 
+        if(timerInterval) clearInterval(timerInterval);
+        if(gameState.problemTimerInterval) clearInterval(gameState.problemTimerInterval);
+        
+        setTimeout(() => {
+            endGame(); 
+        }, 1500); 
+        
+    } else {
+        $('feedback').style.color = "red";
+        $('feedback').style.fontSize = "26px"; 
+        $('feedback').style.textShadow = "none";
+        $('feedback').innerText = "miss!";
+        setTimeout(() => { 
+            if($('feedback').innerText==="miss!") {
+                $('feedback').innerText = "";
+            }
+        }, 300);
+    }
+}
+
+function triggerGaugeBonus() {
+    gameState.gauge = 0;
+    const bonus = Math.floor(Math.random() * 3) + 1;
+    gameState.timer += bonus;
+    gameState.timeBonusAccumulated += bonus; 
+
+    $('feedback').style.color = "green";
+    $('feedback').style.fontSize = "26px"; 
+    $('feedback').style.textShadow = "none";
+    $('feedback').innerText = `Time +${bonus}!`;
+    
+    updateHUD(); 
+    updateGaugeStatusMessage(); 
+    
+    setTimeout(() => $('feedback').innerText="", 1000);
+}
+
+function handleProblemTimeout() {
+    if (gameState.mode !== 'speedcontest') return;
+
+    gameState.speedContestFailed = true; 
+    $('feedback').style.color = "red";
+    $('feedback').style.fontSize = "26px"; 
+    $('feedback').style.textShadow = "none";
+    $('feedback').innerText = "時間切れ！(問題未完了)";
+    
+    processMiss();
+}
+
+const rankStyles = {
+    'Perfect!': {
+        background: 'linear-gradient(to bottom, #ffff00, #ffd700, #b8860b)', 
+        textShadow: '8px 8px 20px rgba(0,0,0,0.8), 0 0 40px rgba(255,255,255,1)',
+        color: 'transparent'
+    },
+    'Super!': {
+        background: 'linear-gradient(to bottom, #ffccff, #ff00ff, #800080)', 
+        textShadow: '5px 5px 15px rgba(0,0,0,0.6), 0 0 30px rgba(255,100,255,1)',
+        color: '#fff' 
+    },
+    'SS': { 
+        background: 'linear-gradient(to bottom, #00ffff, #0080ff, #0000ff)',
+        textShadow: '5px 5px 15px rgba(0,0,0,0.6), 0 0 30px rgba(100,100,255,1)',
+        color: '#fff' 
+    },
+    'S': {
+        background: 'linear-gradient(to bottom, #fff8a0, #ffd700, #b8860b)',
+        textShadow: '4px 4px 10px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.9)',
+        color: 'transparent'
+    },
+    'A': {
+        background: 'linear-gradient(to bottom, #ffffff, #e0e0e0, #a0a0a0)',
+        textShadow: '4px 4px 10px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.7)',
+        color: 'transparent'
+    },
+    'B': {
+        background: 'linear-gradient(to bottom, #f0f0f0, #c0c0c0, #808080)',
+        textShadow: '3px 3px 8px rgba(0,0,0,0.4)',
+        color: 'transparent'
+    },
+    'C': {
+        background: 'linear-gradient(to bottom, #ffbf7f, #b87333, #8a4e21)',
+        textShadow: '3px 3px 8px rgba(0,0,0,0.4)',
+        color: 'transparent'
+    },
+    'D': {
+        background: 'linear-gradient(to bottom, #807060, #4a4030, #201810)',
+        textShadow: '2px 2px 5px rgba(0,0,0,0.6)',
+        color: '#ccc'
+    },
+    'E': {
+        background: 'linear-gradient(to bottom, #d2b48c, #8b4513, #a0522d)',
+        textShadow: '2px 2px 5px rgba(0,0,0,0.4)',
+        color: '#fff' 
+    }
+};
+
+// --- endgame 処理 ---
+function endGame() {
+    gameState.isPlaying = false; 
+    if(timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if(gameState.problemTimerInterval) {
+        clearInterval(gameState.problemTimerInterval);
+        gameState.problemTimerInterval = null;
+    }
+    
+    const isVarietyMode = gameState.mode === 'variety' || gameState.mode === 'super';
+    let timeTaken = 0;
+    
+    if (isVarietyMode) {
+        timeTaken = (Date.now() - gameState.startTime) / 1000;
+        timeTaken = Math.max(0.01, timeTaken); 
+    } else {
+        const timePlayed = gameState.initialTimer - gameState.timer;
+        timeTaken = timePlayed > 0 ? timePlayed : 0.01;
+    }
+
+    const avgKPS = (timeTaken > 0) ? (gameState.correct / timeTaken).toFixed(2) : 0;
+    const kpmActual = (timeTaken > 0) ? Math.round((gameState.correct / timeTaken) * 60) : 0;
+    
+    const totalTyped = gameState.correct + gameState.miss;
+    const acc = totalTyped === 0 ? 0 : (gameState.correct / totalTyped) * 100;
+    const accDisplay = acc.toFixed(2);
+    
+    let baseStandard = sRankStandard[gameState.mode] || 200; 
+    let actualValue = gameState.score;
+    
+    let netKpm = kpmActual; 
+    let intermediateRank;
+
+    if (isVarietyMode) {
+        const accuracyRatio = acc / 100;
+        netKpm = Math.round(kpmActual * accuracyRatio * accuracyRatio);
+        actualValue = netKpm;
+        
+        intermediateRank = 
+            netKpm >= 420 ? 'SS' :
+            netKpm >= 330 ? 'S' :
+            netKpm >= 280 ? 'A' :
+            netKpm >= 230 ? 'B' :
+            netKpm >= 180 ? 'C' :
+            netKpm >= 130 ? 'D' :
+            'E';
+
+        if (gameState.miss === 0 && netKpm >= 420) { 
+            intermediateRank = 'Perfect!'; 
+        }
+        
+    } else if (gameState.mode === 'oneshot') {
+        actualValue = gameState.problemsCleared;
+        const ratio = (baseStandard > 0) ? actualValue / baseStandard : 0; 
+        
+        if (ratio >= 1.5) { intermediateRank = 'S'; } 
+        else if (ratio >= 1.0) { intermediateRank = 'A'; } 
+        else if (ratio >= 0.75) { intermediateRank = 'B'; } 
+        else if (ratio >= 0.5) { intermediateRank = 'C'; } 
+        else if (ratio >= 0.25) { intermediateRank = 'D'; } 
+        else { intermediateRank = 'E'; }
+
+    } else {
+        const ratio = (baseStandard > 0) ? actualValue / baseStandard : 0; 
+        if (ratio >= 1.5) { intermediateRank = 'S'; } 
+        else if (ratio >= 1.0) { intermediateRank = 'A'; } 
+        else if (ratio >= 0.75) { intermediateRank = 'B'; } 
+        else if (ratio >= 0.5) { intermediateRank = 'C'; } 
+        else if (ratio >= 0.25) { intermediateRank = 'D'; } 
+        else { intermediateRank = 'E'; }
+    }
+    
+    const accRank = getAccuracyRank(acc);
+    let finalRank = intermediateRank;
+    let demotionApplied = false;
+
+    if (finalRank !== 'Perfect!' && finalRank !== 'Super!' && finalRank in rankIndexMap) { 
+        const scoreIndex = rankIndexMap[intermediateRank];
+        const accIndex = rankIndexMap[accRank];
+
+        if (Math.abs(scoreIndex - accIndex) >= 2) {
+            if (scoreIndex > 0) {
+                finalRank = rankOrderForDemotion[scoreIndex - 1];
+                demotionApplied = true;
+            } else {
+                finalRank = 'E'; 
+            }
+        }
+    }
+    
+    if (gameState.mode === 'speedcontest' && gameState.miss === 0 && finalRank === 'S') {
+        finalRank = 'Super!'; 
+    }
+    
+    let clearStatus = "結果";
+    let clearColor = "black";
+    let clearComment = "";
+
+    if (isVarietyMode) {
+        clearStatus = "結果発表 (クリア判定なし)";
+        clearColor = "#5d4037";
+        clearComment = `NKPMランク: ${intermediateRank} / 正確度ランク: ${accRank}`;
+        
+        $('clear-status-row').style.display = 'none';
+        
+    } else {
+        let isClearedByRank = false; 
+        let isClearedByScore = false; 
+        let isClearedByKPM = false; 
+        let isFinalClear = false; 
+        const targets = clearTargets[gameState.mode] || { score: 1000, kpm: 200 };
+        let requiredRankIndex = 0; 
+        let requiredRankName = 'E';
+
+        if (gameState.mode === 'standard' || gameState.mode === 'endurance') {
+            requiredRankIndex = rankIndexMap['D']; requiredRankName = 'D';
+        } else if (gameState.mode === 'accuracy') {
+            requiredRankIndex = rankIndexMap['C']; requiredRankName = 'C';
+        } else if (gameState.mode === 'oneshot' || gameState.mode === 'speedcontest' || gameState.mode === 'shiken' ) { 
+            requiredRankIndex = rankIndexMap['B']; requiredRankName = 'B';
+        } 
+        
+        if (finalRank === 'Super!') {
+            isFinalClear = true;
+        } else if (gameState.mode === 'practice') {
+            isFinalClear = (gameState.problemsCleared > 0); 
+        } else {
+            isClearedByRank = (rankIndexMap[finalRank] >= requiredRankIndex);
+            isClearedByScore = (actualValue >= targets.score);
+            isClearedByKPM = (kpmActual >= targets.kpm);
+            isFinalClear = isClearedByRank || isClearedByScore || isClearedByKPM;
+        }
+
+        if (isFinalClear) {
+            if (finalRank === 'Super!') { clearStatus = "特大クリア!!"; clearColor = "darkblue"; clearComment = " (Super!ランクを達成)"; }
+            else if (isClearedByRank) { clearStatus = "クリア!!"; clearColor = "green"; clearComment = ` (ランク(${finalRank})が基準(${requiredRankName}以上)を達成)`; } 
+            else if (isClearedByScore || isClearedByKPM) { clearColor = "darkorange"; clearStatus = "クリア!(複合)"; clearComment = ` (ランク未達。しかし、スコアまたはKPM基準を達成)`; }
+        } else {
+            clearStatus = "失敗...";
+            clearColor = "red";
+            if (gameState.problemsCleared === 0) { clearComment = " (問題未着手/クリア問題数0)"; }
+            else { clearComment = " (複合基準を達成できませんでした)"; }
+        }
+        
+        $('clear-status-row').style.display = 'table-row';
+    }
+    
+
+    $('res-clear-status').innerHTML = `${clearStatus}<br><span style="font-size: 16px; font-weight: normal; color: #5d4037; white-space: pre-wrap; text-align: center;">${clearComment}</span>`;
+    $('res-clear-status').style.color = clearColor;
+
+    const rankEl = $('result-rank');
+    const style = rankStyles[finalRank] || rankStyles['E']; 
+
+    rankEl.innerText = finalRank;
+    rankEl.style.backgroundImage = style.background;
+    rankEl.style.webkitBackgroundClip = 'text';
+    rankEl.style.webkitTextFillColor = style.color === 'transparent' ? 'transparent' : style.color;
+    rankEl.style.textShadow = style.textShadow;
+    rankEl.style.color = style.color || 'transparent'; 
+
+    let comment = '';
+    if (finalRank === 'Perfect!') {
+        comment = "PERFECT!! 正確性と速度、すべての評価基準が完璧でした！";
+    } else if (finalRank === 'Super!') {
+        comment = "Amazing! Perfect Speed!";
+    } else if (finalRank === 'SS') {
+        comment = "Ultimate Perfect!";
+    } else if (finalRank === 'S') {
+        comment = "Perfect!";
+    } else {
+        comment = "お疲れ様でした。";
+    }
+    
+    if (demotionApplied) {
+        comment = `お疲れ様でした。 (正確率ランク**${accRank}**との差により**${intermediateRank}**から**${finalRank}**へ降格)`;
+    }
+
+    $('rank-comment').innerText = comment;
+
+    document.getElementById('res-mode').innerText = modeMap[gameState.mode] || gameState.mode;
+    document.getElementById('res-time-taken').innerText = `${timeTaken.toFixed(2)}秒 (KPS: ${avgKPS})`;
+    
+    if (gameState.mode === 'oneshot') {
+        $('res-kpm').innerText = gameState.problemsCleared + `問 (スコアは非表示)`;
+    } else if (isVarietyMode) {
+        $('res-kpm').innerText = `${kpmActual} KPM (NKPM: ${netKpm} - ランク評価基準)`; 
+    } else {
+        const targets = clearTargets[gameState.mode] || { score: 1000, kpm: 200 };
+        $('res-kpm').innerText = `${gameState.correct} (KPM: ${kpmActual}, 目標: ${targets.kpm})`; 
+    }
+
+    const table = document.getElementById('result-table');
+    const rows = table.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        const th = row.querySelector('td:first-child');
+        if (th && th.textContent.includes('日常ゲージ延長時間')) {
+            row.style.display = 'none';
+        }
+        if (th && th.textContent.includes('スコア')) {
+            row.style.display = (isVarietyMode || gameState.mode === 'oneshot') ? 'none' : 'table-row';
+        }
+    });
+
+    if (isVarietyMode) {
+        rows[0].style.display = 'table-row';
+        rows[1].style.display = 'table-row';
+        rows[2].style.display = 'table-row';
+        rows[3].style.display = 'table-row';
+        
+        rows[1].querySelector('td:first-child').innerText = '完了時間';
+        rows[2].querySelector('td:first-child').innerText = '正確率';
+        rows[3].querySelector('td:first-child').innerText = 'KPM / NKPM';
+    }
+
+    $('res-acc').innerText = accDisplay+"%"; 
+    
+    changeScreen('result-screen');
+    
+    let scoreToSave = gameState.score;
+    if (gameState.mode === 'oneshot') {
+        scoreToSave = gameState.problemsCleared;
+    } else if (isVarietyMode) {
+        scoreToSave = netKpm;
+    }
+
+    saveRanking({mode: gameState.mode, rank: finalRank, score: scoreToSave});
+}
+
+function saveRanking(d) {
+    let l = JSON.parse(localStorage.getItem('typingV12_rank')||'[]');
+    l.push(d); 
+    
+    l.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('typingV12_rank', JSON.stringify(l.slice(0,10)));
+}
+
+function showRanking() {
+    changeScreen('ranking-screen');
+    const l = JSON.parse(localStorage.getItem('typingV12_rank')||'[]');
+    
+    $('ranking-table').querySelector('tbody').innerHTML = l.map((d,i)=>{
+        let scoreDisplay = d.score;
+        
+        if (d.mode === 'oneshot') {
+            scoreDisplay = d.score + "問";
+        } else if (d.mode === 'variety' || d.mode === 'super') {
+            scoreDisplay = d.score + "NKPM";
+        }
+        
+        return `<tr><td>${i+1}</td><td>${modeMap[d.mode] || d.mode}</td><td>${d.rank}</td><td>${scoreDisplay}</td></tr>`;
+    }).join('');
+}
+
+function downloadCSV() {
+    const l = JSON.parse(localStorage.getItem('typingV12_rank')||'[]');
+    let csv = "Rank,Mode,Rank,Score\n"+l.map((d,i)=>{
+        let scoreValue = d.score;
+        if (d.mode === 'oneshot') {
+             scoreValue += "問 (クリア数)"; 
+        } else if (d.mode === 'variety' || d.mode === 'super') {
+            scoreValue += "NKPM";
+        }
+        return `${i+1},${modeMap[d.mode] || d.mode},${d.rank},${scoreValue}`;
+    }).join('\n');
+    const b = new Blob([csv],{type:'text/csv'});
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a'); a.href=u; a.download='ranking.csv'; a.click();
+}
+
+loadSettings(); 
+</script>
+</body>
+</html>

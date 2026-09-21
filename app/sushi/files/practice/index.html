@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../effect.css">
+  <title>自作タイピング - 難易度選択</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="../image/logo(sushi).png">
+</head>
+<body>
+  <h1>自作タイピング(Practice)🍣 難易度を選んでください</h1>
+  <div id="difficulty-select">
+    <button onclick="startGame('practice')">プラクティス</button>
+    <button onclick="startGame('practiceLuna')">挑戦！</button>
+  </div>
+
+  <script>
+    function startGame(level) {
+      // 難易度情報をURLパラメータとして渡す
+      window.location.href = `play.html?difficulty=${level}`;
+    }
+  </script>
+<hr>
+<center>
+<h3>それぞれの難易度での文字の量(クリアに必要なスコア)</h3>
+<p>プラクティス&nbsp<small><font color="deep-pink"><u>Practice</u><font color="black"></small>:2～40文字以上(17)</p>
+<p>挑戦！&nbsp<small><font color="purple"><u>Practice&nbspLuna</u><font color="black"></small>:35～80文字以上(20)</p>
+<hr>
+<small>
+<p>2025&nbsp自作タイピングゲーム(Practice)</p>
+</small>
+</body>
+</html>
+

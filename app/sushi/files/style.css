@@ -1,0 +1,206 @@
+a {
+outline: none;
+text-decoration: none;
+}
+
+/* 全体設定 */
+body {
+  font-family: "Kosugi Maru", "sans-serif";
+  text-align: center;
+  background: #fffaf0;
+  margin: 0;
+  padding: 40px 20px;
+}
+
+/* タイトル */
+h1 {
+  font-size: 2em;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* 寿司表示部 */
+#sushi-static {
+  font-size: 2.5em;
+  font-weight: bold;
+  padding: 15px 25px;
+  background: #ffecc2;
+  border: 4px dashed #cc9966;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+/* 打鍵履歴 */
+#typed-progress {
+  font-size: 1.4em;
+  color: navy;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+/* miss表示 */
+#result {
+  font-size: 1.4em;
+  color: red;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* スコア表示 */
+#score {
+  font-size: 1.2em;
+  color: green;
+  margin-bottom: 10px;
+}
+
+/* タイマー表示 */
+#timer {
+  font-size: 1.2em;
+  color: #007777;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* コメント表示 */
+#score-comment {
+  font-size: 1.2em;
+  color: #555;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* 難易度選択画面用ボタン（index.html用） */
+#difficulty-select button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+  background-color: #ffdca8;
+  border: 2px solid #cc9966;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#difficulty-select button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #ccc;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+#start-button {
+  font-size: 1.4em;
+  padding: 12px 30px;
+  background-color: #ffcc66;
+  border: none;
+  border-radius: 10px;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 30px;
+}
+
+#start-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #ffc966;
+}
+
+#retry-button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: #ffe4b5;
+  border: 2px solid #cc9966;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#retry-button:hover {
+  background-color: #ffc966;
+  transform: scale(1.05);
+}
+
+#back-button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: #ffe4b5;
+  border: 2px solid #cc9966;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#back-button:hover {
+  background-color: #ffc966;
+  transform: scale(1.05);
+}
+
+#end-section button {
+  font-size: 1.2em;
+  margin: 10px;
+  padding: 10px 25px;
+  border-radius: 10px;
+  background-color: #fff0c2;
+  border: 2px solid #cc9966;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#end-section button:hover {
+  background-color: #ffdca8;
+  transform: scale(1.05);
+}
+
+.practice01 {
+  font-size: 1.4em;
+  padding: 12px 30px;
+  background-color: #ffcc66;
+  border: none;
+  border-radius: 10px;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 30px;
+}
+
+.practice01:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #ffc966;
+}
+
+/* 標準フォント（1, 2点用） */
+    .font-standard {
+      font-family: sans-serif;
+      font-size: 3em;
+    }
+    /* 明朝体（3点用） */
+    .font-special {
+      font-family: "Yu Mincho", "MS PMincho", serif;
+      font-size: 3.5em;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    /* ポップアップのスタイル */
+    .point-notice {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5em;
+      color: #ff4500;
+      background: rgba(255,255,255,0.9);
+      padding: 15px 30px;
+      border: 3px solid #ff4500;
+      border-radius: 15px;
+      z-index: 100;
+      pointer-events: none;
+      animation: fadeOut 1s forwards;
+    }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }

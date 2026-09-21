@@ -1,0 +1,10 @@
+#difficulty-select button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+  background-color: #ffdca8;
+  border: 2px solid #cc9966;
+  border-radius: 8px;
+}
+

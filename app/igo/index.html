@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>囲碁盤（Minimax CPU）</title>
+  <style>
+    body {
+      background-color: #fff8e5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Yu Mincho', serif;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      width: min(90vw, 500px);
+      height: min(90vw, 500px);
+      background-color: #dab47d;
+      box-shadow: 0 0 30px rgba(0,0,0,0.3);
+      border: 3px solid #000;
+    }
+    .cell {
+      border: 1px solid rgba(0,0,0,0.2);
+      position: relative;
+      cursor: pointer;
+    }
+    .cell:hover::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background-color: rgba(0,0,0,0.1);
+      animation: pulse 1s ease-out;
+    }
+    @keyframes pulse {
+      from { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      to   { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+    }
+    .cell.hint::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background-color: rgba(0,0,0,0.15);
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
+    .cell svg {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+  <div class="board" id="board"></div>
+  <script>
+    const boardSize = 9;
+    const boardElement = document.getElementById("board");
+    const boardState = [];
+    const directions = [
+      [-1,0],[1,0],[0,-1],[0,1],
+      [-1,-1],[1,1],[-1,1],[1,-1]
+    ];
+
+    let currentColor = "black";
+    let skipCount = 0;
+
+    // 評価重み（初期）
+    let positionWeight = [
+      [100,-20,10,5,5,10,-20,100,100],
+      [-20,-50,-2,-2,-2,-2,-50,-20,-20],
+      [10 ,-2, 2, 1, 1, 2, -2, 10, 10],
+      [5  ,-2, 1, 0, 0, 1, -2, 5,  5],
+      [5  ,-2, 1, 0, 0, 1, -2, 5,  5],
+      [10 ,-2, 2, 1, 1, 2, -2,10, 10],
+      [-20,-50,-2,-2,-2,-2,-50,-20,-20],
+      [100,-20,10,5,5,10,-20,100,100],
+      [100,-20,10,5,5,10,-20,100,100]
+    ];
+
+    // 前回の敗因分析結果
+    let lastGameAnalysis = {
+      lostCorners: 0,
+      riskyPlacements: 0,
+      stoneDifference: 0
+    };
+
+    function isRiskyPosition(x, y) {
+      return (
+        (x === 0 && y === 1) || (x === 1 && y === 0) ||
+        (x === 0 && y === boardSize - 2) || (x === 1 && y === boardSize - 1) ||
+        (x === boardSize - 2 && y === 0) || (x === boardSize - 1 && y === 1) ||
+        (x === boardSize - 2 && y === boardSize - 1) ||
+        (x === boardSize - 1 && y === boardSize - 2)
+      );
+    }
+
+    function adjustEvaluationWeight() {
+      if (lastGameAnalysis.lostCorners >= 2) {
+        positionWeight[0][0] += 30;
+        positionWeight[0][boardSize - 1] += 30;
+        positionWeight[boardSize - 1][0] += 30;
+        positionWeight[boardSize - 1][boardSize - 1] += 30;
+      }
+      if (lastGameAnalysis.riskyPlacements >= 3) {
+        for (let y = 0; y < boardSize; y++) {
+          for (let x = 0; x < boardSize; x++) {
+            if (isRiskyPosition(x, y)) {
+              positionWeight[y][x] -= 50;
+            }
+          }
+        }
+      }
+    }
+
+    function analyzeLoss() {
+      const cornerPositions = [
+        [0,0],[0,boardSize - 1],
+        [boardSize - 1,0],[boardSize - 1,boardSize - 1]
+      ];
+      let lostCorners = 0;
+      cornerPositions.forEach(([x, y]) => {
+        if (boardState[y][x] === "black") lostCorners++;
+      });
+
+      let riskyPlacements = 0;
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (boardState[y][x] === "white") {
+            if (isRiskyPosition(x, y)) riskyPlacements++;
+          }
+        }
+      }
+
+      const { black, white } = countStones();
+      lastGameAnalysis = {
+        lostCorners,
+        riskyPlacements,
+        stoneDifference: white - black
+      };
+    }
+
+    // checkGameOver() の最後に追加：
+    function checkGameOver() {
+      const filled = boardState.every(row => row.every(cell => cell));
+      const noBlack = getLegalMoves("black").length === 0;
+      const noWhite = getLegalMoves("white").length === 0;
+
+      if (filled || (noBlack && noWhite) || skipCount >= 3) {
+        const { black, white } = countStones();
+        let result = "";
+        if (black > white) result = "黒の沈黙が盤を制した(あなたの勝ち！COMは敗因を解析して成長します)";
+        else if (white > black) result = "白の静けさが優った(相手の勝ち！)";
+        else result = "穏やかな引き分け";
+        adjustEvaluationWeight();
+        updatePlayerStats(); // プレイヤー傾向を記録
+        analyzeLoss();         // 🧠 負け方を分析
+        adjustEvaluationWeight(); // 🛠️ 評価関数を修正
+        
+
+        const msg = document.createElement("div");
+        msg.innerHTML = `<strong>終了！</strong><br>${result}<br><br>黒: ${black} 石　白: ${white} 石`;
+        Object.assign(msg.style, {
+          position: "fixed",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontSize: "22px",
+          fontFamily: "Yu Mincho, serif",
+          background: "rgba(255,255,255,0.95)",
+          color: "#222",
+          padding: "20px",
+          border: "2px solid #000",
+          borderRadius: "12px",
+          boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+          textAlign: "center",
+          zIndex: 1000
+        });
+        document.body.appendChild(msg);
+
+      const log = document.createElement("div");
+    log.innerHTML = `<small style="color:#555;">
+    COMの学習: 隅配置失敗 ${lastGameAnalysis.lostCorners}、危険地帯配置 ${lastGameAnalysis.riskyPlacements}。
+    評価関数に微調整を加えました。
+    </small>`;
+    const summary = document.createElement("div");
+    summary.innerHTML = `<small style="color:#444;">
+    あなたの傾向: 隅 ${playerStats.cornerMoves}｜辺 ${playerStats.edgeMoves}｜中央 ${playerStats.centerMoves}（全 ${playerStats.gamesPlayed} 局）
+    </small>`;
+    msg.appendChild(summary);msg.appendChild(log);
+      }
+    }
+
+    function getCell(x, y) {
+      return boardElement.children[y * boardSize + x];
+    }
+
+    function placeStone(x, y, color) {
+      const cell = getCell(x, y);
+      cell.innerHTML = createStoneSVG(color);
+      cell.dataset.color = color;
+      boardState[y][x] = color;
+    }
+
+    function createStoneSVG(color) {
+      const fill = color === "black" ? "black" : "white";
+      const stroke = color === "white"
+        ? 'stroke="rgba(0,0,0,0.2)" stroke-width="1"' : '';
+      return `<svg width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="${fill}" ${stroke} />
+              </svg>`;
+    }
+
+    function isLegalMove(x, y, color) {
+      if (boardState[y][x]) return false;
+      for (const [dx, dy] of directions) {
+        let nx = x + dx, ny = y + dy;
+        let hasOpponent = false;
+        while (
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          boardState[ny][nx] &&
+          boardState[ny][nx] !== color
+        ) {
+          hasOpponent = true;
+          nx += dx; ny += dy;
+        }
+        if (
+          hasOpponent &&
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          boardState[ny][nx] === color
+        ) return true;
+      }
+      return false;
+    }
+
+    function getLegalMoves(color) {
+      const moves = [];
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (isLegalMove(x, y, color)) moves.push([x, y]);
+        }
+      }
+      return moves;
+    }
+
+    function cloneState(state) {
+      return state.map(row => [...row]);
+    }
+
+    function simulateMove(state, x, y, color) {
+      state[y][x] = color;
+      for (const [dx, dy] of directions) {
+        const path = [];
+        let nx = x + dx, ny = y + dy;
+        while (
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          state[ny][nx] &&
+          state[ny][nx] !== color
+        ) {
+          path.push([nx, ny]);
+          nx += dx; ny += dy;
+        }
+        if (
+          path.length &&
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          state[ny][nx] === color
+        ) {
+          path.forEach(([fx, fy]) => state[fy][fx] = color);
+        }
+      }
+    }
+
+    // 確定石の数をカウントする
+    function countStableStones(state, color) {
+      let stableCount = 0;
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (state[y][x] === color) {
+            // 隅からの安定性をチェック
+            if (isCornerStable(state, x, y)) {
+              stableCount++;
+            }
+          }
+        }
+      }
+      return stableCount;
+    }
+
+    function isCornerStable(state, x, y) {
+      const color = state[y][x];
+      // 左上隅
+      if (x === 0 && y === 0) {
+        if (state[0][1] === color && state[1][0] === color) return true;
+      }
+      // 右上隅
+      if (x === boardSize - 1 && y === 0) {
+        if (state[boardSize - 2][0] === color && state[boardSize - 1][1] === color) return true;
+      }
+      // 左下隅
+      if (x === 0 && y === boardSize - 1) {
+        if (state[0][boardSize - 2] === color && state[1][boardSize - 1] === color) return true;
+      }
+      // 右下隅
+      if (x === boardSize - 1 && y === boardSize - 1) {
+        if (state[boardSize - 2][boardSize - 1] === color && state[boardSize - 1][boardSize - 2] === color) return true;
+      }
+      return false;
+    }
+
+    function evaluateBoard(state) {
+      const { black, white } = countStonesFor(state);
+      const totalStones = black + white;
+      let score = 0;
+
+      // 終盤
+      if (totalStones >= 50) {
+        score = white - black;
+      }
+      // 中盤
+      else if (totalStones >= 20) {
+        const whiteStable = countStableStones(state, "white");
+        const blackStable = countStableStones(state, "black");
+        score = (whiteStable - blackStable) * 100 + (white - black);
+      }
+      // 序盤
+      else {
+        for (let y = 0; y < boardSize; y++) {
+          for (let x = 0; x < boardSize; x++) {
+            if (state[y][x] === "white") {
+              score += positionWeight[y][x];
+              if (isRiskyPosition(x, y)) score -= 100;
+            }
+            if (state[y][x] === "black") {
+              score -= positionWeight[y][x];
+            }
+          }
+        }
+      }
+      return score;
+    }
+
+    function minimax(state, depth, maximizing) {
+      const color = maximizing ? "white" : "black";
+      const moves = getLegalMovesFor(state, color);
+      
+      if (depth === 0 || moves.length === 0) {
+        // パスの場合、評価値を調整
+        if (moves.length === 0) {
+            return evaluateBoard(state) + (maximizing ? -1000 : 1000); // 相手をパスさせると大きなボーナス
+        }
+        return evaluateBoard(state);
+      }
+
+      let best = maximizing ? -Infinity : Infinity;
+      for (const [x, y] of moves) {
+        const next = cloneState(state);
+        simulateMove(next, x, y, color);
+        const val = minimax(next, depth - 1, !maximizing);
+        best = maximizing ? Math.max(best, val) : Math.min(best, val);
+      }
+      return best;
+    }
+
+    function getLegalMovesFor(state, color) {
+      const moves = [];
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (!state[y][x] && isLegalMoveFor(state, x, y, color)) {
+            moves.push([x, y]);
+          }
+        }
+      }
+      return moves;
+    }
+
+    function isLegalMoveFor(state, x, y, color) {
+      if (state[y][x]) return false;
+      for (const [dx, dy] of directions) {
+        let nx = x + dx, ny = y + dy;
+        let hasOpponent = false;
+        while (
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          state[ny][nx] &&
+          state[ny][nx] !== color
+        ) {
+          hasOpponent = true;
+          nx += dx; ny += dy;
+        }
+        if (
+          hasOpponent &&
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          state[ny][nx] === color
+        ) return true;
+      }
+      return false;
+    }
+    
+    function countStonesFor(state) {
+      let black = 0, white = 0;
+      for (const row of state) {
+        for (const cell of row) {
+          if (cell === "black") black++;
+          if (cell === "white") white++;
+        }
+      }
+      return { black, white };
+    }
+
+    function countStones() {
+      let black = 0, white = 0;
+      for (const row of boardState) {
+        for (const cell of row) {
+          if (cell === "black") black++;
+          if (cell === "white") white++;
+        }
+      }
+      return { black, white };
+    }
+
+    function showHints() {
+      document.querySelectorAll(".cell.hint").forEach(cell =>
+        cell.classList.remove("hint"));
+      const moves = getLegalMoves(currentColor);
+      moves.forEach(([x, y]) => getCell(x, y).classList.add("hint"));
+    }
+
+    function cpuPlay() {
+      const moves = getLegalMoves("white");
+      if (moves.length === 0) {
+        skipCount++;
+        if (skipCount >= 3) checkGameOver();
+        currentColor = "black";
+        showHints();
+        return;
+      }
+
+      skipCount = 0;
+      let bestMove = moves[0];
+      let bestScore = -Infinity;
+
+      for (const [x, y] of moves) {
+        const next = cloneState(boardState);
+        simulateMove(next, x, y, "white");
+        const score = minimax(next, 3, false); // 深度4
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = [x, y];
+        }
+      }
+
+      handleMove(bestMove[0], bestMove[1]);
+    }
+
+    function handleMove(x, y) {
+      if (!isLegalMove(x, y, currentColor)) {
+        return; // ここで無効な手は処理を終了
+      }
+
+      skipCount = 0;
+      const toFlip = [];
+      for (const [dx, dy] of directions) {
+        const path = [];
+        let nx = x + dx, ny = y + dy;
+        while (
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          boardState[ny][nx] &&
+          boardState[ny][nx] !== currentColor
+        ) {
+          path.push([nx, ny]);
+          nx += dx; ny += dy;
+        }
+        if (
+          path.length &&
+          nx >= 0 && nx < boardSize &&
+          ny >= 0 && ny < boardSize &&
+          boardState[ny][nx] === currentColor
+        ) {
+          toFlip.push(...path);
+        }
+      }
+
+      placeStone(x, y, currentColor);
+      toFlip.forEach(([fx, fy]) => placeStone(fx, fy, currentColor));
+      currentColor = currentColor === "black" ? "white" : "black";
+      showHints();
+      if (currentColor === "white") setTimeout(cpuPlay, 300);
+      checkGameOver();
+    }
+
+    function createBoard() {
+      for (let y = 0; y < boardSize; y++) {
+        boardState[y] = [];
+        for (let x = 0; x < boardSize; x++) {
+          boardState[y][x] = null;
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          cell.addEventListener("click", () => {
+            if (currentColor === "black") handleMove(x, y);
+          });
+          boardElement.appendChild(cell);
+        }
+      }
+
+      const mid = Math.floor(boardSize / 2);
+      placeStone(mid - 1, mid - 1, "white");
+      placeStone(mid,     mid,     "white");
+      placeStone(mid - 1, mid,     "black");
+      placeStone(mid,     mid - 1, "black");
+
+      showHints();
+
+      if (currentColor === "white") {
+        setTimeout(cpuPlay, 500);
+      }
+    }
+
+    const playerStats = JSON.parse(localStorage.getItem("playerStats")) || {
+      cornerMoves: 0,
+      edgeMoves: 0,
+      centerMoves: 0,
+      gamesPlayed: 0
+    };
+
+    function updatePlayerStats() {
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (boardState[y][x] === "black") {
+            const isCorner = (x === 0 || x === boardSize - 1) && (y === 0 || y === boardSize - 1);
+            const isEdge = x === 0 || x === boardSize - 1 || y === 0 || y === boardSize - 1;
+            if (isCorner) playerStats.cornerMoves++;
+            else if (isEdge) playerStats.edgeMoves++;
+            else playerStats.centerMoves++;
+          }
+        }
+      }
+      playerStats.gamesPlayed++;
+      localStorage.setItem("playerStats", JSON.stringify(playerStats));
+    }
+
+    function adaptCOMtoPlayer() {
+      const total = playerStats.cornerMoves + playerStats.edgeMoves + playerStats.centerMoves;
+      if (total === 0) return;
+
+      const edgeRatio = playerStats.edgeMoves / total;
+      const cornerRatio = playerStats.cornerMoves / total;
+
+      if (cornerRatio >= 0.3) {
+        positionWeight[0][0] += 20;
+        positionWeight[0][boardSize - 1] += 20;
+        positionWeight[boardSize - 1][0] += 20;
+        positionWeight[boardSize - 1][boardSize - 1] += 20;
+      }
+
+      if (edgeRatio >= 0.4) {
+        for (let i = 0; i < boardSize; i++) {
+          positionWeight[i][0] -= 10;
+          positionWeight[i][boardSize - 1] -= 10;
+        }
+      }
+    }
+
+    function showEvaluationWeights() {
+      let table = "<table style='margin:auto;font-size:12px;border-collapse:collapse;'>";
+      for (let y = 0; y < boardSize; y++) {
+        table += "<tr>";
+        for (let x = 0; x < boardSize; x++) {
+          table += `<td style='border:1px solid #ccc;padding:4px;'>${positionWeight[y][x]}</td>`;
+        }
+        table += "</tr>";
+      }
+      table += "</table>";
+
+      const popup = document.createElement("div");
+      popup.innerHTML = `<strong>COM評価重み</strong><br>${table}`;
+      Object.assign(popup.style, {
+        position: "fixed",
+        bottom: "20px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "#fff",
+        border: "1px solid #999",
+        padding: "10px",
+        boxShadow: "0 0 10px rgba(0,0,0,0.3)",
+        zIndex: 999
+      });
+      document.body.appendChild(popup);
+    }
+
+    adaptCOMtoPlayer(); // 長期学習に基づくCOM調整
+    createBoard(); // 初期盤面生成を実行
+  </script>
+</body>
+</html>

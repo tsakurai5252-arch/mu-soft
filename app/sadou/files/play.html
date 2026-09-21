@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>自作タイピングゲーム(茶道)</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="./image/logo.png">
+</head>
+<body>
+  <h1>～茶道の道のりは長い～ 🌿</h1>
+  <div id="countdown" style="font-size: 2.5em; margin-bottom: 20px;"></div>
+  <div id="sushi-static">ここに問題が表示されます</div>
+  <div id="result"></div>
+  <div id="typed-progress"></div>
+  <div id="score">師匠からの評価: -点</div>
+  <div id="timer">おもてなしできる残り時間: あと-秒</div>
+  <div id="score-comment"></div>
+  <div id="end-section" style="margin-top: 30px;">
+  <button id="retry-button" style="display: none;">もう一度挑戦する 🔁</button>
+</div>
+<div id="end-section" style="margin-top: 20px;">
+  <button id="retry-button" style="display: none;">もう一度挑戦する 🔁</button>
+  <button id="back-button" style="display: none;">通ってきた道を戻る 🧭</button>
+</div>
+  <script src="typing-game.js"></script>
+<hr>
+<script src="OSsupport.js"></script>
+<script>
+  showDetectedOS(); // 必要なら detectOS() を直接使って分岐してもOK
+</script>
+    <script src="BrowserDetect.js"></script>
+<script>
+  showBrowserStatus();
+</script>
+<p id="os-bitness-display"></p>
+<script src="OSbit.js"></script>
+<hr>
+<small>
+<p>2025&nbsp自作タイピングゲーム(ver1.00_茶道)</p>
+</small>
+</body>
+</html>

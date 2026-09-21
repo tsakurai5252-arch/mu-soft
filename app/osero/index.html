@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高度なオセロゲーム (最終結果表示付き)</title>
+    
+    <style>
+        /* 游明朝体が利用できない環境では代替フォントが使われます */
+        @font-face {
+            font-family: 'YuMincho';
+            src: local('YuMincho'), local('Yu Mincho');
+            unicode-range: U+3000-30FF, U+4E00-9FFF;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        /* --- 選択画面のスタイル（変更なし） --- */
+        #selection-screen {
+            text-align: center;
+            padding: 20px 40px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        #color-select {
+            margin: 15px 0 20px 0;
+            font-size: 1.1em;
+        }
+        #color-select label {
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        #start-button {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        #start-button:hover {
+            background-color: #1e7e34;
+        }
+
+        /* --- ゲーム情報（変更なし） --- */
+        #game-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        #score, #message {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #reset-button {
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        #reset-button:hover {
+            background-color: #c82333;
+        }
+
+        /* --- ボードコンテナ (修正) --- */
+        #board-container {
+            width: 480px; 
+            height: 480px;
+            position: relative; 
+            border: 4px solid #4a2c14; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .board-8x8 {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            width: 100%;
+            height: 100%;
+            position: relative; 
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: #006400; 
+            border: 1px solid #004d00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-sizing: border-box; 
+        }
+
+        /* --- 置ける場所マーカー（変更なし） --- */
+        .marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.4); 
+            pointer-events: none; 
+            opacity: 0.8;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
+        }
+        
+        /* --- コマのスタイル（変更なし） --- */
+        .disc {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s, background-color 0.5s;
+            transform: scale(0);
+        }
+
+        .disc.placed {
+            transform: scale(1);
+        }
+
+        .disc.black {
+            background: radial-gradient(circle at 30% 30%, #444, #000);
+        }
+
+        .disc.white {
+            background: radial-gradient(circle at 70% 70%, #fff, #bbb);
+        }
+
+        /* 裏返しアニメーション（変更なし） */
+        .disc.flipping {
+            animation: flip-scale 0.5s forwards;
+        }
+
+        @keyframes flip-scale {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(0.5) rotateY(90deg); }
+            100% { transform: scale(1) rotateY(180deg); }
+        }
+
+        .disc.flipping.to-white {
+            background: radial-gradient(circle at 70% 70%, #fff, #bbb);
+        }
+        .disc.flipping.to-black {
+            background: radial-gradient(circle at 30% 30%, #444, #000);
+        }
+
+        /* --- 思考中/結果表示オーバーレイ (修正: .board-8x8 の子として機能する) --- */
+        #thinking-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* 親要素(.board-8x8)のサイズにぴったり合わせる */
+            width: 100%; 
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); 
+            color: white;
+            font-size: 3em;
+            font-family: 'YuMincho', serif; 
+            justify-content: center;
+            align-items: center;
+            z-index: 10; 
+            pointer-events: none; 
+            text-align: center;
+            padding: 20px;
+            line-height: 1.5; 
+        }
+        #thinking-overlay span {
+            display: block;
+            font-size: 0.5em; 
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>オセロゲーム (Reversi)</h1>
+
+    <div id="selection-screen">
+        <p>どちらでプレイしますか？</p>
+        <div id="color-select">
+            <input type="radio" id="select-black" name="player-color" value="black" checked>
+            <label for="select-black">黒 (先手)</label>
+            <input type="radio" id="select-white" name="player-color" value="white">
+            <label for="select-white">白 (後手)</label>
+        </div>
+        <button id="start-button">ゲーム開始</button>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div id="game-info">
+            <div id="score">
+                黒: <span id="score-black">2</span> | 白: <span id="score-white">2</span>
+            </div>
+            <div id="message"></div>
+            <button id="reset-button">リセット</button>
+        </div>
+
+        <div id="board-container">
+            <div id="board" class="board-8x8">
+                <div id="thinking-overlay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 定数 ---
+        const EMPTY = 0;
+        const BLACK = 1;
+        const WHITE = 2;
+        const BOARD_SIZE = 8;
+        const COM_THINK_TIME = 1000; 
+
+        // --- 状態変数 ---
+        let board;
+        let currentPlayer; 
+        let isGameOver;
+        let playerColor; 
+        let comColor;    
+        const directions = [
+            [0, 1], [0, -1], [1, 0], [-1, 0], 
+            [1, 1], [1, -1], [-1, 1], [-1, -1] 
+        ];
+
+        // --- DOM要素 ---
+        const selectionScreen = document.getElementById('selection-screen');
+        const gameContainer = document.getElementById('game-container');
+        const startButton = document.getElementById('start-button');
+        const boardElement = document.getElementById('board');
+        const scoreBlackElement = document.getElementById('score-black');
+        const scoreWhiteElement = document.getElementById('score-white');
+        const messageElement = document.getElementById('message');
+        const resetButton = document.getElementById('reset-button');
+        
+        // <<< 修正: const から let に変更 >>>
+        let thinkingOverlay = document.getElementById('thinking-overlay');
+
+        // --- ゲームロジック関数 (変更なし) ---
+
+        function checkMove(r, c, player) {
+            if (board[r][c] !== EMPTY) return [];
+
+            const opponent = player === BLACK ? WHITE : BLACK;
+            let flippableDiscs = [];
+
+            for (const [dr, dc] of directions) {
+                let currentLine = [];
+                let tr = r + dr;
+                let tc = c + dc;
+
+                while (tr >= 0 && tr < BOARD_SIZE && tc >= 0 && tc < BOARD_SIZE && board[tr][tc] === opponent) {
+                    currentLine.push([tr, tc]);
+                    tr += dr;
+                    tc += dc;
+                }
+
+                if (tr >= 0 && tr < BOARD_SIZE && tc >= 0 && tc < BOARD_SIZE && board[tr][tc] === player) {
+                    flippableDiscs.push(...currentLine);
+                }
+            }
+            return flippableDiscs;
+        }
+
+        function findAllValidMoves(player) {
+            const validMoves = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === EMPTY) {
+                        if (checkMove(r, c, player).length > 0) {
+                            validMoves.push([r, c]);
+                        }
+                    }
+                }
+            }
+            return validMoves;
+        }
+        
+        // --- ターン管理関数 (変更なし) ---
+
+        function switchTurn() {
+            currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
+            updateGameInfo();
+
+            const nextPlayerValidMoves = findAllValidMoves(currentPlayer);
+            
+            if (nextPlayerValidMoves.length === 0) {
+                const opponent = currentPlayer === BLACK ? WHITE : BLACK;
+                const opponentValidMoves = findAllValidMoves(opponent);
+
+                if (opponentValidMoves.length === 0) {
+                    isGameOver = true;
+                } else {
+                    messageElement.textContent = `${currentPlayer === BLACK ? '黒' : '白'}はパスです！${opponent === BLACK ? '黒' : '白'}の番に戻ります`;
+                    currentPlayer = opponent; 
+                }
+            }
+
+            if (board.flat().every(cell => cell !== EMPTY)) {
+                isGameOver = true;
+            }
+            
+            updateGameInfo();
+            renderBoard(); 
+
+            if (!isGameOver && currentPlayer === comColor) {
+                messageElement.textContent = `COM(${currentPlayer === BLACK ? '黒' : '白'})の思考中...`;
+                thinkingOverlay.innerHTML = '思考中...'; 
+                thinkingOverlay.style.display = 'flex'; 
+                setTimeout(comMove, COM_THINK_TIME); 
+            }
+        }
+        
+        function comMove() {
+            if (isGameOver || currentPlayer !== comColor) return;
+
+            const validMoves = findAllValidMoves(comColor);
+            
+            if (validMoves.length === 0) {
+                switchTurn(); 
+                return;
+            }
+
+            let bestMoves = [];
+            let maxFlips = -1;
+
+            for (const [r, c] of validMoves) {
+                const flips = checkMove(r, c, comColor).length;
+                
+                if (flips > maxFlips) {
+                    maxFlips = flips;
+                    bestMoves = [[r, c]];
+                } else if (flips === maxFlips) {
+                    bestMoves.push([r, c]);
+                }
+            }
+
+            const [r, c] = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+            const flippableDiscs = checkMove(r, c, comColor);
+            board[r][c] = comColor;
+            placeDisc(r, c, comColor);
+
+            Promise.all(flippableDiscs.map(([fr, fc]) => flipDisc(fr, fc, comColor)))
+                .then(() => {
+                    switchTurn();
+                });
+        }
+
+
+        // --- 描画とUI操作関数 ---
+
+        function createDisc(player, placed = false) {
+            const disc = document.createElement('div');
+            disc.classList.add('disc');
+            disc.classList.add(player === BLACK ? 'black' : 'white');
+            if (placed) {
+                disc.classList.add('placed'); 
+            }
+            return disc;
+        }
+
+        function placeDisc(r, c, player) {
+            const cell = boardElement.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            const disc = createDisc(player);
+            const marker = cell.querySelector('.marker');
+            if (marker) cell.removeChild(marker);
+
+            cell.appendChild(disc);
+
+            setTimeout(() => disc.classList.add('placed'), 10); 
+        }
+
+        function flipDisc(r, c, newPlayer) {
+            return new Promise(resolve => {
+                const cell = boardElement.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                const disc = cell.querySelector('.disc');
+                
+                if (!disc) {
+                    resolve();
+                    return;
+                }
+
+                const flipClass = newPlayer === BLACK ? 'to-black' : 'to-white';
+
+                board[r][c] = newPlayer; 
+
+                disc.classList.add('flipping', flipClass);
+
+                setTimeout(() => {
+                    disc.classList.remove('black', 'white');
+                    disc.classList.add(newPlayer === BLACK ? 'black' : 'white');
+                    disc.classList.remove('flipping', flipClass);
+                    resolve();
+                }, 500); 
+            });
+        }
+        
+        function highlightValidMoves() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('valid-move');
+                const marker = cell.querySelector('.marker');
+                if (marker) cell.removeChild(marker); 
+            });
+            
+            if (isGameOver) return;
+
+            const validMoves = findAllValidMoves(currentPlayer); 
+
+            validMoves.forEach(([r, c]) => {
+                const cell = boardElement.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                if (cell) {
+                    if (currentPlayer === playerColor && board[r][c] === EMPTY) {
+                         const marker = document.createElement('div');
+                         marker.classList.add('marker');
+                         cell.appendChild(marker);
+                    }
+                    cell.classList.add('valid-move');
+                }
+            });
+        }
+
+        function renderBoard() {
+            // オーバーレイを退避
+            const overlayClone = thinkingOverlay.cloneNode(true); 
+            
+            // 盤面をクリア
+            boardElement.innerHTML = '';
+            
+            // セルを再描画
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    if (board[r][c] !== EMPTY) {
+                        const disc = createDisc(board[r][c], true);
+                        cell.appendChild(disc);
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+
+                    boardElement.appendChild(cell);
+                }
+            }
+            
+            // 盤面描画後、オーバーレイを再挿入
+            boardElement.appendChild(overlayClone); 
+            
+            // DOM要素の参照を更新
+            // thinkingOverlayがletで宣言されているため、再代入が可能
+            thinkingOverlay = document.getElementById('thinking-overlay'); 
+
+            highlightValidMoves(); 
+        }
+
+        function updateGameInfo() {
+            let blackCount = 0;
+            let whiteCount = 0;
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === BLACK) blackCount++;
+                    if (board[r][c] === WHITE) whiteCount++;
+                }
+            }
+
+            scoreBlackElement.textContent = blackCount;
+            scoreWhiteElement.textContent = whiteCount;
+
+            if (isGameOver) {
+                let winnerMessage;
+                let winnerText;
+                
+                if (blackCount > whiteCount) {
+                    winnerText = '黒の勝利 🏆';
+                    winnerMessage = `ゲーム終了！黒の勝利 (${blackCount}対${whiteCount})`;
+                } else if (whiteCount > blackCount) {
+                    winnerText = '白の勝利 🏆';
+                    winnerMessage = `ゲーム終了！白の勝利 (${whiteCount}対${blackCount})`;
+                } else {
+                    winnerText = '引き分け';
+                    winnerMessage = `ゲーム終了！引き分け (${blackCount}対${whiteCount})`;
+                }
+
+                thinkingOverlay.innerHTML = `${winnerText}<span>(${blackCount} 対 ${whiteCount})</span>`;
+                thinkingOverlay.style.display = 'flex';
+                
+                messageElement.textContent = winnerMessage;
+                
+            } else if (currentPlayer === playerColor) {
+                 messageElement.textContent = `あなたの番です (${currentPlayer === BLACK ? '黒' : '白'})`;
+                 thinkingOverlay.style.display = 'none'; 
+            } 
+        }
+
+        function handleCellClick(r, c) {
+            if (isGameOver || currentPlayer !== playerColor) {
+                return;
+            }
+
+            const flippableDiscs = checkMove(r, c, currentPlayer);
+
+            if (flippableDiscs.length > 0) {
+                board[r][c] = currentPlayer;
+                placeDisc(r, c, currentPlayer);
+
+                Promise.all(flippableDiscs.map(([fr, fc]) => flipDisc(fr, fc, currentPlayer)))
+                    .then(() => {
+                        switchTurn();
+                    });
+
+            } else {
+                 messageElement.textContent = `そこには置けません。あなたの番です (${currentPlayer === BLACK ? '黒' : '白'})`;
+            }
+        }
+
+        // --- 初期化と開始 ---
+        function initializeGame() {
+            selectionScreen.style.display = 'block';
+            gameContainer.style.display = 'none';
+            isGameOver = false;
+
+            board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(EMPTY));
+            board[3][3] = WHITE;
+            board[3][4] = BLACK;
+            board[4][3] = BLACK;
+            board[4][4] = WHITE;
+            
+            scoreBlackElement.textContent = 2;
+            scoreWhiteElement.textContent = 2;
+            messageElement.textContent = '色を選んで開始してください';
+            
+            // thinkingOverlayが再描画されていない場合を考慮し、DOMから取得し直す
+            thinkingOverlay = document.getElementById('thinking-overlay');
+            if (thinkingOverlay) {
+                 thinkingOverlay.style.display = 'none'; 
+                 thinkingOverlay.innerHTML = ''; 
+            }
+        }
+
+        function startGame(playerSelection) {
+            playerColor = playerSelection === 'black' ? BLACK : WHITE;
+            comColor = playerSelection === 'black' ? WHITE : BLACK;
+            currentPlayer = BLACK; 
+
+            selectionScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+
+            renderBoard();
+            updateGameInfo();
+
+            if (currentPlayer === comColor) {
+                messageElement.textContent = `COM(${currentPlayer === BLACK ? '黒' : '白'})の思考中...`;
+                thinkingOverlay.innerHTML = '思考中...';
+                thinkingOverlay.style.display = 'flex'; 
+                setTimeout(comMove, COM_THINK_TIME); 
+            }
+        }
+
+        // --- イベントリスナー ---
+        startButton.addEventListener('click', () => {
+            const selectedColor = document.querySelector('input[name="player-color"]:checked').value;
+            startGame(selectedColor);
+        });
+        resetButton.addEventListener('click', initializeGame);
+
+        // --- 起動 ---
+        document.addEventListener('DOMContentLoaded', initializeGame);
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="effect.css">
+  <title>自作タイピング - 難易度選択</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="./image/logo(sushi).png">
+</head>
+<body>
+  <h1>自作タイピング🍣 難易度を選んでください</h1>
+
+  <div id="difficulty-select">
+    <button onclick="startGame('easy')">簡単</button>
+    <button onclick="startGame('normal')">普通</button>
+    <button onclick="startGame('hard')">難しい</button>
+    <button onclick="startGame('lunatic')">難易度は人を狂わす</button>
+    <button onclick="startGame('SuperLunatic')">狂気には狂気を...</button>
+  </div>
+
+  <script>
+    function startGame(level) {
+      // 難易度情報をURLパラメータとして渡す
+      window.location.href = `play.html?difficulty=${level}`;
+    }
+  </script>
+<hr>
+<center>
+<h3>それぞれの難易度での文字の量(クリアに必要なスコア)</h3>
+<p>簡単&nbsp<small><font color="green"><u>easy</u><font color="black"></small>:2～3文字(10)</p>
+<p>普通&nbsp<small><font color="blue"><u>normal</u><font color="black"></small>:6～9文字(15)</p>
+<p>難しい&nbsp<small><font color="red"><u>hard</u><font color="black"></small>:7～11文字以上(20)</p>
+<p>難易度は人を狂わす&nbsp<small><font color="purple"><u>lunatic</u><font color="black"></small>:16～36文字以上(23)</p>
+<p>狂気には狂気を...&nbsp<small><font color="white-red"><u>Super</u>&nbsp<font color="purple"><u>Lunatic</u><font color="black"></small>:2～40文字以上(26)</p>
+<hr>
+<small>
+<p>2025&nbsp自作タイピングゲーム(ver1.06)</p>
+</small>
+</body>
+</html>
+

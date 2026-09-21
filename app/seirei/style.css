@@ -1,0 +1,51 @@
+body {
+  background: radial-gradient(circle, #1c142e, #000);
+  color: #f0eaff;
+  font-family: '游ゴシック', sans-serif;
+  text-align: center;
+  padding: 50px;
+}
+
+.centered {
+  max-width: 600px;
+  margin: auto;
+}
+
+.pillars {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.pillar {
+  border: 2px solid #a384d6;
+  border-radius: 10px;
+  padding: 15px;
+  width: 200px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: rgba(255,255,255,0.05);
+}
+
+.pillar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 8px #c7a4ff;
+}
+
+.hidden {
+  display: none;
+}
+
+#type-input {
+  padding: 10px;
+  font-size: 20px;
+  width: 60%;
+}
+
+#timer {
+  margin-top: 20px;
+  font-size: 20px;
+  color: #ffc;
+}

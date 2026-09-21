@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>言葉の選定</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="centered">
+    <h1>言葉の柱</h1>
+    <p>選ばれし言葉の力を選択してください</p>
+
+    <div class="pillars">
+      <div class="pillar" onclick="setDifficulty('easy')">
+        🌿 <strong>ささやきの言葉</strong><br>(Easy)
+      </div>
+      <div class="pillar" onclick="setDifficulty('normal')">
+        💫 <strong>語られし言葉</strong><br>（Normal）
+      </div>
+      <div class="pillar" onclick="setDifficulty('hard')">
+        🔥 <strong>失われた言葉</strong><br>（Hard）
+      </div>
+      <div class="pillar hidden" id="lunatic" onclick="setDifficulty('lunatic')">
+        🌙 <strong>狂気の言葉</strong><br>（Lunatic）
+      </div>
+    </div>
+  </div>
+<br>
+<hr>
+<p>2025&nbsp自作タイピングゲーム</p>
+  <script src="difficulty.js"></script>
+</body>
+</html>

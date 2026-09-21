@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>語りの章</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0a0a0a;
+      color: #eee;
+      font-family: "Yu Mincho", serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+    }
+    h2 {
+      font-size: 2em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #wordDisplay, #typedDisplay {
+      font-size: 1.5em;
+      margin: 16px;
+      padding: 10px 20px;
+      background-color: #111;
+      border: 1px solid #555;
+      min-height: 1.5em;
+    }
+    #message, #timer {
+      font-size: 1em;
+      margin: 6px;
+      color: #ccc;
+    }
+    .miss {
+      color: #f88;
+    }
+    .label {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="chapterTitle">章タイトル</h2>
+  <div id="wordDisplay">語句</div>
+  <div id="typedDisplay"><span class="label">入力：</span><span id="typedText"></span></div>
+  <div id="message">精霊の囁き</div>
+  <div id="timer">残り時間：--秒</div>
+
+  <script src="stages.js"></script>
+  <script>
+    const difficulty = localStorage.getItem("kotobaForestDifficulty") || "normal";
+    const params = new URLSearchParams(window.location.search);
+    const stageNum = parseInt(params.get("stage"));
+    const stage = stageData[stageNum];
+
+    if (!stage) {
+      document.body.innerHTML = "<p>章データが見つかりませんでした (404 Not Found)</p>";
+      throw new Error("Invalid stage number");
+    }
+
+    function getAdjustedTimeLimit(base) {
+      if (difficulty === "easy") return base + 10;
+      if (difficulty === "hard") return Math.max(base - 5, 3);
+      return base;
+    }
+
+    function getWhisperText(base) {
+      if (difficulty === "easy") return base + " 精霊：「ゆっくり綴ってもかまいません…」";
+      if (difficulty === "hard") return base + " 精霊：「揺らぎなき語りだけが環を進めます…」";
+      return base;
+    }
+
+    document.getElementById("chapterTitle").textContent = stage.title;
+    document.getElementById("wordDisplay").textContent = stage.questions[0].kana;
+    document.getElementById("message").textContent = getWhisperText(stage.whisper);
+
+    const typedText = document.getElementById("typedText");
+    const timer = document.getElementById("timer");
+
+    let current = 0;
+    let typed = "";
+    let timeLeft = getAdjustedTimeLimit(stage.timeLimit);
+    let timerID;
+
+    function updateTimerDisplay() {
+      timer.textContent = `残り時間：${timeLeft}秒`;
+    }
+
+    function startTimer() {
+      if (stage.timeLimit <= 0) return;
+      clearInterval(timerID);
+      timeLeft = getAdjustedTimeLimit(stage.timeLimit);
+      updateTimerDisplay();
+      timerID = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) fail("語りが途切れてしまった…");
+      }, 1000);
+    }
+
+    function fail(message) {
+      document.getElementById("message").textContent = `精霊：「${message}」`;
+      document.getElementById("message").classList.add("miss");
+
+      if (difficulty === "hard") {
+        clearInterval(timerID);
+        setTimeout(() => {
+          alert("深遠なる語りは一度の揺らぎも許されません…");
+          window.location.href = "stage_select.html";
+        }, 1200);
+        return;
+      }
+
+      typed = "";
+      typedText.textContent = "";
+      startTimer();
+    }
+
+    function advance() {
+      current++;
+      typed = "";
+      typedText.textContent = "";
+
+      if (current >= stage.questions.length) {
+        document.getElementById("wordDisplay").textContent = "完了";
+        document.getElementById("message").textContent = "精霊：「あなたの語りが、森に刻まれました。」";
+        clearInterval(timerID);
+        setTimeout(() => {
+          saveProgress();
+          window.location.href = "stage_select.html";
+        }, 2000);
+      } else {
+        document.getElementById("wordDisplay").textContent = stage.questions[current].kana;
+        document.getElementById("message").textContent = getWhisperText(stage.whisper);
+        document.getElementById("message").classList.remove("miss");
+        startTimer();
+      }
+    }
+
+    function saveProgress() {
+      const rawSave = JSON.parse(localStorage.getItem("kotobaForestSave")) || {};
+      const save = {
+        unlockedStagesByDifficulty: Object.assign({ easy: [1], normal: [1], hard: [1] }, rawSave.unlockedStagesByDifficulty),
+        clearedStagesByDifficulty: Object.assign({ easy: [], normal: [], hard: [] }, rawSave.clearedStagesByDifficulty)
+      };
+
+      const cleared = save.clearedStagesByDifficulty[difficulty];
+      const unlocked = save.unlockedStagesByDifficulty[difficulty];
+
+      if (!cleared.includes(stageNum)) cleared.push(stageNum);
+      const nextNum = stageNum + 1;
+
+      if (stageData[nextNum] && !unlocked.includes(nextNum)) unlocked.push(nextNum);
+
+      if ([1, 2, 3].every(n => cleared.includes(n)) && stageData[99] && !unlocked.includes(99)) {
+        unlocked.push(99);
+      }
+
+      localStorage.setItem("kotobaForestSave", JSON.stringify(save));
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key;
+      if (key.length !== 1 || !/^[a-zA-Z0-9.,\-_'!]$/.test(key)) return;
+
+      typed += key.toLowerCase();
+      typedText.textContent = typed;
+
+      const romajiList = stage.questions[current].romaji;
+      if (romajiList.some(r => r.startsWith(typed))) {
+        document.getElementById("message").classList.remove("miss");
+        if (romajiList.includes(typed)) advance();
+      } else {
+        fail("その語りは違う響きのようだ…");
+      }
+    });
+
+    startTimer();
+  </script>
+</body>
+</html>

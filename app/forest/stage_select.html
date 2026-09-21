@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>章の選択 - 言葉の森</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0a0a0a;
+      color: #eee;
+      font-family: "Yu Mincho", serif;
+      padding: 60px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 {
+      font-size: 2em;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #difficultyBadge {
+      font-size: 0.9em;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .stage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .stage-button {
+      font-size: 1.1em;
+      padding: 10px 24px;
+      background-color: #111;
+      color: #eee;
+      border: 1px solid #555;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 280px;
+      text-align: center;
+    }
+    .locked {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .stage-button:hover:not(.locked) {
+      background-color: #222;
+    }
+    #spellInput {
+      margin-top: 40px;
+      font-size: 1em;
+      padding: 8px;
+      width: 260px;
+      text-align: center;
+      background-color: #111;
+      color: #eee;
+      border: 1px solid #444;
+    }
+    .control-button {
+      margin-top: 20px;
+      padding: 8px 20px;
+      font-size: 1em;
+      background: #222;
+      color: #eee;
+      border: 1px solid #555;
+      cursor: pointer;
+    }
+    .control-button:hover {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>章を選んでください</h2>
+  <div id="difficultyBadge"></div>
+
+  <div class="stage-list" id="stageList"></div>
+
+  <input id="spellInput" placeholder="語りの呪文を…" />
+
+  <button id="resetButton" class="control-button">記録をリセットする</button>
+  <button id="goBackButton" class="control-button">難易度選択に戻る</button>
+
+  <script src="stages.js"></script>
+  <script>
+    const difficulty = localStorage.getItem("kotobaForestDifficulty") || "normal";
+
+    const defaultSave = {
+      unlockedStagesByDifficulty: {
+        easy: [1],
+        normal: [1],
+        hard: [1]
+      },
+      clearedStagesByDifficulty: {
+        easy: [],
+        normal: [],
+        hard: []
+      }
+    };
+
+    const saveRaw = JSON.parse(localStorage.getItem("kotobaForestSave")) || {};
+    const saveData = {
+      unlockedStagesByDifficulty: Object.assign({}, defaultSave.unlockedStagesByDifficulty, saveRaw.unlockedStagesByDifficulty),
+      clearedStagesByDifficulty: Object.assign({}, defaultSave.clearedStagesByDifficulty, saveRaw.clearedStagesByDifficulty)
+    };
+
+    // 難易度ラベル
+    const difficultyBadge = document.getElementById("difficultyBadge");
+    const badgeInfo = {
+      easy:  { text: "やさしき語り", color: "green" },
+      normal:{ text: "精霊の語り",   color: "blue" },
+      hard:  { text: "深遠なる語り", color: "red" }
+    };
+    difficultyBadge.textContent = badgeInfo[difficulty].text;
+    difficultyBadge.style.backgroundColor = badgeInfo[difficulty].color;
+
+    const unlockedList = (saveData.unlockedStagesByDifficulty[difficulty] || [1]).map(n => parseInt(n));
+
+    const list = document.getElementById("stageList");
+    const sortedStages = Object.entries(stageData)
+      .map(([num, data]) => ({ num: parseInt(num), data }))
+      .sort((a, b) => a.num - b.num);
+
+    sortedStages.forEach(({ num, data }) => {
+      const isUnlocked = unlockedList.includes(num);
+
+      const button = document.createElement("button");
+      button.className = "stage-button";
+      if (!isUnlocked) button.classList.add("locked");
+
+      button.textContent = data.title;
+      button.onclick = () => {
+        if (isUnlocked) {
+          window.location.href = `play_stage.html?stage=${num}`;
+        } else {
+          alert("この章はまだ封印されています。");
+        }
+      };
+
+      list.appendChild(button);
+    });
+
+    // 呪文で解放
+    document.getElementById("spellInput").addEventListener("input", (e) => {
+      const spell = e.target.value.trim().toLowerCase();
+      const unlockSpell = "key";
+      if (spell === unlockSpell) {
+        saveData.unlockedStagesByDifficulty[difficulty] = Object.keys(stageData).map(n => parseInt(n));
+        localStorage.setItem("kotobaForestSave", JSON.stringify(saveData));
+        alert("語りの封印がすべて解かれました。");
+        location.reload();
+      }
+    });
+
+    // リセット
+    document.getElementById("resetButton").addEventListener("click", () => {
+      if (confirm("語りの記録をすべて消去してもよろしいですか？")) {
+        localStorage.removeItem("kotobaForestSave");
+        localStorage.removeItem("kotobaForestDifficulty");
+        alert("森の記録は静かに還されました…");
+        location.reload();
+      }
+    });
+
+    // 戻る
+    document.getElementById("goBackButton").addEventListener("click", () => {
+      window.location.href = "difficulty_select.html";
+    });
+  </script>
+</body>
+</html>

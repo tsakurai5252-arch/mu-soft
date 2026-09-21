@@ -1,0 +1,30 @@
+/* 正解した時の文字色 */
+.correct {
+    color: #FF0000; /* 赤色 */
+}
+
+/* ミスした時の文字色 */
+.miss {
+    color: #b30000; /* 失敗の赤色 */
+}
+
+/* 正解時のアニメーション */
+@keyframes correct-fade {
+    from { color: #4f7942; opacity: 1; }
+    to { color: #4f7942; opacity: 0; }
+}
+
+.correct-effect {
+    animation: correct-fade 0.5s ease-out;
+}
+
+/* ミス時のアニメーション */
+@keyframes miss-shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.miss-effect {
+    animation: miss-shake 0.3s;
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>語りの選択 - 難易度</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #eee;
+      font-family: "Yu Mincho", serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 20px;
+    }
+    h2 {
+      font-size: 2em;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .difficulty-button {
+      font-size: 1.2em;
+      padding: 12px 32px;
+      margin: 10px;
+      background-color: #111;
+      color: #eee;
+      border: 1px solid #555;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .difficulty-button:hover {
+      background-color: #222;
+    }
+    .description {
+      font-size: 0.95em;
+      margin-bottom: 20px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h2>語りのスタイルを選んでください</h2>
+
+  <div>
+    <button class="difficulty-button" onclick="selectDifficulty('easy')">やさしき語り&nbsp<small><font color="green"><u>easy</u><font color="white"></small></button>
+    <div class="description">ミスしても語り直し可能。制限時間は長め。</div>
+
+    <button class="difficulty-button" onclick="selectDifficulty('normal')">精霊の語り&nbsp<small><font color="blue"><u>normal</u><font color="white"></small></button>
+    <div class="description">標準的な判定。精霊の声に導かれながら語る。</div>
+
+    <button class="difficulty-button" onclick="selectDifficulty('hard')">深遠なる語り&nbsp<small><font color="red"><u>hard</u><font color="white"></small></button>
+    <div class="description">ノーミスクリアを強いられます。語りの緊張と研ぎ澄まされた時間。</div>
+  </div>
+
+  <script>
+    function selectDifficulty(level) {
+      localStorage.setItem("kotobaForestDifficulty", level);
+      window.location.href = "stage_select.html";
+    }
+  </script>
+</body>
+</html>

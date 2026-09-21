@@ -1,0 +1,56 @@
+ body {
+ font-family: 'Yu-Mincho' , sans-serif;
+ background-color:#fffaf0;
+} 
+
+ .red {
+  color: red;
+}
+
+ .blue {
+  color: blue;
+}
+
+ .green {
+  color: green;
+}
+
+ .under {
+  text-decoration: underline;
+}
+ .yu {
+  font-family: 'Yu Mincho' , serif;
+}
+
+ .Mi {
+  font-size:10px;
+}
+
+  Mi2 {
+  font-size: 13px;
+}
+
+  h1 {
+  font-family: 'Yu Mincho' , serif;
+}
+
+  p {
+  font-family: 'Yu Mincho' , serif;
+}
+
+  a {
+outline: none;
+text-decoration: none;
+}
+a:link { color: #0000FF; }
+a:visited { color: #0000FF; }
+a:active { color: #0000FF; }
+
+a:link {
+  color: 0000FF; 
+  transition: 0.4s; /* 変化に0.4秒かける */
+}
+
+a:hover {
+  color: red; 
+}

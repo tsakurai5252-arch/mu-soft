@@ -1,0 +1,309 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const chaNoYuList = [
+        // 難易度設定
+  easy 
+    timeLimit: 60,
+    sushiTimeLimit: 0,
+    sushiList: [
+      { kana: "お茶", romaji: ["otya"] },
+      { kana: "玉露", romaji: ["gyokuro"] },
+      { kana: "惜しい", romaji: ["oshii", "osii"] },
+      { kana: "茶道", romaji: ["sadou" , "sado"] },
+      { kana: "趣味", romaji: ["syumi"] },
+      { kana: "いいね", romaji: ["iine"] },
+      { kana: "失格", romaji: ["sikkaku" , "shikkaku"] },
+      { kana: "風味", romaji: ["huumi" , "hu-mi"] },
+      { kana: "あおさ", romaji: ["aosa"] },
+      { kana: "へいわ", romaji: ["heiwa"] },
+      { kana: "修行", romaji: ["syugyou"] },
+      { kana: "初心", romaji: ["syosinn"] },
+      { kana: "そら", romaji: ["sora"] },
+      { kana: "ゆき", romaji: ["yuki"] },
+      { kana: "みず", romaji: ["mizu"] },
+      { kana: "師匠", romaji: ["sisyou" , "shisho"] }, // 魚以外に飲み物としても
+      { kana: "ココア", romaji: ["kokoa"] },
+      { kana: "パン", romaji: ["pan" , "pann"] },
+      { kana: "おなら", romaji: ["onara"] },
+      { kana: "職人", romaji: ["syokuninn" , "shokunin"] },
+      { kana: "姫路城", romaji: ["himezizyou" , "himejijo"] }
+    ]
+  },
+  normal: {
+    timeLimit: 90,
+    sushiTimeLimit: 0,
+    sushiList: [
+      { kana: "一期一会の機会", romaji: ["itigoitienokikai", "ichigoichienikikai"] },
+      { kana: "玉露はおいしい", romaji: ["gyokurohaoisii", "gyokurohaoishii"] },
+      { kana: "茶道マスター", romaji: ["sadoumasuta-" , "sadomasuta-"] },
+      { kana: "茶道はもてなしてこそ", romaji: ["sadouhamotenasitekoso" , "sadohamotenasitekoso"] },
+      { kana: "新鮮な茶葉が一番", romaji: ["sinsennnatyabagaitiban" , "sinnsennnachabagaitibann"] },
+      { kana: "あつあつのお湯を注ぐ", romaji: ["atsuatsunooyuwososogu" , "atuatunooyuwososogu"] },
+      { kana: "平和を実現する", romaji: ["heiwawozitugennsuru" , "heiwawozitsugensuru"] },
+      { kana: "茶道練習のみそ", romaji: ["sadourennsyuunomiso" , "sadorennsyuunomiso"] },
+      { kana: "javascriptはAI頼み", romaji: ["javaciripthaaitanomi" , "javascripthaaidanomi"] },
+      { kana: "筋のあってかたい繊維", romaji: ["suzinoattekataisenni" , "sujinoattekataisenni"] },
+      { kana: "桜が咲いたよ", romaji: ["sakuragasaitayo"] },
+      { kana: "茶道大会は皆真剣だ", romaji: ["sadoutaikaihaminasinnkennda" , "sadoutaikaihaminnnasinnkennda" , "sadotaikaihaminasinnkennda"] },
+      { kana: "雪がつもってきた", romaji: ["yukigatsumottekita" , "yukigatumottekita"] },
+      { kana: "あけましておめでとう", romaji: ["akemasiteomedetou"] },
+      { kana: "抹茶のスイーツ", romaji: ["mattyanosui-tu" , "macchanosuiitsu"] },
+      { kana: "ライバル心に火", romaji: ["raibarusinnnihi" , "raibarushinnihi"] }
+    ]
+  },
+  hard: {
+    timeLimit: 120,
+    sushiTimeLimit: 23,
+    sushiList: [
+      { kana: "我思う、故に我あり", romaji: ["wareomou,yueniwareari"] },
+      { kana: "優柔不断な人ね", romaji: ["yuuzyuuhudannnahitone", "yuujuuhudannahitone"] },
+      { kana: "二時間前に出直してきな！", romaji: ["nizikannmaenidenaositekina!"] },
+      { kana: "素晴らしい絶品のお茶", romaji: ["subarasiizeppinnnootya" , "sybarashiizeppinnnoocha"] },
+      { kana: "とろけるような舌触り", romaji: ["torokeruyounasitazawari"] },
+      { kana: "紙粘土で作品を作る", romaji: ["kaminenndodesakuhinnwotukuru"] },
+      { kana: "平和を実現することは大切", romaji: ["heiwawozitugennsurukotohataisetu" , "heiwawzitsugennsurukotohataisetsu"] },
+      { kana: "砂糖と塩を間違える", romaji: ["satoutoshioomachigaeru" , "satoutosioomatigaeru"] },
+      { kana: "カレーは飲み物です", romaji: ["kareehanomimonodesu" , "kare-hanomimonodesu"] },
+      { kana: "冷房は強すぎ注意", romaji: ["reibouwatsuyosugichuui" , "reibouhatuyosugityuui"] },
+      { kana: "参加券落としたかも", romaji: ["sannkakenotoshitakamo" , "sankakennotositakamo"] },
+      { kana: "朝ごはん食べ忘れた", romaji: ["asagohantabewasureta" , "asagohanntabewasureta"] },
+      { kana: "曇り時々雨のち晴れ", romaji: ["kumoritokidokiamenochihare" , "kumoritokidokiamenotihare"] },
+      { kana: "忘れ物ありませんか", romaji: ["wasuremonoarimasenka" , "wasuremonoarimasennka"] },
+      { kana: "漢字の成り立ち講座", romaji: ["kanjinonaritachikouza" , "kannzinonaritatikouza"] },
+      { kana: "眠気との戦いは続く", romaji: ["nemuketonotatakaiwatsuduku" , "nemuketonotatakaihatuduku"] },
+      { kana: "寿司タイムリミット", romaji: ["susitaimurimitto" , "sushitaimurimitto"] },
+      { kana: "ライバル心に火が付いた", romaji: ["raibarusinnnihigatuita" , "raibarushinnihigatuita"] },
+      { kana: "いざ尋常に勝負", romaji: ["izazinnzyounisyoubu" ,"izazinnzyounishobu"] },
+      { kana: "さて、アンダーバーは必要か?", romaji: ["sate,annda-ba-hahituyouka" , "sate,anndabahahituyouka?"] }
+    ]
+  },
+  lunatic: {
+    timeLimit: 140,
+    sushiTimeLimit: 20,
+    sushiList: [
+      { kana: "茶道をするなら心でもてなせ", romaji: ["sadouwosurunarakokorodemotenase" , "sadowosurunarakokorodemotenase"] },
+      { kana: "青巻紙赤巻紙黄巻紙、これは打ちにくいなあ", romaji: ["aomakigamiakamakigamikimakigami,korehautinikuinaa"] },
+      { kana: "これは絶品！職人魂炸裂の奇跡の組み合わせ", romaji: ["korehazeppinn!syokunintamasisakuretunokisekinokumiawase" , "korehazeppinn!syokuninntamasiisakuretunokisekinokumiawase"] },
+      { kana: "絶品の味とはとてもうまい味のことだ", romaji: ["zeppinnnoazitohatotemoumaiazinokotoda"] },
+      { kana: "平和を実現することは、とても大切なことである", romaji: ["heiwawozitugennsurukotoha,totemotaisetunakotodearu" ,"heiwawozitsugennsurukotoha,totemotaisetsunakotodearu"] },
+      { kana: "タイピングは練習するとすごくうまくなる", romaji: ["taipinnguharennsyuusurutosugokuumakunaru"] },
+      { kana: "スマホばかり触って、茶道の心得も忘れたか", romaji: ["sumahobakarisawatte,sadounokokoroemowasuretaka" , "sumahobakarisawatte,sadonokokoroemowasuretaka"] },
+      { kana: "茶葉にすべてを委ねるのが人生の本質だ", romaji: ["tyabanisubetewoyudanerunogajinseinohonshitsuda" , "chabanisubetewoyudanerunogazinnseinohonnsituda"] },
+      { kana: "一流は失敗しても点て(たて)直す、二流は文句を言う", romaji: ["ichiryuwashippaishitemotatenaosu,niryuwamonkewoiu" , "itiryuuhasippaisitemotatenaosu,niryuhamonnkuwoiu"] },
+{ kana: "早口ことばに勝てる茶道名人は今や伝説の存在らしい",
+  romaji: ["hayakutikotobanikaterusadoumeizinnhaimayadensetsunosonzairashii" , "hayakurikotobanikaterusadoumeizinnhaimayadensnetunosonnzairasii"],
+},
+
+{ kana: "部屋の温度で議論が起きるのは一流茶道チームだけだと思っていた",
+  romaji: ["heyanonondodegironnagaokirunohairyuusadouchi-mudakedatoomotteita" , "heyanoonndodegironngaokirunohaitiryuusadouti-mudakedatoomotteita"],
+},
+
+{ kana: "点て(たて)すぎてすべてが無に帰りました...",
+  romaji: ["tatesugitesubetegamunikaerimashita..." , "tatesugitesubetegamunikaerimasita..."],
+},
+
+{ kana: "茶葉に人生を見いだすのはもはや悟りの領域としか言いようがない",
+  romaji: ["tyabanijinseiwoimidasunohamohayasatorinoryouikitoshakaiyouganai" , "tyabanizinnseiwoimiidasunohamohayasatorinoryouikitosikaiiyouganai"],
+},
+
+{ kana: "茶道を続けることで世界平和が訪れると本気で信じている人がいる",
+  romaji: ["sadouwotuzukerukotodesekaiheiwagaotozurerutohonkideshinjiteiruhitogairu" , "sadouwotuzukerukotodesekaiheiwagaotozurerutohonnkidesinnziteiruhitogairu"]
+},
+
+{ kana: "おもてなしタイムリミットは近くなってきている。注意せよ！", romaji: ["omotenasitaimurimittohatikakunattekiteiru.tyuuiseyo!" , "omotenashitaimurimittohatikakunattekiteiru.tyuuiseyo!"] 
+},
+
+{ kana: "ライバル心に火が付いた。いざ尋常に勝負だ、お前ら！！", romaji: ["raibarusinnnihigatuita.izazinnzyounisyoubuda,omaera!!" , "raibarushinnihigatuita.izazinnzyounishoubuda,omaera!!"] }
+    ]
+  },
+  SuperLunatic: {
+  timeLimit: 145, // より短く、瞬発力を求める設定
+  sushiTimeLimit: 21,
+  sushiList: [
+    { kana: "狂気を打て。君が待ち望んだクリアが待っているはずだ。ただ努力しろ。そうだ。頑張るのだぞ！！！", romaji: ["kyoukiwoute.kimigamatinozonndakuriagamatteiruhazuda.tadadoryokusiro.souda.gannbarunodazo!!!"] },
+    { kana: "鼓動が打鍵になる。そんな夢みたいなことを思い浮かべたことはあるか?私はない。だから君がそれをやってみろ。", romaji: ["kodougadakennninaru.sonnnayumemitainakotowoomoiukabetakotohaaruka?watasihanai.dakarakimigasorewoyattemiro."] },
+    { kana: "How do you say rakuda in English?", romaji: ["howdoyousayrakudainenglish?"] },
+    { kana: "言葉の残響が頭に響く。これは発狂案件だなあ...", romaji: ["kotobanozannkyougaatamanihibiku.korehahakkyouannkenndanaa..."] },
+    { kana: "こ、これが素晴らしい絶品のお茶...うますぎる", romaji: ["ko,koregasubarasiizeppinnnootya...umasugiru"] }, 
+    { kana: "風は沈黙した。それはなぜか?タイピング能力が凄すぎるからだ", romaji: ["kazehatinnmokusita.sorehanazeka?taipinngunouryokugasugosugirukarada"] },
+    { kana: "記憶の花が咲くとき、お前の記憶は元通りになるだろう。しかし今までの記憶は失われる。悲しきかな", romaji: ["kiokunohanagasakutoki,omaenokiokuhamotodoorininarudarou.sikasiimamadenokiokuhausinawareru.kanasikikana"] },
+    { kana: "きつつき", romaji: ["きつつき"] },
+    { kana: "javascriptはAI頼みだなあ、こんな長文を人間が打てるわけもないし", romaji: ["javascripthaaidanomidanaa,konnnatyoubunnwoninngenngauteruwakemonaisi"] }, 
+    { kana: "光をなぞる夢を見た?そうか。ついにこの時が来たんだな", romaji: ["hikariwonazoruyumewomita?souka.tuinikonotokigakitanndana"] },
+    { kana: "ここはSuperLunaticだ。クリアできるわけがないぞ?", romaji: ["kokohasuperlunaticda.kuriadekiruwakeganaizo?"] },
+    { kana: "煙の中で言葉が踊る? なんだそれは。意味不明だな", romaji: ["kemurinonakadekotobagaodoru?nanndasoreha.imihumeidana"] },
+    { kana: "騒がしい... うせな！煙草(たばこ)の味が濁る", romaji: ["sawagasii...usena!tabakonoaziganigoru"] }, // 擬似言語
+    { kana: "人でないものは何というか知ってるか? 私は知らねえよ", romaji: ["hitodenaimonohananntoiukasitteruka?watasihasiraneeyo"] },
+    { kana: "くぁwせdrftgyふじこlp (うわああああ)", romaji: ["uwaaaaa"] }, // 意味不明語
+    { kana: "視えぬ風を打て? 何で見えない、攻撃もしてこない相手を打つ必要があるんだ?", romaji: ["mienukazewoute?nanndemienai,kougekimositekonaiaitewoutuhituyougaarunnda?"] }
+   ]
+ }
+};
+
+    const seasonalList = [
+  { kana: "さくら", romaji: ["sakura"], season: "spring" },
+  { kana: "新茶", romaji: ["sinntya" , "shinncha"], season: "spring" },
+  { kana: "紅葉", romaji: ["sanma" , "sannma"], season: "autumm" },
+  { kana: "秋の味覚", romaji: ["akinomikaku"], season: "autumm" },
+  { kana: "夏は暑い", romaji: ["natuhaatui" , "natsuhaatsui"], season: "summer"},
+  { kana: "暑すぎる", romaji: ["atusugiru" , "atsusugiru"], season: "summer"},
+  
+];
+
+    const difficultyList = {
+        easy: 10,
+        normal: 15,
+        hard: 20,
+        lunatic: 23,
+        SuperLunatic: 26
+    };
+
+    const seasonalList = [
+        { season: 'spring', kana: 'さくらもち', romaji: ["sakuramochi"] },
+        { season: 'summer', kana: 'うなぎ', romaji: ["unagi"] },
+        { season: 'autumn', kana: 'まつたけ', romaji: ["matsutake"] },
+        { season: 'winter', kana: 'かに', romaji: ["kani"] }
+    ];
+
+    const typingTextElement = document.getElementById('sushi-static');
+    const romajiElement = document.getElementById('romaji');
+    const inputElement = document.getElementById('typing-input');
+    const scoreElement = document.getElementById('score-display');
+    const timerElement = document.getElementById('timer');
+    const resultElement = document.getElementById('result');
+    const playSection = document.getElementById('play-section');
+    const endSection = document.getElementById('end-section');
+    
+    // スコア表示用要素を一度だけ宣言
+    const scoreDisplayElement = document.getElementById('score-display');
+    const highScoreElement = document.getElementById('high-score-display'); // ここで宣言
+    const scoreCommentElement = document.getElementById('score-comment');
+
+    let wordList = [];
+    let currentWord = {};
+    let isGameRunning = false;
+    let score = 0;
+    let timer = 0;
+    let timerInterval;
+
+    // ハイスコア関連の変数
+    let highScore = 0;
+    const highScoreKey = 'typing-game-high-score';
+
+    // URLパラメータから難易度を取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const difficulty = urlParams.get('difficulty') || 'easy';
+    const totalWords = difficultyList[difficulty];
+
+    function getRandomWord() {
+        const randomIndex = Math.floor(Math.random() * chaNoYuList.length);
+        return chaNoYuList[randomIndex];
+    }
+
+    function getCurrentSeason() {
+        const month = new Date().getMonth() + 1;
+        if (month >= 3 && month <= 5) return 'spring';
+        if (month >= 6 && month <= 8) return 'summer';
+        if (month >= 9 && month <= 11) return 'autumn';
+        return 'winter';
+    }
+
+    function createWordList() {
+        wordList = [];
+        for (let i = 0; i < totalWords; i++) {
+            wordList.push(getRandomWord());
+        }
+        const seasonWord = seasonalList.find(s => s.season === getCurrentSeason());
+        if (seasonWord) {
+            wordList.push(seasonWord);
+        }
+    }
+
+    function setNextWord() {
+        if (wordList.length > 0) {
+            currentWord = wordList.shift();
+            typingTextElement.textContent = currentWord.kana;
+            romajiElement.textContent = currentWord.romaji;
+            inputElement.value = '';
+            inputElement.focus();
+        } else {
+            gameEnd();
+        }
+    }
+
+    function updateTimer() {
+        timer++;
+        timerElement.textContent = `おもてなしできる時間: あと ${timer} 秒`;
+    }
+
+    function startGame() {
+        createWordList();
+        isGameRunning = true;
+        score = 0;
+        timer = 0;
+        scoreElement.textContent = `御匠からの評価: 0 点`;
+        resultElement.textContent = '';
+        playSection.style.display = 'block';
+        endSection.style.display = 'none';
+
+        // ハイスコアを読み込む
+        const storedHighScore = localStorage.getItem(highScoreKey);
+        if (storedHighScore) {
+            highScore = parseInt(storedHighScore, 10);
+        }
+        if (highScoreElement) {
+            highScoreElement.textContent = `ハイスコア: ${highScore}`;
+        }
+        
+        timerInterval = setInterval(updateTimer, 1000);
+        setNextWord();
+    }
+
+    function gameEnd() {
+        isGameRunning = false;
+        clearInterval(timerInterval);
+        playSection.style.display = 'none';
+        endSection.style.display = 'block';
+
+        // スコアの保存
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem(highScoreKey, highScore);
+        }
+
+        // スコア表示を更新
+        scoreDisplayElement.textContent = `今回の評価: ${score}`;
+        // highScoreElement は既に宣言済みなので、ここでは再宣言しない
+        if (highScoreElement) {
+            highScoreElement.textContent = `ハイスコア: ${highScore}`;
+        }
+    }
+
+    function handleTyping(event) {
+        if (!isGameRunning) return;
+
+        const typedText = event.target.value;
+        const correctRomaji = currentWord.romaji;
+        
+        if (typedText === correctRomaji) {
+            score += 100;
+            scoreElement.textContent = `御匠からの評価: ${score} 点`;
+            setNextWord();
+        } else {
+            typingTextElement.classList.add('miss-effect');
+            setTimeout(() => {
+                typingTextElement.classList.remove('miss-effect');
+            }, 300);
+        }
+    }
+
+    inputElement.addEventListener('input', handleTyping);
+    
+    // play.html にのみ存在するボタン
+    const retryButton = document.getElementById('retry-button');
+    if(retryButton) retryButton.addEventListener('click', startGame);
+
+    const backButton = document.getElementById('back-button');
+    if(backButton) backButton.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+});

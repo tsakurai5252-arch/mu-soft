@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="ANSI">
+  <title>寿司タイピングゲーム</title>
+  <link rel="stylesheet" href="./files/css/style_main.css">  <!-- CSSの読み込み -->
+</head>
+<li>難易度を選択します。</br>
+<center>
+<div id="difficulty-select">
+  <button onclick="setDifficulty('easy')">かんたん</button>
+  <button onclick="setDifficulty('normal')">ふつう</button>
+  <button onclick="setDifficulty('hard')">むずかしい</button>
+</div>
+<body>
+  <div id="sushi-static">ここに寿司が表示されます</div>
+  <div id="result"></div>
+  <div id="score">スコア: 0</div>
+
+<!-- miss 表示 -->
+  <div id="timer-bar"></div>
+
+  <script src="files/javascript/game_system.js"></script>  <!-- JSの読み込み -->
+</center>
+</body>
+</html>
+
