@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>いざ大魔導士へ！～言葉が紡ぐ魔法の力～</title>
+<style>
+  :root{--w:800px;--h:600px}
+  html,body{height:100%;margin:0;background:#1a0b2e;color:#ffffff;font-family: "Hiragino Kaku Gothic Pro","Meiryo",sans-serif;}
+  .center{height:100%;display:flex;align-items:center;justify-content:center;}
+  
+#frame {
+  width: var(--w);
+  height: var(--h);
+  /* 魔法の世界観に合わせた夜空と魔法の光のグラデーション */
+  background: linear-gradient(to bottom, #2c1b4d 0%, #1a0b2e 100%);
+  border: 4px solid #c5a85c;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 12px;
+}
+
+/* 枠内の文字色を白に */
+#frame, #frame .story-text, #frame h2, #frame p {
+  color:#ffffff;
+}
+
+  #fade{position:absolute;inset:0;background:#1a0b2e;opacity:0;pointer-events:none;transition:opacity .45s;z-index:80}
+  #fade.on{opacity:1;pointer-events:auto}
+  /* loading area bottom (non-expanded gif) */
+  #loading-area{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;text-align:center;z-index:40;width:90%}
+  #loading-gif{max-width:100px;height:auto;display:block;margin:0 auto} /* 拡大しない */
+  #progress-text{margin-top:8px;color:#ffffff;font-size:13px}
+  #progress-wrap{width:70%;margin:8px auto;background:#1a0b2e;border-radius:8px;height:14px;overflow:hidden;border:1px solid #c5a85c}
+  #progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#9370db,#ffd700);transition:width .25s}
+  /* loading2 top-right 20% */
+  #loading2{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* loading3 small right-top when saving */
+  #loading3{position:absolute;top:8px;right:8px;z-index:95;display:none;width:80px}
+  /* loading4 same as loading2 */
+  #loading4{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* NEW loading5 */
+  #loading5{position:absolute;top:8px;right:8px;z-index:90;display:none;width:20%}
+  /* screen base */
+  .screen{display:none;padding:12px;height:100%;box-sizing:border-box;overflow:auto}
+  .screen.active{display:block}
+  h1,h2{margin:6px 0}
+  .btn{display:inline-block;padding:8px 12px;margin:6px;background:#263238;color:#ffffff;border-radius:8px;border:1px solid #c5a85c;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .small{font-size:13px;color:#eeeeee}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#101214;padding:14px;border-radius:8px;border:1px solid #c5a85c;z-index:200}
+  .hidden{display:none}
+  
+  /* staff roll inner */
+  .roll-wrap{height:100%;overflow:hidden;position:relative;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  .roll-inner{width:90%;}
+  .roll-line{
+    font-size: 1.5em;
+    margin: 12px 0;
+    opacity: 0;
+  }
+  
+  /* スタッフロールの特定のタイトルを白太文字+光エフェクトで装飾 */
+  .roll-heading {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ffffff, 0 0 20px #c5a85c;
+    font-size: 1.7em;
+  }
+
+  #roll-inner h2, #extra-roll-inner h2 {
+    font-family: "Yu Mincho", "游明朝", serif;
+  }
+  
+  /* 下からフェードイン→1.2秒停止→上へフェードアウト (全体2.4秒想定) */
+  @keyframes scrollFade {
+    0% { opacity: 0; transform: translateY(30px); }
+    25% { opacity: 1; transform: translateY(0); }
+    75% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-30px); }
+  }
+  
+  #top-log{position:absolute;left:12px;top:10px;font-size:12px;color:#eeeeee;z-index:150}
+  #copyright{position:absolute;left:18px;bottom:12px;font-size:12px;color:#eeeeee;z-index:10}
+  /* Added for critical restricted mode */
+  .warn-overlay{position:absolute;inset:0;background:#2c1b4d;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:190;}
+  .warn-text{margin-top:12px;color:#ffffff;font-size:18px;font-weight:bold;}
+  .btn:disabled{cursor:default; opacity: 0.5;}
+  
+  /* Text animation */
+  #title-text-anim {
+    font-size: 2.2em;
+    white-space: nowrap;
+    text-shadow: 0 0 10px #ffd700;
+  }
+  #title-text-anim span {
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+    display: inline-block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; filter: blur(4px); transform: translateY(-10px); }
+    to { opacity: 1; filter: blur(0); transform: translateY(0); }
+  }
+  
+  /* New warning style */
+  .partial-warn{margin: 12px; text-align: center; color:#ffdddd; font-weight: bold;}
+  /* New button fade-in style */
+  .title-buttons-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0s 0.5s;
+  }
+  .title-buttons-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s;
+  }
+  
+  /* Ruby text (furigana) styling */
+  ruby{font-size:1.3em;}
+  rt{font-size:0.5em;}
+
+  /* story screen styles */
+  .story-inner{width:90%; margin:auto; text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%;}
+  .story-text{font-size:1.2em; margin:20px 0; line-height:1.6; text-align:left;}
+
+  /* ending screen styles */
+  #ending-img-wrap, #extra-ending-img-wrap{display:flex; justify-content:center; align-items:center; height:70%;}
+  #ending-img{max-width:100%; max-height:100%; border: 2px solid #c5a85c; border-radius: 8px;}
+  #ending-text, #extra-ending-text{font-size:1.1em; text-align:center; margin-top:10px; height:20%; display:flex; align-items:center; justify-content:center;}
+  
+  /* Extra専用エンディングテキスト強調 */
+  #extra-ending-text { font-size: 1.5em; font-weight: bold; text-shadow: 0 0 10px #9370db; }
+
+  /* Mobile-specific warning style */
+  .mobile-warn{margin: 12px; text-align: center; color:#ffdddd; font-weight: bold;}
+
+/* ゲーム終了ボタンも含め全ボタンの色を統一 */
+button, .btn, #exitButton {
+  background:linear-gradient(to bottom,#4a2c75,#2c1b4d) !important;
+  color:#ffffff !important;
+  border:2px solid #c5a85c !important;
+  border-radius:8px !important;
+  font-weight:bold !important;
+  cursor:pointer;
+  transition:background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+button:hover, .btn:hover, #exitButton:hover {
+  background:linear-gradient(to bottom,#643b9e,#3e266b) !important;
+  box-shadow: 0 0 8px rgba(197,168,92,0.6);
+}
+button:active, .btn:active, #exitButton:active {
+  transform:translateY(1px) !important;
+}
+
+/* 独自ウインドウ・ダイアログ・開発者ツール */
+.dialog, .devtool-window {
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e);
+  border: 3px solid #c5a85c;
+  border-radius: 10px;
+  padding: 16px;
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+}
+.dialog-header, .devtool-header {
+  background: #c5a85c;
+  color: #1a0b2e;
+  padding: 8px;
+  border-radius: 6px 6px 0 0;
+  font-size: 1.1em;
+}
+
+/* 設定タブ */
+.settings, .settings-tab {
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e);
+  border: 3px solid #c5a85c;
+  border-radius: 10px;
+  color: #ffffff;
+  padding: 12px;
+}
+
+/* BGM確認ダイアログ（全て） */
+#bgmConfirm, #staffBgmConfirm, .bgm-dialog, div[id*="Confirm"], div[class*="dialog"], div[class*="Dialog"], div[id*="Dialog"], .settings, .settings-tab, .devtool-window, .devtool, .devtool-tab {
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e) !important;
+  border: 3px solid #c5a85c !important;
+  border-radius: 10px !important;
+  padding: 16px !important;
+  color: #fff !important;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+}
+.devtool-header, .settings-header {
+  background: #c5a85c !important;
+  color: #1a0b2e !important;
+  padding: 8px;
+  border-radius: 6px 6px 0 0;
+  font-size: 1.1em;
+}
+
+/* ====== 魔法風カスタム確認ダイアログ ====== */
+.confirm-dialog {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e);
+  border: 4px solid #c5a85c;
+  border-radius: 12px;
+  padding: 20px;
+  width: 340px;
+  z-index: 10000;
+  text-align: center;
+  color: #fff;
+  font-family: "Hiragino Kaku Gothic Pro","Meiryo",sans-serif;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.8);
+  display: none;
+}
+.confirm-header {
+  background: #c5a85c;
+  color: #1a0b2e;
+  padding: 8px;
+  border-radius: 8px 8px 0 0;
+  margin: -20px -20px 10px -20px;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* ====== 全ての確認ダイアログを魔法風に強制統一 ====== */
+div[id*="Confirm"], div[class*="confirm"], div[class*="dialog"], div[class*="Dialog"] {
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e) !important;
+  border: 4px solid #c5a85c !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  font-family: "Hiragino Kaku Gothic Pro","Meiryo",sans-serif !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.8) !important;
+}
+
+/* ====== modal/hidden ダイアログも魔法風に統一 ====== */
+#modal, .modal, [id*="modal"], [class*="modal"], [id*="hidden"], [class*="hidden"] {
+  background: linear-gradient(to bottom, #2c1b4d, #1a0b2e) !important;
+  border: 4px solid #c5a85c !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  font-family: "Hiragino Kaku Gothic Pro","Meiryo",sans-serif !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.8) !important;
+}
+
+/* Music Roomのスタイルに追加 */
+#scene-musicroom .subtitle {
+  font-size: 14px; 
+  font-style: italic; 
+  color: #cccccc; 
+  margin-top: -10px; 
+  margin-bottom: 20px; 
+}
+
+/* プレイ画面の入力欄を見やすく */
+#input {
+  color: #000000;
+  background: #ffffff;
+  border: 2px solid #c5a85c;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+<div class="center">
+  <div id="frame" role="application" aria-label="ゲーム枠">
+    <div id="fade"></div>
+
+    <div id="top-log" class="small">F12:ロードログは console に出力</div>
+    <div id="top-title" class="hidden" style="position:absolute;left:12px;top:28px;font-size:13px;color:#c5a85c;font-weight:bold;z-index:150;">いざ大魔導士へ！<br>～言葉が紡ぐ魔法の力～</div>
+
+    <div id="loading-area" aria-hidden="false">
+      <img id="loading-gif" src="./image/loading.gif" alt="loading gif">
+      <div id="progress-text">魔力充填中... 0%</div>
+      <div id="progress-wrap"><div id="progress-bar"></div></div>
+    </div>
+    
+    <div id="partial-warn" class="partial-warn hidden">システム要件が満たされていないため、一部魔法が制限されます。</div>
+    <div id="mobile-warn" class="mobile-warn hidden">モバイル版で起動しました。一部の機能は動作しない場合があります。</div>
+
+    <img id="loading2" src="./image/loading2.gif" alt="loading2 gif" style="display:none">
+    <img id="loading3" src="./image/loading3.gif" alt="loading3 gif" style="display:none;width:80px">
+    <img id="loading4" src="./image/loading6.gif" alt="loading4 gif" style="display:none;width:20%">
+    <img id="loading5" src="./image/loading5.gif" alt="loading5 gif" style="display:none;width:20%">
+
+    <div id="prologue" class="screen">
+      <div class="story-inner">
+        <h2>プロローグ</h2>
+        <div class="story-text">
+          今から3000年前、「伝説の大魔導士が現れ、究極の魔法で世界を救う」という言い伝えがあった。
+          しかし、途方もない時が流れた今、魔法の存在すら疑われ始め、闇の王が再び世界を覆い尽くそうとしていた。
+          そんなことも知らずに魔法学校の門を叩いた君(見習い魔法使い)は、果たして己の言葉を魔法に変え、世界を救うことができるのか!?
+        </div>
+        <button id="btn-prologue-next" class="btn">いざ出発！</button>
+      </div>
+    </div>
+    
+    <div id="story" class="screen">
+      <div class="story-inner">
+        <h2 id="story-title"></h2>
+        <div id="story-text" class="story-text"></div>
+        <div id="story-buttons" style="margin-top:20px">
+          <button id="btn-story-next" class="btn">次へ</button>
+          <button id="btn-story-back" class="btn hidden">戻る</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ending" class="screen">
+      <div class="story-inner">
+        <div id="ending-img-wrap"><img id="ending-img" src="" alt="Ending Image"></div>
+        <div id="ending-text"></div>
+        <div style="margin-top:20px">
+          <button id="btn-ending-prev" class="btn hidden">戻る</button>
+          <button id="btn-ending-next" class="btn">次へ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="extra-ending" class="screen">
+      <div class="story-inner">
+        <div id="extra-ending-text"></div>
+        <div style="margin-top:40px">
+          <button id="btn-extra-ending-prev" class="btn hidden">戻る</button>
+          <button id="btn-extra-ending-next" class="btn">次へ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="title" class="screen">
+      <div id="title-text-anim"></div>
+      <div class="small" id="title-copyright"></div>
+      <div id="title-buttons" class="title-buttons-hidden" style="margin-top:18px">
+        <button id="btn-start" class="btn">詠唱開始</button>
+        <button id="btn-records" class="btn">魔導録</button>
+        <button id="btn-story-list" class="btn">ストーリー</button>
+        <button id="btn-music-room" class="btn">Music Room</button>
+        <button id="btn-settings" class="btn">設定</button>
+        <button id="btn-exit" class="btn">終了</button>
+      </div>
+    </div>
+    
+    <div id="music-room" class="screen">
+      <h2>魔界の旋律</h2>
+       <div id="scene-musicroom" class="scene">
+        <p class="subtitle">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspMusicRoom</p>
+      <div style="margin-top:20px;">
+        <button id="btn-play-bgm" class="btn">通常BGM</button>
+        <button id="btn-play-staff" class="btn">スタッフロールのテーマ</button>
+        <button id="btn-play-ending" class="btn">エンディングのテーマ</button>
+      </div>
+    </div>
+      <div style="margin-top:20px;">
+        <button id="btn-music-room-back" class="btn">タイトルに戻る</button>
+      </div>
+    </div>
+    
+    <div id="story-list" class="screen">
+      <h2>ストーリー選択</h2>
+      <div id="story-list-grid" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-story-list-back" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="chapter" class="screen">
+      <h2>章選択</h2>
+      <div id="chapter-list" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-chap-back" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="stage" class="screen">
+      <h2 id="stage-heading">章のステージ選択</h2>
+      <div id="stage-grid" class="grid"></div>
+      <div style="margin-top:12px"><button id="btn-stage-back" class="btn">章選択に戻る</button> <button id="btn-stage-title" class="btn">タイトルに戻る</button></div>
+    </div>
+
+    <div id="play" class="screen">
+      <h2 id="play-title">ステージ</h2>
+      <div class="small">詠唱制限時間: <span id="play-timer">60</span> 秒</div>
+      <div id="question" style="margin-top:12px;font-size:18px;"></div>
+      <input id="input" type="text" style="width:80%;padding:8px;margin-top:10px;font-size:16px" autocomplete="off" inputmode="kana" enterkeyhint="done">
+      <div style="margin-top:12px"><button id="btn-giveup" class="btn">あきらめる</button> <button id="btn-play-back" class="btn">前に戻る</button></div>
+      <div id="play-msg" style="margin-top:8px" class="small"></div>
+    </div>
+
+    <div id="records" class="screen">
+      <h2>魔導録</h2>
+      <div id="records-list" class="small"></div>
+      <div style="margin-top:12px">
+        <button id="btn-records-back" class="btn">タイトルに戻る</button>
+        <button class="btn" id="btn-records-back-chapter">章選択に戻る</button>
+        <button class="btn" id="btn-records-back-last-stage">ステージ選択に戻る</button>
+        <button id="btn-records-story" class="btn">ストーリー</button>
+        <button id="btn-dev-tools" class="btn">開発者ツール</button>
+      </div>
+    </div>
+
+    <div id="staff" class="screen">
+      <div class="roll-wrap">
+        <div id="roll-inner">
+          <div id="roll-copy" class="small"></div>
+          <h4 class="roll-line roll-heading hidden" data-text="～開発者～"></h4>
+          <p class="roll-line hidden" data-text="考案: 人間"></p>
+          <p class="roll-line hidden" data-text="前作: SDGsタイピング～サステナブルな世界～"></p>
+          <p class="roll-line hidden" data-text="前々作: 果物タイピング～果樹園救済物語～"></p>
+          <p class="roll-line hidden" data-text="プログラムベース: いざ一流農家へ！～あなたの努力で農園が成長～"></p>
+          <p class="roll-line hidden" data-text="世界を救え！～目指せタイピングマスター～"></p>
+          <p class="roll-line hidden" data-text="製作(前半): Google Gemini"></p>
+          <p class="roll-line hidden" data-text="製作(後半): Google Gemini"></p>
+          <p class="roll-line hidden" data-text="プログラム: ChatGPT(ベース), Google Gemini"></p>
+          <p class="roll-line hidden" data-text="デザイン: Google Gemini"></p>
+          <p class="roll-line hidden" data-text="プログラム改良, 最終調整: 人間"></p>
+          <p class="roll-line hidden" data-text="問題文作成: Google Gemini"></p>
+          <h4 class="roll-line roll-heading hidden" data-text="～BGM・効果音～"></h4>
+          <p class="roll-line hidden" data-text="BGM素材: ./image/bgm/01.mp3・08.mp3・09.mp3"></p>
+          <p class="roll-line hidden" data-text="効果音: ./image/bgm/02.mp3・03.mp3・04.mp3・05.mp3・06.mp3・07.mp3"></p>
+          <p class="roll-line hidden" data-text="BGM・効果音はフリー音源を使用しています。"></p>
+          <h4 class="roll-line roll-heading hidden" data-text="～Special Thanks～"></h4>
+          <p class="roll-line hidden" data-text="Internet Explorer 6.0"></p>
+          <p class="roll-line hidden" data-text="Google Chrome 149.0.7827.201"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows 11"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows 10"></p>
+          <p class="roll-line hidden" data-text="Microsoft Windows XP"></p>
+          <h3 class="roll-line roll-heading hidden" data-text="～ゲーム制作ストーリー～"></h3>
+          <p class="roll-line hidden" data-text="魔法使い×タイピングって面白いのではないかと"></p>
+          <p class="roll-line hidden" data-text="ひらめいたその勢いで作ったものです。"></p>
+          <p class="roll-line hidden" data-text="魔法の詠唱、どうだったでしょうか?"></p>
+          <p class="roll-line hidden" data-text="それでは。 by 人間"></p>
+          <p class="roll-line hidden" data-text="2026 自作タイピングゲーム"></p>
+          <p class="roll-line hidden" data-text="2025-2026 自作タイピングゲーム制作プロジェクト"></p>
+          <p class="roll-line hidden" data-text="最後(?)までプレイしてくれてありがとう!～Thank you for Playing!～"></p>      
+        </div>
+        <div id="final-msg" class="hidden" style="text-align:center;">
+          <h3 style="margin:24px 0; color:#ffd700;">さらなる高みを目指して...</h3>
+          <button id="btn-roll-back-to-title" class="btn">タイトルに戻る</button>
+          </div>
+      </div>
+    </div>
+
+    <div id="extra-staff" class="screen">
+      <div class="roll-wrap">
+        <div id="extra-roll-inner">
+          <div id="roll-copy" class="small"></div>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～Extra Mode クリアおめでとう！～"></h4>
+          <p class="roll-line extra-roll-line hidden" data-text="君のタイピング力はついに次元を超えた。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="もはやこの世界に君を超える魔法使いはいない。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="すべての真理を理解し、世界の法則となった君へ。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="この過酷な試練を乗り越えたことに敬意を表します。"></p>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～TRUE MAGIC MASTER～"></h4>
+          <p class="roll-line extra-roll-line hidden" data-text="これからも、君の言葉が新たな魔法を紡ぎ続けるだろう。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="本当の本当に、最後まで遊んでくれてありがとう！"></p>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～在りし日の再演～"></h4>
+          <p class="extra-roll-line hidden" data-text="製作(前半): Google Gemini"></p>
+          <p class="extra-roll-line hidden" data-text="製作(後半): Google Gemini"></p>
+          <p class="extra-roll-line hidden" data-text="プログラム: ChatGPT(ベース), Google Gemini"></p>
+          <p class="extra-roll-line hidden" data-text="デザイン: Google Gemini"></p>
+          <p class="extra-roll-line hidden" data-text="プログラム改良, 最終調整: 人間"></p>
+          <p class="extra-roll-line hidden" data-text="問題文作成: Google Gemini"></p>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～BGM・効果音～"></h4>
+          <p class="extra-roll-line hidden" data-text="BGM素材: ./image/bgm/01.mp3・08.mp3・09.mp3"></p>
+          <p class="extra-roll-line hidden" data-text="効果音: ./image/bgm/02.mp3・03.mp3・04.mp3・05.mp3・06.mp3・07.mp3"></p>
+          <p class="extra-roll-line hidden" data-text="BGM・効果音はフリー音源を使用しています。"></p>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～Special Thanks～"></h4>
+          <p class="extra-roll-line hidden" data-text="Internet Explorer 6.0"></p>
+          <p class="extra-roll-line hidden" data-text="Google Chrome 149.0.7827.201"></p>
+          <p class="extra-roll-line hidden" data-text="Microsoft Windows 11"></p>
+          <p class="extra-roll-line hidden" data-text="Microsoft Windows 10"></p>
+          <p class="extra-roll-line hidden" data-text="Microsoft Windows XP"></p>
+          <h4 class="roll-line extra-roll-line roll-heading hidden" data-text="～開発秘話～"></h4>
+          <p class="roll-line extra-roll-line hidden" data-text="4作目まで作ったからもういいや...と思っていたのに"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="今になってまた「新作作りたい！」と思い始めたんですよね。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="どうせなら...と新しい機能や修正をたくさん入れました。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="Extra、スタッフロール仕様変更etc...本当に大変でした。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="最後までプレイしてくれてありがとうございました。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="それでは、また逢う日まで。"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="by 人間"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="2026 自作タイピングゲーム"></p>
+          <p class="roll-line extra-roll-line hidden" data-text="2025-2026 自作タイピングゲーム制作プロジェクト"></p>
+        </div>
+        <div id="extra-final-msg" class="hidden" style="text-align:center;">
+          <h3 style="margin:24px 0; color:#ffd700;">永遠の魔法伝説として...</h3>
+          <button id="btn-extra-roll-back-to-title" class="btn">タイトルに戻る</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameover" class="screen">
+  <h2 style="color:#ff4444">詠唱失敗</h2>
+  <p>魔法の詠唱には一度のミスも許されません。</p>
+  <div style="margin-top:20px">
+    <button id="btn-gameover-title" class="btn">タイトルに戻る</button>
+  </div>
+</div>
+
+<div id="exit" class="screen">
+      <img id="exit-gif" src="./image/loading.gif" alt="loading">
+      <div id="exit-text" class="small" style="margin-top:8px">魔法陣を解除中です...</div>
+      <div id="exit-wrap" style="margin-top:8px"><div id="exit-bar" style="width:0%;height:12px;background:#e55;border-radius:6px"></div></div>
+    </div>
+
+    <div id="settings-modal" class="modal hidden" style="z-index:200">
+      <h3>設定</h3>
+      <div style="text-align:left">
+        <label><input id="chk-bgm" type="checkbox"> BGM</label><br>
+        <label><input id="chk-se" type="checkbox" checked> 効果音</label><br>
+        <label><input id="chk-kana" type="checkbox"> フリガナ</label><br>
+        <div style="margin-top:6px">BGM音量 <input id="bgm-vol" type="range" min="0" max="1" step="0.1" value="0.2"></div>
+        <div>SE音量 <input id="se-vol" type="range" min="0" max="1" step="0.1" value="1"></div>
+        <div style="margin-top:8px">
+          <label><input id="chk-easy" type="checkbox"> Easyモード</label><br>
+          <label><input id="chk-normal" type="checkbox" checked> Normalモード</label><br>
+          <label><input id="chk-hard" type="checkbox"> Hardモード</label><br>
+          <button id="btn-reset" class="btn">リセット(セーブ削除)</button>
+          <button id="btn-cert" class="btn">魔導書更新</button>
+          <button class="btn" id="btn-export-save">ゲームデータをダウンロード</button>
+          <button class="btn" id="btn-import-save">ゲームデータを取り込む</button><input accept=".dat" id="file-import" style="display:none" type="file"/><br>
+          <button id="btn-settings-close" class="btn">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dev-tools-modal" class="modal hidden" style="z-index:210">
+      <h3>開発者ツール</h3>
+      <div style="text-align:left">
+        <button id="btn-dev-to-ending" class="btn">エンディングへ</button><br>
+        <button id="btn-dev-to-staff" class="btn">スタッフロールへ</button><br>
+        <button id="btn-dev-to-extra-ending" class="btn">Extraエンディングへ</button><br>
+        <button id="btn-dev-to-extra-staff" class="btn">Extraスタッフロールへ</button><br>
+        <div style="margin-top:8px">
+          <button id="btn-dev-close" class="btn">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bgm-prompt" class="modal hidden" style="z-index:200">
+      <div>BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-yes" class="btn">再生する</button>
+        <button id="bgm-no" class="btn">再生しない</button>
+      </div>
+    </div>
+    
+    <div id="bgm-staff-prompt" class="modal hidden" style="z-index:200">
+      <div>スタッフロール BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-staff-yes" class="btn">再生する</button>
+        <button id="bgm-staff-no" class="btn">再生しない</button>
+      </div>
+    </div>
+
+    <div id="bgm-ending-prompt" class="modal hidden" style="z-index:200">
+      <div>エンディング BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+        <button id="bgm-ending-yes" class="btn">再生する</button>
+        <button id="bgm-ending-no" class="btn">再生しない</button>
+      </div>
+    </div>
+
+    <div id="bgm-setting-warn-prompt" class="modal hidden" style="z-index:200">
+      <div>BGM ONが選択されていません。<br>BGMを再生しますか？</div>
+      <div style="margin-top:8px">
+          <label><input id="chk-easy" type="checkbox"> Easyモード</label><br>
+          <label><input id="chk-normal" type="checkbox" checked> Normalモード</label><br>
+          <label><input id="chk-hard" type="checkbox"> Hardモード</label><br>
+        <button id="bgm-setting-warn-yes" class="btn">はい</button>
+        <button id="bgm-setting-warn-no" class="btn">いいえ</button>
+      </div>
+    </div>
+
+    <div id="copyright" class="small"></div>
+  </div>
+</div>
+
+<audio id="bgm" loop preload="auto"><source src="./image/bgm/01.mp3" type="audio/mpeg"></audio>
+<audio id="bgm-staff" loop preload="auto"><source src="./image/bgm/08.mp3" type="audio/mpeg"></audio>
+<audio id="bgm-ending" loop preload="auto"><source src="./image/bgm/09.mp3" type="audio/mpeg"></audio>
+<audio id="se-btn" preload="auto"><source src="./image/bgm/02.mp3" type="audio/mpeg"></audio>
+<audio id="se-clear" preload="auto"><source src="./image/bgm/03.mp3" type="audio/mpeg"></audio>
+<audio id="se-fail" preload="auto"><source src="./image/bgm/04.mp3" type="audio/mpeg"></audio>
+<audio id="se-back" preload="auto"><source src="./image/bgm/05.mp3" type="audio/mpeg"></audio>
+<audio id="se-exit" preload="auto"><source src="./image/bgm/06.mp3" type="audio/mpeg"></audio>
+<audio id="se-locked" preload="auto"><source src="./image/bgm/07.mp3" type="audio/mpeg"></audio>
+
+<script>
+/* -------------------------
+   Utilities, state, data
+   ------------------------- */
+const ADMIN_PW = "farm1227";
+const BASE_KEY = "KLP3P-HJG3L-667AP";
+const MAX_DAYS = 10950; // 30 years
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function log(...a){ console.log("[GAME]",...a); }
+
+/* fiscal key */
+function getFiscalYear(date=new Date()){
+  const y = date.getFullYear(), m = date.getMonth()+1;
+  return (m>=4) ? y : y-1;
+}
+function genKeyForYear(fy){ return `${BASE_KEY}-${fy}`; }
+
+/* certificate */
+function getBuiltInCert(){
+  const now = new Date();
+  const fy = getFiscalYear(now);
+  const issued = now.toISOString();
+  const expires = new Date(now.getFullYear()+30, now.getMonth(), now.getDate()).toISOString();
+  return { productKey: genKeyForYear(fy), issued, expires, copyright:"© 2026 Become a great wizard!" };
+}
+function loadCert(){
+  const s = localStorage.getItem("typing_magic_game_certificate");
+  if(!s) return getBuiltInCert();
+  try{ return JSON.parse(s); } catch(e){ console.warn("cert parse err",e); localStorage.removeItem("typing_magic_game_certificate"); return getBuiltInCert(); }
+}
+function validateCert(cert){
+  const expect = genKeyForYear(getFiscalYear());
+  if(!cert || !cert.productKey) throw new Error("ライセンスエラー: 証明書不正");
+  if(cert.productKey !== expect) throw new Error(`ライセンスエラー: 期待 ${expect}`);
+  if(new Date(cert.expires) < new Date()) throw new Error("証明書期限切れ");
+  return true;
+}
+function saveCert(cert){ localStorage.setItem("typing_magic_game_certificate", JSON.stringify(cert)); }
+
+/* problems with furigana (魔法使いテーマ + Extraモード) */
+const problemBank = {
+  // --- 既存の1～6章 ---
+  "1-1": [ { "w": "魔法の杖", "y": "まほうのつえ" }, { "w": "魔力", "y": "まりょく" }, { "w": "呪文", "y": "じゅもん" }, { "w": "詠唱", "y": "えいしょう" } ],
+  "1-2": [ { "w": "魔法陣", "y": "まほうじん" }, { "w": "属性", "y": "ぞくせい" }, { "w": "集中", "y": "しゅうちゅう" }, { "w": "基礎", "y": "きそ" } ],
+  "1-3": [ { "w": "火の玉", "y": "ひのたま" }, { "w": "水の盾", "y": "みずのたて" }, { "w": "風の刃", "y": "かぜのは" }, { "w": "土の壁", "y": "つちのかべ" } ],
+  "1-4": [ { "w": "薬草", "y": "やくそう" }, { "w": "調合", "y": "ちょうごう" }, { "w": "回復薬", "y": "かいふくやく" }, { "w": "治癒魔法", "y": "ちゆまほう" } ],
+  "1-5": [ { "w": "瞑想", "y": "めいそう" }, { "w": "魔力回復", "y": "まりょくかいふく" }, { "w": "精神力", "y": "せいしんりょく" }, { "w": "初級魔法", "y": "しょきゅうまほう" } ],
+  "1-6": [ { "w": "魔法使いの卵", "y": "まほうつかいのたまご" }, { "w": "はじまりの魔法", "y": "はじまりのまほう" }, { "w": "魔導書", "y": "まどうしょ" }, { "w": "師匠の教え", "y": "ししょうのおしえ" } ],
+  "2-1": [ { "w": "炎の精霊", "y": "ほのおのせいれい" }, { "w": "紅蓮の炎", "y": "ぐれんのほのお" }, { "w": "爆発魔法", "y": "ばくはつまほう" }, { "w": "灰燼", "y": "かいじん" } ],
+  "2-2": [ { "w": "水の精霊", "y": "みずのせいれい" }, { "w": "氷結魔法", "y": "ひょうけつまほう" }, { "w": "絶対零度", "y": "ぜったいれいど" }, { "w": "癒しの雨", "y": "いやしのあめ" } ],
+  "2-3": [ { "w": "風の精霊", "y": "かぜのせいれい" }, { "w": "竜巻", "y": "たつまき" }, { "w": "飛行魔法", "y": "ひこうまほう" }, { "w": "疾風怒濤", "y": "しっぷうどとう" } ],
+  "2-4": [ { "w": "土の精霊", "y": "つちのせいれい" }, { "w": "地割れ", "y": "じわれ" }, { "w": "巨大岩壁", "y": "きょだいがんぺき" }, { "w": "大地の怒り", "y": "だいちのいかり" } ],
+  "2-5": [ { "w": "光の魔法", "y": "ひかりのまほう" }, { "w": "神聖魔法", "y": "しんせいまほう" }, { "w": "浄化の光", "y": "じょうかのひかり" }, { "w": "閃光", "y": "せんこう" } ],
+  "2-6": [ { "w": "闇の魔法", "y": "やみのまほう" }, { "w": "影縛り", "y": "かげしばり" }, { "w": "幻惑の霧", "y": "げんわくのきり" }, { "w": "深淵", "y": "しんえん" } ],
+  "3-1": [ { "w": "錬金術", "y": "れんきんじゅつ" }, { "w": "等価交換", "y": "とうかこうかん" }, { "w": "賢者の石", "y": "けんじゃのいし" }, { "w": "黄金生成", "y": "おうごんせいせい" } ],
+  "3-2": [ { "w": "万能薬", "y": "ばんのうやく" }, { "w": "エリクサー", "y": "えりくさー" }, { "w": "魔力増幅薬", "y": "まりょくぞうふくやく" }, { "w": "秘薬", "y": "ひやく" } ],
+  "3-3": [ { "w": "魔法釜", "y": "まほうがま" }, { "w": "煮込む", "y": "にこむ" }, { "w": "蒸留", "y": "じょうりゅう" }, { "w": "成分抽出", "y": "せいぶんちゅうしゅつ" } ],
+  "3-4": [ { "w": "希少素材", "y": "きしょうそざい" }, { "w": "竜の鱗", "y": "りゅうのうろこ" }, { "w": "マンドラゴラ", "y": "まんどらごら" }, { "w": "精霊の涙", "y": "せいれいのなみだ" } ],
+  "3-5": [ { "w": "ホムンクルス", "y": "ほむんくるす" }, { "w": "人工生命体", "y": "じんこうせいめいたい" }, { "w": "魂の定着", "y": "たましいのていちゃく" }, { "w": "禁忌の術", "y": "きんきのじゅつ" } ],
+  "3-6": [ { "w": "錬金術師の工房", "y": "れんきんじゅつしのこうぼう" }, { "w": "古き知識", "y": "ふるきちしき" }, { "w": "物質変換", "y": "ぶっしつへんかん" }, { "w": "真理の扉", "y": "しんりのとびら" } ],
+  "4-1": [ { "w": "召喚術", "y": "しょうかんじゅつ" }, { "w": "契約の証", "y": "けいやくのあかし" }, { "w": "異世界の門", "y": "いせかいのもん" }, { "w": "召喚獣", "y": "しょうかんじゅう" } ],
+  "4-2": [ { "w": "使い魔", "y": "つかいま" }, { "w": "黒猫", "y": "くろねこ" }, { "w": "夜のフクロウ", "y": "よるのふくろう" }, { "w": "意思疎通", "y": "いしそつう" } ],
+  "4-3": [ { "w": "幻獣召喚", "y": "げんじゅうしょうかん" }, { "w": "ペガサス", "y": "ぺがさす" }, { "w": "ユニコーン", "y": "ゆにこーん" }, { "w": "聖なる絆", "y": "せいなるきずな" } ],
+  "4-4": [ { "w": "竜騎士", "y": "りゅうきし" }, { "w": "ドラゴン召喚", "y": "どらごんしょうかん" }, { "w": "竜の咆哮", "y": "りゅうのほうこう" }, { "w": "逆鱗", "y": "げきりん" } ],
+  "4-5": [ { "w": "大精霊召喚", "y": "だいせいれいしょうかん" }, { "w": "精霊王", "y": "せいれいおう" }, { "w": "精霊契約", "y": "せいれいけいやく" }, { "w": "自然の化身", "y": "しぜんのけしん" } ],
+  "4-6": [ { "w": "悪魔召喚", "y": "あくましょうかん" }, { "w": "悪魔との契約", "y": "あくまとのけいやく" }, { "w": "恐ろしい代償", "y": "おそろしいだいしょう" }, { "w": "魂の取引", "y": "たましいのとりひき" } ],
+  "5-1": [ { "w": "大魔法陣", "y": "だいまほうじん" }, { "w": "儀式魔法", "y": "ぎしまほう" }, { "w": "複数詠唱", "y": "ふくすうえいしょう" }, { "w": "星の配置", "y": "ほしのはいち" } ],
+  "5-2": [ { "w": "空間魔法", "y": "くうかんまほう" }, { "w": "瞬間移動", "y": "しゅんかんいどう" }, { "w": "転移門", "y": "てんいもん" }, { "w": "次元断層", "y": "じげんだんそう" } ],
+  "5-3": [ { "w": "時間魔法", "y": "じかんまほう" }, { "w": "時間遡行", "y": "じかんそこう" }, { "w": "未来予知", "y": "みらいよち" }, { "w": "時の歯車", "y": "ときのはぐるま" } ],
+  "5-4": [ { "w": "結界魔法", "y": "けっかいまほう" }, { "w": "絶対防御", "y": "ぜったいぼうぎょ" }, { "w": "魔法反射", "y": "まほうはんしゃ" }, { "w": "不可侵の聖域", "y": "ふかしんのせいいき" } ],
+  "5-5": [ { "w": "封印魔法", "y": "ふういんまほう" }, { "w": "邪神封印", "y": "じゃしんふういん" }, { "w": "永遠の眠り", "y": "えいえんのねむり" }, { "w": "封印の鍵", "y": "ふういんのかぎ" } ],
+  "5-6": [ { "w": "魔法塔の最上階", "y": "まほうとうのさいじょうかい" }, { "w": "魔力結節点", "y": "まりょくけっせつてん" }, { "w": "世界樹の導き", "y": "せかいじゅのみちびき" }, { "w": "星の記憶", "y": "ほしのきおく" } ],
+  "6-1": [ { "w": "究極魔法", "y": "きゅうきょくまほう" }, { "w": "天地創造", "y": "てんちそうぞう" }, { "w": "神の怒り", "y": "かみのいかり" }, { "w": "滅びの光", "y": "ほろびのひかり" } ],
+  "6-2": [ { "w": "古代魔法の復活", "y": "こだいまほうのふっかつ" }, { "w": "忘れられし言葉", "y": "わすれられすることば" }, { "w": "真理の真言", "y": "しんりのしんごん" }, { "w": "言霊の力", "y": "ことだまのちから" } ],
+  "6-3": [ { "w": "魔力の暴走", "y": "まりょくのぼうそう" }, { "w": "制御不能", "y": "せいぎょふのう" }, { "w": "魔力限界突破", "y": "まりょくげんかいとっぱ" }, { "w": "真なる覚醒", "y": "しんなるかくせい" } ],
+  "6-4": [ { "w": "闇の王との決戦", "y": "やみのおうとのけっせん" }, { "w": "世界を救う最終魔法", "y": "せかいをすくうさいしゅうまほう" }, { "w": "全魔力解放", "y": "ぜんまりょくかいほう" }, { "w": "奇跡の光", "y": "きせきのひかり" } ],
+  "6-5": [ { "w": "平和への祈り", "y": "へいわへのいのり" }, { "w": "世界の再生", "y": "せかいのさいせい" }, { "w": "降り注ぐ光の雨", "y": "ふりそそぐひかりのあめ" }, { "w": "生命の息吹", "y": "せいめいのいぶき" } ],
+  "6-6": [
+    { "w": "伝説の大魔導士として世界に新たな光をもたらす", "y": "でんせつのだいまどうしとしてせかいにあらたなひかりをもたらす" },
+    { "w": "古の呪文と現代の叡智が交差する奇跡の瞬間", "y": "いにしえのじゅもんとげんだいのえいちがこうさするきせきのしゅんかん" },
+    { "w": "闇を打ち払い全ての生命が調和する平和な世界へ", "y": "やみをうちはらいすべてのせいめいがちょうわするへいわなせかいへ" },
+    { "w": "君の紡いだ言葉は永遠の魔法となり歴史に刻まれる", "y": "きみのつむいだことばはえいえんのまほうとなりれきしにきざまれる" }
+  ],
+  // --- Extraモード (第7～9章) ---
+  "7-1": [ { "w": "異界の門", "y": "いかいのもん" }, { "w": "次元歪曲", "y": "じげんわいきょく" }, { "w": "星幽界", "y": "せいゆうかい" }, { "w": "異界の住人", "y": "いかいのじゅうにん" } ],
+  "7-2": [ { "w": "虚無", "y": "きょむ" }, { "w": "暗黒物質", "y": "あんこくぶっしつ" }, { "w": "事象の地平線", "y": "じしょうのちへいせん" }, { "w": "混沌", "y": "こんとん" } ],
+  "7-3": [ { "w": "時空の裂け目", "y": "じくうのさけめ" }, { "w": "パラレルワールド", "y": "ぱられるわーるど" }, { "w": "並行宇宙", "y": "へいこううちゅう" }, { "w": "亜空間", "y": "あくうかん" } ],
+  "7-4": [ { "w": "星のささやき", "y": "ほしのささやき" }, { "w": "銀河の渦", "y": "ぎんがのうず" }, { "w": "流星群", "y": "りゅうせいぐん" }, { "w": "超新星爆発", "y": "ちょうしんせいばくはつ" } ],
+  "7-5": [ { "w": "概念魔法", "y": "がいねんまほう" }, { "w": "因果律操作", "y": "いんがりつそうさ" }, { "w": "運命の書き換え", "y": "うんめいのかきかえ" }, { "w": "存在の証明", "y": "そんざいのしょうめい" } ],
+  "7-6": [ { "w": "未知との遭遇", "y": "みちとのそうぐう" }, { "w": "異次元からの呼び声", "y": "いじげんからのよびごえ" }, { "w": "境界を超える者", "y": "きょうかいをこえるもの" }, { "w": "新たなる理", "y": "あらたなることわり" } ],
+  "8-1": [ { "w": "神々の黄昏", "y": "かみがみのたそがれ" }, { "w": "神話の再現", "y": "しんわのさいげん" }, { "w": "創世記", "y": "そうせいき" }, { "w": "古代神", "y": "こだいしん" } ],
+  "8-2": [ { "w": "神器", "y": "しんき" }, { "w": "聖なる杯", "y": "せいなるさかずき" }, { "w": "裁きの剣", "y": "さばきのけん" }, { "w": "神の盾", "y": "かみのたて" } ],
+  "8-3": [ { "w": "神託", "y": "しんたく" }, { "w": "預言者", "y": "よげんしゃ" }, { "w": "啓示", "y": "けいじ" }, { "w": "奇跡の代行者", "y": "きせきのだいこうしゃ" } ],
+  "8-4": [ { "w": "忘れられた祭壇", "y": "わすれられたさいだん" }, { "w": "禁断の果実", "y": "きんだんのかじつ" }, { "w": "原初の炎", "y": "げんしょのほのお" }, { "w": "創造の息吹", "y": "そうぞうのいぶき" } ],
+  "8-5": [ { "w": "絶対神", "y": "ぜったいしん" }, { "w": "全知全能", "y": "ぜんちぜんのう" }, { "w": "神罰", "y": "しんばつ" }, { "w": "救済", "y": "きゅうさい" } ],
+  "8-6": [ { "w": "神を越える力", "y": "かみをこえるちから" }, { "w": "究極の叡智", "y": "きゅうきょくのえいち" }, { "w": "古の封印解除", "y": "いにしえのふういんかいじょ" }, { "w": "神話の終焉", "y": "しんわのしゅうえん" } ],
+  "9-1": [ { "w": "宇宙の真理", "y": "うちゅうのしんり" }, { "w": "万物の法則", "y": "ばんぶつのほうそく" }, { "w": "神羅万象", "y": "しんらばんしょう" }, { "w": "根源", "y": "こんげん" } ],
+  "9-2": [ { "w": "アカシックレコード", "y": "あかしっくれこーど" }, { "w": "魂の記憶", "y": "たましいのきおく" }, { "w": "全宇宙の歴史", "y": "ぜんうちゅうのれきし" }, { "w": "情報統合", "y": "じょうほうとうごう" } ],
+  "9-3": [ { "w": "悟り", "y": "さとり" }, { "w": "解脱", "y": "げだつ" }, { "w": "涅槃", "y": "ねはん" }, { "w": "輪廻転生", "y": "りんねてんしょう" } ],
+  "9-4": [ { "w": "永遠", "y": "えいえん" }, { "w": "無限", "y": "むげん" }, { "w": "虚数空間", "y": "きょすうくうかん" }, { "w": "ゼロポイント", "y": "ぜろぽいんと" } ],
+  "9-5": [ { "w": "思考の具現化", "y": "しこうのぐげんか" }, { "w": "夢と現実の境界", "y": "ゆめとげんじつのきょうかい" }, { "w": "絶対的調和", "y": "ぜったいてきちょうわ" }, { "w": "存在の昇華", "y": "そんざいのしょうか" } ],
+  "9-6": [ 
+    { "w": "大魔導士のその先へと君はすすむことになるだろう。それは本当にうれしいことである。", "y": "だいまどうしのそのさきへときみはすすむことになるだろう。それはほんとうにうれしいことである。" }, 
+    { "w": "究極を超えた高みを目指して切磋琢磨する日常にも終わりが近づいている。", "y": "きゅうきょくをこえたたかみをめざしてせっさたくまするにちじょうにもおわりがちかづいている。" }, 
+    { "w": "君は宇宙そのものになることだろう。なんでそう思うのかって？それは私の直感だよ。", "y": "きみはうちゅうそのものになるだろう。なんでそうおもうのかって？それはわたしのちょっかんだよ。" }, 
+    { "w": "君が永遠の魔法伝説になったとしても、私を忘れないでくれよ。", "y": "きみがえいえんのまほうでんせつになったとしても、わたしをわすれないでくれよ。" } 
+  ]
+};
+
+const stories = {
+  1: { title: "第1章 🔮 見習い魔法使い：あなたは魔法学校に入学。基礎から魔法人生が始まる。: はじまりの呪文", text: "古の魔導書は、まだ力を失っていない。君は、闇に覆われた世界で、人々が失いかけた魔法の言葉を紡ぎ始める。言葉は小さな光となり、道を照らしていく。" },
+  2: { title: "第2章 🔮 属性の探求：精霊たちと対話し、自然の属性魔法を覚えていく。: 元素との共鳴", text: "言葉の力が鍵となり、君は古文書を解読し、失われた精霊たちの知識を見つけ出す。タイピングで真実を解き明かす旅は、強力な魔法を手にするための一歩となる。" },
+  3: { title: "第3章 🔮 錬金術の秘密：図書館の奥深くで、物質を変換する錬金術を学ぶ。: 真理への扉", text: "キーボードが紡ぐ言葉は、物質の法則を書き換える。君は真理と対話することで、失われた錬金術の秘法を取り戻し、新たな力を手に入れていく。" },
+  4: { title: "第4章 🔮 召喚の儀式：強大な魔物や幻獣と契約し、戦いの備えを進める。: 異界との契約", text: "君のタイピングの力は、異世界への扉をも開く。恐れを捨てて強大な存在と契約を結び、迫り来る闇の軍勢に立ち向かうための強力な味方を得る。" },
+  5: { title: "第5章 🔮 高位魔法の試練：時空を操る儀式魔法を習得し、心を研ぎ澄ます。: 時空の支配者", text: "魔法は、心の内側にも影響を及ぼす。君はタイピングによって、膨大な魔力を制御し、迷いや恐怖を克服する。それは、闇の王を倒すための最後の試練となる。" },
+  6: { title: "第6章 🔮 伝説の大魔導士：究極の魔法を放ち、闇の王との最終決戦に挑む。: 世界の再生", text: "君はついに、闇の王の真実と向き合う。闇の王が世界の光を奪った理由、そして君に託された使命。全ての謎を解き明かす最後の詠唱が、世界を救う鍵となる。" },
+  // Extra Stories
+  7: { title: "Ex 第1章 🌟 異界の門：未知の次元への挑戦", text: "闇を退けた君の前に、突如として次元の歪みが現れた。異世界の脅威からこの世界を守るため、大魔導士としての新たな戦いが始まる。" },
+  8: { title: "Ex 第2章 🌟 古代神の遺産：失われた超魔法", text: "異界の門を越えた先には、かつて神々が封印したとされる古代の超魔法が眠っていた。君はそれを解読し、真の力に目覚めていく。" },
+  9: { title: "Ex 第3章 🌟 宇宙の真理：大魔導士を超える者", text: "全ての次元を超越した空間。そこには宇宙の真理が隠されていた。君は、大魔導士という枠組みさえも超え、究極の存在へと至る。" }
+};
+
+const endings = [
+  { img: "./image/ending/01.png", text: "伝説の大魔導士など存在しないと人々は言った。" },
+  { img: "./image/ending/02.png", text: "しかし、君は魔法の知識を深め、実力を証明し続けた。" },
+  { img: "./image/ending/03.png", text: "ついに闇の王は倒れ、伝説は真実だったということが証明された。" },
+  { img: "./image/ending/04.png", text: "君の詠唱の速さと正確さは、神業と呼ぶにふさわしいものだった。" },
+  { img: "./image/ending/05.png", text: "嘘だという主張は崩れ、再び世界に魔法の光が満ちた。" },
+  { img: "./image/ending/06.png", text: "君は「伝説の大魔導士」として、世界を救った英雄となった。" },
+  { img: "./image/ending/07.png", text: "しかし、魔法の探求に終わりはない。" },
+  { img: "./image/ending/08.png", text: "新たな呪文が紡がれる限り、この伝説は続くのだ。" },
+  { img: "./image/ending/08.png", text: "NORMAL ENDING No.1 【さらなる高みを目指して...】" }
+];
+
+const extraEndings = [
+  "宇宙の真理を理解した君は、もはや人間という枠組みを超えた。",
+  "時間も、空間も、すべてが君の紡ぐ言葉の中で調和している。",
+  "もはや戦う必要すらなく、君の存在そのものが平和の象徴となった。",
+  "全ての次元に光をもたらし、君は永遠の伝説となったのだ。",
+  "Thank you for playing Extra Mode! - by 人間",
+  "TRUE ENDING No.1 【全ステージクリアおめでとう！】"
+];
+let extraEndingPageIndex = 0;
+let endingPageIndex = 0;
+
+/* persistent save structure */
+function loadSave(){
+  try{
+    const s=localStorage.getItem("typing_magic_game_typingSave");
+    if(!s) return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false };
+    const saved = JSON.parse(s);
+    if(saved.firstLaunch === undefined) saved.firstLaunch = false;
+    if(saved.bgmEnabled === undefined) saved.bgmEnabled = true;
+    if(saved.seEnabled === undefined) saved.seEnabled = true;
+    if(saved.furigana === undefined) saved.furigana = false;
+    if(saved.unlockedStories === undefined) saved.unlockedStories = [0]; 
+    if(saved.easyMode === undefined) saved.easyMode = false;
+    if(saved.normalMode === undefined) saved.normalMode = true;
+    if(saved.hardMode === undefined) saved.hardMode = false;
+    if(saved.staffSeen === undefined) saved.staffSeen = false;
+    return saved;
+  }catch(e){ localStorage.removeItem("typing_magic_game_typingSave"); return { firstLaunch: true, unlocked:{1:[1]}, records:{}, unlockedStories: [0], staffSeen:false, bgmEnabled: true, seEnabled: true, furigana: false }; }
+}
+function saveAll(data){
+  document.getElementById("loading3").style.display = "block";
+  localStorage.setItem("typing_magic_game_typingSave", JSON.stringify(data));
+  setTimeout(()=>{ document.getElementById("loading3").style.display = "none"; log("save done"); }, 700);
+}
+
+/* audio helpers */
+const audio = {
+  bgm: document.getElementById("bgm"),
+  bgmStaff: document.getElementById("bgm-staff"),
+  bgmEnding: document.getElementById("bgm-ending"),
+  btn: document.getElementById("se-btn"),
+  clear: document.getElementById("se-clear"),
+  fail: document.getElementById("se-fail"),
+  back: document.getElementById("se-back"),
+  exit: document.getElementById("se-exit"),
+  locked: document.getElementById("se-locked")
+};
+function playSE(id){
+  const chk = document.getElementById("chk-se");
+  if(chk && !chk.checked) return;
+  const a = audio[id];
+  if(!a) return;
+  try{ a.currentTime=0; a.play(); }catch(e){ log("SE play failed",e); }
+}
+function setSEVolume(v){ ["btn","clear","fail","back","exit","locked"].forEach(k=>{ const a=audio[k]; if(a) a.volume = v; }); }
+function setBGMVolume(v){ 
+  if(audio.bgm) audio.bgm.volume = v; 
+  if(audio.bgmStaff) audio.bgmStaff.volume = v;
+  if(audio.bgmEnding) audio.bgmEnding.volume = v;
+}
+
+function stopAllBGM(){
+  try {
+    audio.bgm.pause();
+    audio.bgm.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmStaff.pause();
+    audio.bgmStaff.currentTime = 0;
+  } catch (e) {}
+  try {
+    audio.bgmEnding.pause();
+    audio.bgmEnding.currentTime = 0;
+  } catch (e) {}
+}
+
+/* transition utility */
+async function transitionWithLoading(checkFn, targetFn, fadeColor = "#000", fadeDuration = ".45s", loadingGifId = "loading2"){
+  const fade = document.getElementById("fade");
+  const loadingGif = document.getElementById(loadingGifId);
+  const loading2Gif = document.getElementById("loading2");
+  const loading4Gif = document.getElementById("loading4");
+  const loading5Gif = document.getElementById("loading5");
+  
+  fade.style.backgroundColor = fadeColor;
+  fade.style.transitionDuration = fadeDuration;
+
+  if(loading2Gif && loadingGifId !== "loading2") loading2Gif.style.display = "none";
+  if(loading4Gif && loadingGifId !== "loading4") loading4Gif.style.display = "none";
+  if(loading5Gif && loadingGifId !== "loading5") loading5Gif.style.display = "none";
+  
+  fade.classList.add("on");
+  await delay(parseFloat(fadeDuration) * 1000); 
+  
+  if (loadingGif) loadingGif.style.display = "block";
+  await delay(150);
+  try{
+    await checkFn();
+    await delay(200);
+    targetFn();
+  }catch(e){
+    console.error("transition check failed", e);
+    alert("🍁ページを移動できません\n" + (e && e.message? e.message : ""));
+  }finally{
+    if (loadingGif) loadingGif.style.display = "none";
+    await delay(150);
+    fade.classList.remove("on");
+    fade.style.backgroundColor = "#1a0b2e";
+    fade.style.transitionDuration = ".45s";
+  }
+}
+
+/* safe show screen */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+  const el = document.getElementById(id);
+  if(el) el.classList.add("active");
+  if(id !== "loading-area" && id !== "title") document.getElementById("loading-area").style.display = "none";
+  
+  if(id !== "staff") {
+      const topTitle = document.getElementById("top-title");
+      if(topTitle) topTitle.classList.add("hidden");
+  }
+}
+
+/* -------------------------
+   Game logic state
+   ------------------------- */
+let save = loadSave();
+let currentChapter = 1;
+let currentStage = 1;
+let playTimer = null;
+let remaining = 60;
+let qIndex = 0;
+let startTime = 0;
+
+/* -------------------------
+   UI behaviors
+   ------------------------- */
+function showTitle(){
+  const titleText = "いざ大魔導士へ！～言葉が紡ぐ魔法の力～";
+  const container = document.getElementById("title-text-anim");
+  const copyright = document.getElementById("title-copyright");
+  const cert = loadCert();
+  copyright.textContent = cert && cert.copyright ? cert.copyright : "";
+
+  const buttonsDiv = document.getElementById("title-buttons");
+  buttonsDiv.classList.remove("title-buttons-visible");
+  buttonsDiv.classList.add("title-buttons-hidden");
+
+  container.innerHTML = "";
+  titleText.split("").forEach((char, index) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    span.style.animationDelay = `${index * 0.05}s`;
+    container.appendChild(span);
+  });
+  
+  setTimeout(() => {
+    showScreen("title");
+  }, 50);
+
+  setTimeout(() => {
+    buttonsDiv.classList.remove("title-buttons-hidden");
+    buttonsDiv.classList.add("title-buttons-visible");
+  }, 1500); 
+}
+function renderChapterList(){
+  const wrap = document.getElementById("chapter-list");
+  wrap.innerHTML = "";
+  // 1〜9章 (7～9章はスタッフロールを見た後のみ表示)
+  for(let i=1;i<=9;i++){
+    if(i > 6 && !save.staffSeen) continue;
+    
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = (save.unlocked && save.unlocked[i]);
+    
+    let chapText = (i <= 6) ? `第${i}章` : `Extra第${i-6}章`;
+    
+    if(unlocked){
+      btn.textContent = chapText;
+      btn.onclick = ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ currentChapter = i; renderStageGrid(i); showScreen("stage"); }); }
+    } else {
+      btn.textContent = `🔒 ${chapText}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+}
+function renderStageGrid(ch){
+  const grid = document.getElementById("stage-grid"); grid.innerHTML="";
+  for(let s=1;s<=6;s++){
+    const key = `${ch}-${s}`;
+    const unlockedInChapter = (save.unlocked && save.unlocked[ch] && save.unlocked[ch].includes(s));
+    const cleared = (save.records && save.records[key] !== undefined);
+    const btn = document.createElement("button");
+    btn.className="btn";
+    if(unlockedInChapter){
+      let text = key;
+      if(cleared) text = `✅ ${key}`;
+      btn.textContent = text;
+      btn.onclick = ()=> { playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=> startStage(ch,s)); };
+    } else {
+      btn.textContent = `🔒 ${key}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    grid.appendChild(btn);
+  }
+  let chapTitle = (ch <= 6) ? `第${ch}章` : `Extra 第${ch-6}章`;
+  document.getElementById("stage-heading").textContent = `${chapTitle} ステージ選択`;
+}
+
+/* start stage */
+function startStage(ch, st){
+  currentChapter = ch; currentStage = st;
+  stopAllBGM();
+  const key = `${ch}-${st}`;
+  const problems = problemBank[key].slice(0,4);
+  qIndex = 0; remaining = 60;
+  document.getElementById("play-title").textContent = `第${key}`;
+  renderQuestion(problems[0].w, problems[0].y);
+  document.getElementById("input").value = "";
+  document.getElementById("play-timer").textContent = remaining;
+  showScreen("play");
+  startTime = Date.now();
+  if(playTimer) clearInterval(playTimer);
+  playTimer = setInterval(()=>{
+    remaining--;
+    document.getElementById("play-timer").textContent = remaining;
+    if(remaining<=0){ clearInterval(playTimer); onFail(); }
+  },1000);
+  
+  document.getElementById("input").onkeydown = function(e){
+    if(e.key === "Enter"){
+      e.preventDefault(); 
+      const val = this.value.trim();
+      const correct = problems[qIndex].y;
+      try {
+        if (typeof checkAnswer === "function" && checkAnswer(val, correct)) {
+          playSE('clear');
+          qIndex++;
+          if(qIndex >= problems.length){
+            clearInterval(playTimer);
+            onClear();
+          } else {
+            renderQuestion(problems[qIndex].w, problems[qIndex].y);
+            this.value = "";
+          }
+        } else {
+          playSE('fail');
+          if (save && save.hardMode) { showScreen("gameover"); return; }
+          document.getElementById("play-msg").textContent = "詠唱失敗。もう一度。";
+          this.select();
+        }
+      } catch(err) {
+        if(val === correct){
+          playSE('clear');
+          qIndex++;
+          if(qIndex >= problems.length){ clearInterval(playTimer); onClear(); }
+          else { renderQuestion(problems[qIndex].w, problems[qIndex].y); this.value = ""; }
+        } else {
+          playSE('fail');
+          if (save && save.hardMode) { showScreen("gameover"); return; }
+          document.getElementById("play-msg").textContent = "詠唱失敗。もう一度。";
+          this.select();
+        }
+      }
+    }
+  };
+}
+
+function renderQuestion(word, furigana){
+  const qEl = document.getElementById("question");
+  const furiganaEnabled = document.getElementById("chk-kana").checked;
+  const qText = `詠唱 ${qIndex+1}: 「${word}」 を入力してください`;
+  if(furiganaEnabled){
+    qEl.innerHTML = `詠唱 ${qIndex+1}: <ruby>${word}<rt>${furigana}</rt></ruby> を入力してください`;
+  } else {
+    qEl.textContent = qText;
+  }
+}
+
+function onClear(){
+  playSE('clear');
+  const elapsed = Math.max(0, Math.floor((Date.now()-startTime)/1000));
+  const key = `${currentChapter}-${currentStage}`;
+  
+  if(!save.records) save.records = {};
+  if(!save.records[key] || elapsed < save.records[key]){ save.records[key] = elapsed; }
+
+  if(!save.unlocked) save.unlocked = {};
+  if(!save.unlocked[currentChapter]) save.unlocked[currentChapter] = [];
+  
+  if (currentStage < 6) {
+    if (!save.unlocked[currentChapter].includes(currentStage + 1)) {
+      save.unlocked[currentChapter].push(currentStage + 1);
+    }
+    saveAll(save);
+    renderChapterList(); renderStageGrid(currentChapter);
+    onStageCleared(elapsed);
+  } else if (currentStage === 6) {
+    if (currentChapter < 6 || (currentChapter >= 7 && currentChapter < 9)) {
+      const nextChap = currentChapter + 1;
+      if (!save.unlocked[nextChap]) { save.unlocked[nextChap] = [1]; }
+      if (!save.unlockedStories.includes(nextChap)) { save.unlockedStories.push(nextChap); }
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+      onChapterCleared(elapsed);
+    } else if (currentChapter === 6) {
+      // 本編最終クリア
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+      onFinalChapterCleared(elapsed);
+    } else if (currentChapter === 9) {
+      // Extraモード最終クリア
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+      onExtraFinalChapterCleared(elapsed);
+    }
+  }
+}
+
+function onStageCleared(elapsed){
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>詠唱成功！ ${currentChapter}-${currentStage} を ${elapsed}秒で突破しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showScreen("records");
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+function onChapterCleared(elapsed){
+  let chapTitle = (currentChapter <= 6) ? `第${currentChapter}章` : `Extra 第${currentChapter-6}章`;
+  const msg = document.createElement("div"); msg.innerHTML = `<div>${chapTitle}クリア！</div>`;
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  showStory(currentChapter + 1);
+}
+
+async function onFinalChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>第6章 🔮 伝説の大魔導士 クリア！</div>`;
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5");
+}
+
+async function onExtraFinalChapterCleared(elapsed){
+  const msg = document.createElement("div"); msg.innerHTML = `<div>Extra第3章 🌟 宇宙の真理 クリア！</div>`;
+  document.getElementById("records-list").innerHTML = msg.innerHTML;
+  updateRecordsUI();
+  await transitionWithLoading(() => askPlayEndingBGM(), showExtraEnding, "#fff", "1s", "loading5");
+}
+
+function onFail(){
+  playSE('fail');
+  showScreen("records");
+  const list = document.getElementById("records-list");
+  const msg = document.createElement("div"); msg.innerHTML = `<div>時間切れ！ ${currentChapter}-${currentStage} の詠唱は失敗しました。</div>` + (list.innerHTML||"");
+  list.innerHTML = msg.innerHTML;
+  if(document.getElementById("chk-bgm").checked){ stopAllBGM(); audio.bgm.play().catch(()=>{}); }
+}
+
+function updateRecordsUI(){
+  const list = document.getElementById("records-list");
+  list.innerHTML = "";
+  if(save.records){
+    for(const k in save.records){
+      const d = document.createElement("div"); d.textContent = `${k}: ${save.records[k]}秒`; list.appendChild(d);
+    }
+  } else {
+    list.textContent = "まだ記録はありません。";
+  }
+}
+
+function showRecords(){
+  updateRecordsUI();
+  showScreen("records");
+}
+
+function showStory(chapter){
+  stopAllBGM();
+  
+  if (chapter === 0) {
+    document.getElementById("btn-prologue-next").onclick = ()=>{ 
+      playSE('btn');
+      save.firstLaunch = false;
+      saveAll(save);
+      renderChapterList(); renderStageGrid(currentChapter);
+      transitionWithLoading(() => Promise.resolve(), () => showTitle());
+    };
+    showScreen("prologue");
+    return;
+  }
+  
+  const storyData = stories[chapter];
+  if (!storyData) return;
+
+  document.getElementById("story-title").textContent = storyData.title;
+  document.getElementById("story-text").textContent = storyData.text;
+  
+  const btnNext = document.getElementById("btn-story-next");
+  const btnBack = document.getElementById("btn-story-back");
+  
+  btnNext.onclick = ()=>{ playSE('btn'); showScreen("chapter"); };
+  btnBack.classList.add("hidden");
+
+  showScreen("story");
+}
+
+function renderStoryList(){
+  const wrap = document.getElementById("story-list-grid");
+  wrap.innerHTML = "";
+  for(let i=0;i<=9;i++){
+    if(i > 6 && !save.staffSeen) continue;
+    
+    const btn = document.createElement("button"); btn.className="btn";
+    const unlocked = save.unlockedStories.includes(i);
+    let storyTitle = "プロローグ";
+    if (i > 0 && i <= 6) storyTitle = `第${i}章`;
+    if (i > 6) storyTitle = `Ex第${i-6}章`;
+    
+    if(unlocked){
+      btn.textContent = `✅ ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('btn'); showStory(i); };
+    } else {
+      btn.textContent = `🔒 ${storyTitle}`;
+      btn.onclick = ()=>{ playSE('locked'); };
+    }
+    wrap.appendChild(btn);
+  }
+  showScreen("story-list");
+}
+
+/* 本編 Ending */
+function showEnding(){
+  endingPageIndex = 0;
+  updateEndingPage();
+  showScreen("ending");
+}
+
+function updateEndingPage(){
+  const endingData = endings[endingPageIndex];
+  document.getElementById("ending-img").src = endingData.img;
+  document.getElementById("ending-text").textContent = endingData.text;
+
+  const btnNext = document.getElementById("btn-ending-next");
+  const btnPrev = document.getElementById("btn-ending-prev");
+  
+  btnPrev.classList.toggle("hidden", endingPageIndex === 0);
+  
+  if (endingPageIndex === endings.length - 1) {
+    btnNext.textContent = "スタッフロールへ";
+    btnNext.onclick = ()=>{ playSE('btn'); startStaffRoll(); };
+  } else {
+    btnNext.textContent = "次へ";
+    btnNext.onclick = ()=>{ playSE('btn'); endingPageIndex++; updateEndingPage(); };
+  }
+}
+
+/* Extra Ending */
+function showExtraEnding(){
+  extraEndingPageIndex = 0;
+  updateExtraEndingPage();
+  showScreen("extra-ending");
+}
+
+function updateExtraEndingPage(){
+  document.getElementById("extra-ending-text").textContent = extraEndings[extraEndingPageIndex];
+  
+  const btnNext = document.getElementById("btn-extra-ending-next");
+  const btnPrev = document.getElementById("btn-extra-ending-prev");
+  
+  btnPrev.classList.toggle("hidden", extraEndingPageIndex === 0);
+  
+  if (extraEndingPageIndex === extraEndings.length - 1) {
+    btnNext.textContent = "スタッフロールへ";
+    btnNext.onclick = ()=>{ playSE('btn'); startExtraStaffRoll(); };
+  } else {
+    btnNext.textContent = "次へ";
+    btnNext.onclick = ()=>{ playSE('btn'); extraEndingPageIndex++; updateExtraEndingPage(); };
+  }
+}
+
+/* 本編 Staff Roll */
+async function startStaffRoll(){
+  stopAllBGM();
+
+  const playBGM = await askPlayStaffBGM();
+  
+  const fade = document.getElementById("fade");
+  fade.style.backgroundColor = "#fff";
+  fade.style.transitionDuration = "1s";
+  document.getElementById("loading4").style.display = "block";
+  fade.classList.add("on");
+  
+  await delay(1000); 
+  document.getElementById("loading4").style.display = "none";
+
+  showScreen("staff");
+  
+  if (playBGM && document.getElementById("chk-bgm").checked) {
+      audio.bgmStaff.volume = parseFloat(document.getElementById("bgm-vol").value || 0.2); 
+      audio.bgmStaff.play().catch(()=>{}); 
+  }
+  
+  const rollLines = document.querySelectorAll("#staff .roll-line");
+  const finalMsg = document.getElementById("final-msg");
+  const topTitle = document.getElementById("top-title");
+  
+  if(topTitle) {
+      topTitle.classList.add("hidden");
+      topTitle.style.animation = "none";
+  }
+
+  rollLines.forEach(line => line.classList.add("hidden"));
+  finalMsg.classList.add("hidden");
+
+  await delay(150);
+  fade.classList.remove("on");
+  
+  let lineCount = 0;
+  for (const line of rollLines) {
+    line.textContent = line.dataset.text;
+    line.style.animation = "none";
+    line.offsetHeight; 
+    line.style.animation = "scrollFade 2.4s ease-in-out forwards";
+    line.classList.remove("hidden");
+    
+    await delay(2600); 
+    line.classList.add("hidden");
+    
+    lineCount++;
+    if (lineCount === 1 && topTitle) {
+        topTitle.classList.remove("hidden");
+        topTitle.style.animation = "fadeIn 1s forwards";
+    }
+  }
+
+  if (!save.staffSeen) {
+    save.staffSeen = true;
+    // Extra Mode Unlock!
+    save.unlocked[7] = [1];
+    if(!save.unlockedStories.includes(7)) save.unlockedStories.push(7);
+    saveAll(save);
+    renderChapterList(); renderStageGrid(currentChapter);
+    
+    finalMsg.innerHTML = `<h3 style="margin:24px 0; color:#ffd700;">🌟 Extraモード解放！ 🌟<br>新たな次元への扉が開かれた...</h3><button id="btn-roll-back-to-title" class="btn">タイトルに戻る</button>`;
+  } else {
+    finalMsg.innerHTML = `<h3 style="margin:24px 0;">次なる魔法の探求へ...</h3><button id="btn-roll-back-to-title" class="btn">タイトルに戻る</button>`;
+  }
+  
+  document.getElementById("btn-roll-back-to-title").addEventListener("click", ()=>{ 
+    playSE('back'); 
+    transitionWithLoading(() => Promise.resolve(), () => {
+        stopAllBGM();
+        showScreen("title");
+        if(document.getElementById("chk-bgm").checked){ audio.bgm.play().catch(()=>{}); }
+    }, "#fff", "1s", "loading4");
+  });
+
+  finalMsg.classList.remove("hidden");
+}
+
+/* Extra Staff Roll */
+async function startExtraStaffRoll(){
+  stopAllBGM();
+
+  const playBGM = await askPlayStaffBGM();
+  
+  const fade = document.getElementById("fade");
+  fade.style.backgroundColor = "#fff";
+  fade.style.transitionDuration = "1s";
+  document.getElementById("loading4").style.display = "block";
+  fade.classList.add("on");
+  
+  await delay(1000); 
+  document.getElementById("loading4").style.display = "none";
+
+  showScreen("extra-staff");
+  
+  if (playBGM && document.getElementById("chk-bgm").checked) {
+      audio.bgmStaff.volume = parseFloat(document.getElementById("bgm-vol").value || 0.2); 
+      audio.bgmStaff.play().catch(()=>{}); 
+  }
+  
+  const rollLines = document.querySelectorAll("#extra-staff .roll-line");
+  const extraFinalMsg = document.getElementById("extra-final-msg");
+
+  rollLines.forEach(line => line.classList.add("hidden"));
+  extraFinalMsg.classList.add("hidden");
+
+  await delay(150);
+  fade.classList.remove("on");
+  
+  for (const line of rollLines) {
+    line.textContent = line.dataset.text;
+    line.style.animation = "none";
+    line.offsetHeight; 
+    line.style.animation = "scrollFade 2.4s ease-in-out forwards";
+    line.classList.remove("hidden");
+    
+    await delay(2600); 
+    line.classList.add("hidden");
+  }
+
+  extraFinalMsg.classList.remove("hidden");
+}
+
+/* exit process */
+async function runExitProcess(){
+  stopAllBGM();
+  showScreen("exit");
+  document.getElementById("exit-text").textContent = "魔法陣を解除中です...";
+  playSE('btn');
+  await delay(800);
+  document.getElementById("exit-text").textContent = "終了処理中です...";
+  const bar = document.getElementById("exit-bar");
+  for(let p=0;p<=100;p+=10){ bar.style.width = p + "%"; await delay(300); }
+  bar.style.width = "0%";
+  document.getElementById("exit-gif").style.display = "none";
+  document.getElementById("exit-text").textContent = "魔導書を閉じました。htmlを終了することができます。";
+  playSE('exit');
+}
+
+/* settings */
+function openSettings(){ 
+  document.getElementById("chk-bgm").checked = save.bgmEnabled;
+  document.getElementById("chk-se").checked = save.seEnabled;
+  document.getElementById("chk-kana").checked = save.furigana;
+  document.getElementById("settings-modal").classList.remove("hidden"); 
+}
+function closeSettings(){ document.getElementById("settings-modal").classList.add("hidden"); }
+function applySettings(){
+  save.bgmEnabled = document.getElementById("chk-bgm").checked;
+  save.seEnabled = document.getElementById("chk-se").checked;
+  save.furigana = document.getElementById("chk-kana").checked;
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+  saveAll(save);
+  renderChapterList(); renderStageGrid(currentChapter);
+}
+document.getElementById("btn-settings-close")?.addEventListener("click", ()=>{ applySettings(); closeSettings(); });
+
+/* dev tools */
+function openDevTools(){ document.getElementById("dev-tools-modal").classList.remove("hidden"); }
+function closeDevTools(){ document.getElementById("dev-tools-modal").classList.add("hidden"); }
+
+/* certificate */
+async function updateCertificate(){
+  const pw = prompt("大魔導士パスワード:");
+  if(pw !== ADMIN_PW){ alert("パスワードが違います"); return; }
+  const daysStr = prompt("有効期間（日数） 1〜10950:", "365");
+  const days = parseInt(daysStr,10);
+  if(isNaN(days) || days < 1 || days > MAX_DAYS){ alert("無効な日数"); return; }
+  const issued = new Date();
+  const expires = new Date(issued.getTime() + days*24*3600*1000);
+  const cert = { productKey: genKeyForYear(getFiscalYear()), issued: issued.toISOString(), expires: expires.toISOString(), copyright:"© 2026 Save The World! Typing Master" };
+  saveCert(cert);
+  alert("魔導書を更新しました。");
+}
+
+/* OS/Browser check */
+function checkSystemRequirements(){
+    const ua = navigator.userAgent;
+    let isOSSupported = false;
+    let isBrowserSupported = false;
+    const isWindows = /Windows NT/.test(ua);
+    if (isWindows) {
+        const winVerMatch = /Windows NT (\d+\.\d)/.exec(ua);
+        if (winVerMatch && parseFloat(winVerMatch[1]) >= 6.1) isOSSupported = true;
+    }
+    if (ua.indexOf("Edg") > -1) {
+        if (parseInt(/Edg\/(\d+)/.exec(ua)[1], 10) >= 80) isBrowserSupported = true;
+    } else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) {
+        if (parseInt(/(?:Opera|OPR)\/(\d+)/.exec(ua)[1], 10) >= 55) isBrowserSupported = true;
+    } else if (ua.indexOf("Chrome") > -1) {
+        if (parseInt(/Chrome\/(\d+)/.exec(ua)[1], 10) >= 67) isBrowserSupported = true;
+    } else if (ua.indexOf("Firefox") > -1) {
+        if (parseInt(/Firefox\/(\d+)/.exec(ua)[1], 10) >= 60) isBrowserSupported = true;
+    }
+    return { isOSSupported, isBrowserSupported };
+}
+
+async function runLoadingChecks(){
+  const bar = document.getElementById("progress-bar");
+  const ptext = document.getElementById("progress-text");
+  let attempt = 0;
+
+  const reqs = checkSystemRequirements();
+  const isSuperRestricted = !reqs.isOSSupported && !reqs.isBrowserSupported;
+  const isPartialRestricted = !isSuperRestricted && (!reqs.isOSSupported || !reqs.isBrowserSupported);
+
+  if (isSuperRestricted) {
+      ["btn-start", "btn-records", "btn-story-list", "btn-settings"].forEach(id => document.getElementById(id).disabled = true);
+  }
+  if (isPartialRestricted) {
+      document.getElementById("partial-warn").classList.remove("hidden");
+      document.getElementById("btn-start").disabled = true;
+      document.getElementById("btn-start").textContent = "🔒詠唱開始";
+  }
+
+  while(attempt < 3){
+    attempt++;
+    try{
+      ptext.textContent = "魔力回路チェック中..."; bar.style.width = "10%"; await delay(700);
+      
+      ptext.textContent = "幻影ファイルチェック中..."; bar.style.width = "30%"; 
+      const images = ["./image/loading.gif","./image/loading2.gif","./image/loading3.gif","./image/loading4.gif", "./image/loading5.gif", ...[...Array(8)].map((_, i) => `./image/ending/0${i+1}.png`)];
+      await Promise.all(images.map(u => new Promise((resolve) => { const i = new Image(); i.onload = resolve; i.onerror = resolve; i.src = u; })));
+      await delay(300);
+
+      ptext.textContent = "旋律ファイルチェック中..."; bar.style.width = "50%"; 
+      const audios = [...[...Array(9)].map((_, i) => `./image/bgm/0${i+1}.mp3`)];
+      await Promise.all(audios.map(u => new Promise((resolve) => { const a = new Audio(); a.oncanplaythrough = resolve; a.onerror = resolve; a.src = u; a.load(); })));
+      await delay(300);
+
+      ptext.textContent = "魔導書確認中..."; bar.style.width = "70%"; 
+      try { validateCert(loadCert()); } catch (e) { localStorage.removeItem("typing_magic_game_certificate"); location.reload(); return; }
+      await delay(300);
+
+      ptext.textContent = "古代文字検証中..."; bar.style.width = "90%"; await delay(300);
+      
+      ptext.textContent = "魔力充填完了 ✅"; bar.style.width = "100%"; await delay(600);
+      document.getElementById("loading-area").style.display = "none";
+      await askPlayBGM();
+      if(save.firstLaunch){
+        await transitionWithLoading(() => Promise.resolve(), () => showStory(0));
+      } else {
+        await transitionWithLoading(() => Promise.resolve(), showTitle);
+      }
+      return;
+    }catch(e){
+      if(attempt < 3){
+        ptext.textContent = `魔力充填に問題が発生しました。再試行します... (${attempt})`;
+        await delay(800);
+      } else {
+        ptext.textContent = "❗魔力充填に失敗しました";
+        const btn = document.createElement("button"); btn.className="btn"; btn.textContent="魔導書を閉じる"; btn.onclick = ()=> runExitProcess();
+        document.getElementById("loading-area").appendChild(btn);
+        return;
+      }
+    }
+  }
+}
+
+function askPlayBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-yes").onclick = ()=>{
+      modal.classList.add("hidden");
+      document.getElementById("chk-bgm").checked = true;
+      document.getElementById("bgm-vol").value = localStorage.getItem("typing_magic_game_bgmVol") || 0.2;
+      setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+      try{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }catch(e){}
+      resolve();
+    };
+    document.getElementById("bgm-no").onclick = ()=>{
+      modal.classList.add("hidden");
+      document.getElementById("chk-bgm").checked = false;
+      resolve();
+    };
+  });
+}
+
+function askPlayEndingBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-ending-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-ending-yes").onclick = ()=>{
+      const isBgmEnabled = document.getElementById("chk-bgm").checked;
+      if (!isBgmEnabled) {
+          const warnModal = document.getElementById("bgm-setting-warn-prompt");
+          warnModal.classList.remove("hidden");
+          document.getElementById("bgm-setting-warn-yes").onclick = ()=>{
+              warnModal.classList.add("hidden"); modal.classList.add("hidden");
+              document.getElementById("chk-bgm").checked = true; 
+              saveAll(save); renderChapterList(); renderStageGrid(currentChapter);
+              stopAllBGM(); audio.bgmEnding.play().catch(()=>{});
+              resolve();
+          };
+          document.getElementById("bgm-setting-warn-no").onclick = ()=>{
+              warnModal.classList.add("hidden"); modal.classList.add("hidden"); resolve();
+          };
+      } else {
+          modal.classList.add("hidden"); stopAllBGM(); audio.bgmEnding.play().catch(()=>{}); resolve();
+      }
+    };
+    document.getElementById("bgm-ending-no").onclick = ()=>{ modal.classList.add("hidden"); resolve(); };
+  });
+}
+
+function askPlayStaffBGM(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("bgm-staff-prompt");
+    modal.classList.remove("hidden");
+    document.getElementById("bgm-staff-yes").onclick = ()=>{ modal.classList.add("hidden"); resolve(true); };
+    document.getElementById("bgm-staff-no").onclick = ()=>{ modal.classList.add("hidden"); resolve(false); };
+  });
+}
+
+function checkMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+window.addEventListener("DOMContentLoaded", async ()=>{
+  document.getElementById("btn-story-next")?.addEventListener("click", ()=>{ playSE('btn'); showScreen("chapter"); });
+  document.getElementById("btn-story-back")?.addEventListener("click", ()=>{ playSE('back'); renderStoryList(); });
+  document.getElementById("btn-story-list")?.addEventListener("click", ()=>{ playSE('btn'); renderStoryList(); });
+  document.getElementById("btn-story-list-back")?.addEventListener("click", ()=>{ playSE('back'); showScreen("title"); });
+  document.getElementById("btn-start").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderChapterList(); showScreen("chapter"); }); });
+  document.getElementById("btn-records").addEventListener("click", ()=>{ playSE('btn'); showRecords(); });
+  document.getElementById("btn-music-room").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("music-room"); }); });
+  document.getElementById("btn-music-room-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ stopAllBGM(); showScreen("title"); if(document.getElementById("chk-bgm").checked){ audio.bgm.play().catch(()=>{}); } }); });
+  
+  document.getElementById("btn-play-bgm").addEventListener("click", ()=>{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } });
+  document.getElementById("btn-play-staff").addEventListener("click", ()=>{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgmStaff.play().catch(()=>{}); } });
+  document.getElementById("btn-play-ending").addEventListener("click", ()=>{ if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgmEnding.play().catch(()=>{}); } });
+
+  document.getElementById("btn-settings").addEventListener("click", ()=>{ playSE('btn'); openSettings(); });
+  document.getElementById("btn-exit").addEventListener("click", ()=>{ playSE('exit'); transitionWithLoading(()=>Promise.resolve(), ()=> runExitProcess()); });
+
+  document.getElementById("btn-chap-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-stage-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("chapter"); }); });
+  document.getElementById("btn-stage-title").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+
+  document.getElementById("btn-play-back").addEventListener("click", ()=>{ playSE('back'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+  document.getElementById("btn-giveup").addEventListener("click", ()=>{ playSE('fail'); if(playTimer) clearInterval(playTimer); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStageGrid(currentChapter); showScreen("stage"); if(document.getElementById("chk-bgm").checked) { stopAllBGM(); audio.bgm.play().catch(()=>{}); } }); });
+
+  document.getElementById("btn-records-back").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("title"); }); });
+  document.getElementById("btn-records-back-last-stage").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("stage"); }); });
+  document.getElementById("btn-records-back-chapter").addEventListener("click", ()=>{ playSE('back'); transitionWithLoading(()=>Promise.resolve(), ()=>{ showScreen("chapter"); }); });
+  document.getElementById("btn-records-story").addEventListener("click", ()=>{ playSE('btn'); transitionWithLoading(()=>Promise.resolve(), ()=>{ renderStoryList(); }); });
+  document.getElementById("btn-dev-tools").addEventListener("click", ()=>{ playSE('btn'); openDevTools(); });
+  document.getElementById("btn-reset").addEventListener("click", ()=>{ 
+    if(confirm("セーブと魔導書を削除しますか？")){ 
+      localStorage.removeItem("typing_magic_game_typingSave"); 
+      localStorage.removeItem("typing_magic_game_certificate"); 
+      save = loadSave(); alert("リセットしました"); 
+    }
+  });
+  document.getElementById("btn-cert").addEventListener("click", ()=>{ updateCertificate(); });
+
+  document.getElementById("btn-dev-to-ending").addEventListener("click", async ()=>{ closeDevTools(); await transitionWithLoading(() => askPlayEndingBGM(), showEnding, "#fff", "1s", "loading5"); });
+  document.getElementById("btn-dev-to-staff").addEventListener("click", async ()=>{ closeDevTools(); startStaffRoll(); });
+  document.getElementById("btn-dev-to-extra-ending").addEventListener("click", async ()=>{ closeDevTools(); await transitionWithLoading(() => askPlayEndingBGM(), showExtraEnding, "#fff", "1s", "loading5"); });
+  document.getElementById("btn-dev-to-extra-staff").addEventListener("click", async ()=>{ closeDevTools(); startExtraStaffRoll(); });
+  document.getElementById("btn-dev-close").addEventListener("click", ()=>{ playSE('back'); closeDevTools(); });
+
+  document.getElementById("btn-extra-roll-back-to-title")?.addEventListener("click", ()=>{ 
+    playSE('back'); 
+    transitionWithLoading(() => Promise.resolve(), () => { stopAllBGM(); showScreen("title"); if(document.getElementById("chk-bgm").checked){ audio.bgm.play().catch(()=>{}); } }, "#fff", "1s", "loading4");
+  });
+  
+  document.getElementById("btn-ending-prev")?.addEventListener("click", ()=>{ if(endingPageIndex > 0) { playSE('back'); endingPageIndex--; updateEndingPage(); } });
+
+  document.getElementById("bgm-vol").addEventListener("input", (e)=>{ localStorage.setItem("typing_magic_game_bgmVol", e.target.value); setBGMVolume(e.target.value); });
+  document.getElementById("se-vol").addEventListener("input", (e)=>{ localStorage.setItem("typing_magic_game_seVol", e.target.value); setSEVolume(e.target.value); });
+
+  const savedSettings = loadSave();
+  document.getElementById("bgm-vol").value = localStorage.getItem("typing_magic_game_bgmVol") || 0.2;
+  document.getElementById("se-vol").value = localStorage.getItem("typing_magic_game_seVol") || 1;
+  document.getElementById("chk-bgm").checked = savedSettings.bgmEnabled;
+  document.getElementById("chk-se").checked = savedSettings.seEnabled;
+  document.getElementById("chk-kana").checked = savedSettings.furigana;
+
+  setBGMVolume(parseFloat(document.getElementById("bgm-vol").value));
+  setSEVolume(parseFloat(document.getElementById("se-vol").value));
+
+  document.getElementById("copyright").textContent = loadCert().copyright || "";
+
+  if (checkMobileDevice()) {
+      document.getElementById("loading-area").style.display = "none";
+      document.getElementById("mobile-warn").classList.remove("hidden");
+      await askPlayBGM();
+      if(save.firstLaunch){ await transitionWithLoading(() => Promise.resolve(), () => showStory(0)); } 
+      else { await transitionWithLoading(() => Promise.resolve(), showTitle); }
+  } else {
+      runLoadingChecks();
+  }
+});
+
+function levenshtein(a, b) {
+  const dp = Array.from({length: a.length+1}, ()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+      else dp[i][j]=1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+function checkAnswer(input, correct) {
+  if(save.easyMode) return levenshtein(input, correct) <= 2;
+  return input === correct;
+}
+function setMode(mode) {
+  save.easyMode = (mode === "easy"); save.normalMode = (mode === "normal"); save.hardMode = (mode === "hard");
+  document.getElementById("chk-easy").checked = save.easyMode;
+  document.getElementById("chk-normal").checked = save.normalMode;
+  document.getElementById("chk-hard").checked = save.hardMode;
+  saveAll(save);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("chk-easy")?.addEventListener("change", e => { if (e.target.checked) setMode("easy"); else if (!save.hardMode) setMode("normal"); });
+  document.getElementById("chk-normal")?.addEventListener("change", e => { if (e.target.checked) setMode("normal"); });
+  document.getElementById("chk-hard")?.addEventListener("change", e => { if (e.target.checked) setMode("hard"); else if (!save.easyMode) setMode("normal"); });
+  
+  document.getElementById("btn-gameover-title")?.addEventListener("click", ()=>{
+    playSE('btn');
+    transitionWithLoading(()=>Promise.resolve(), ()=>{
+      stopAllBGM();
+      showTitle();
+      if (document.getElementById("chk-bgm").checked) audio.bgm.play().catch(()=>{});
+    });
+  });
+});
+/* -------------------------
+   Save export/import (固定鍵版)
+   ------------------------- */
+
+const SAVE_KEY1 = "Become-a-great-wizard_@2026";
+const SAVE_KEY2 = "int<int2";
+
+function xorProcessBytes(dataBytes, key){
+  const keyBytes = new TextEncoder().encode(key);
+  const out = new Uint8Array(dataBytes.length);
+  for(let i=0;i<dataBytes.length;i++){
+    out[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+  }
+  return out;
+}
+
+function exportSaveToDat(){
+  const s = localStorage.getItem("typingSave");
+  if(!s){
+    alert("保存データが見つかりません。");
+    return;
+  }
+  const dataBytes = new TextEncoder().encode(s);
+  let enc = xorProcessBytes(dataBytes, SAVE_KEY1);
+  enc = xorProcessBytes(enc, SAVE_KEY2);
+  const b64 = btoa(String.fromCharCode(...enc));
+  const blob = new Blob([b64], { type: "application/octet-stream" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "become-a-great-wizard_ver3.dat";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 5000);
+  alert("Become-a-great-wizard_ver3.dat をダウンロードしました。");
+}
+
+function importDatFile(file){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const text = e.target.result;
+      const bytes = Uint8Array.from(atob(text), c=>c.charCodeAt(0));
+      let dec = xorProcessBytes(bytes, SAVE_KEY2);
+      dec = xorProcessBytes(dec, SAVE_KEY1);
+      const decoded = new TextDecoder().decode(dec);
+      const parsed = JSON.parse(decoded);
+      localStorage.setItem("typingSave", JSON.stringify(parsed));
+      save = loadSave();
+      alert("セーブデータを取り込みました。タイトルへ戻ると反映されます。");
+    }catch(err){
+      console.error("import failed", err);
+      alert("取り込みに失敗しました。ファイルが壊れている可能性があります。");
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("btn-export-save")?.addEventListener("click", ()=>{ playSE('btn'); exportSaveToDat(); });
+document.getElementById("btn-import-save")?.addEventListener("click", ()=>{ 
+  playSE('btn'); 
+  const f = document.getElementById("file-import");
+  f.value = "";
+  f.click();
+});
+document.getElementById("file-import")?.addEventListener("change", (ev)=>{
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  if(!confirm(`${file.name} を取り込みます。現在のセーブは上書きされます。よろしいですか？`)) return;
+  importDatFile(file);
+});
+</script>
+
+<div id="bgmConfirm" class="confirm-dialog">
+  <div class="confirm-header">🎵 旋律の確認</div><p>BGMを再生しますか？</p>
+  <button id="bgmYes">再生する</button><button id="bgmNo">再生しない</button>
+</div>
+<div id="staffBgmConfirm" class="confirm-dialog">
+  <div class="confirm-header">🎵 スタッフロール旋律確認</div><p>スタッフロールのBGMを再生しますか？</p>
+  <button id="staffBgmYes">再生する</button><button id="staffBgmNo">再生しない</button>
+</div>
+<div id="settingsConfirm" class="confirm-dialog">
+  <div class="confirm-header">⚙️ 魔導設定確認</div><p>設定を保存しますか？</p>
+  <button id="settingsYes">保存する</button><button id="settingsNo">保存しない</button>
+</div>
+</body>
+</html>
