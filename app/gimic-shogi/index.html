@@ -1,0 +1,3841 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超・ギミック将棋</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: rgba(30, 30, 40, 0.85);
+      --board-color: #e2b062;
+      --board-border: #8b5a2b;
+      --cell-border: #6d421e;
+      --text-color: #f0f0f0;
+      --accent-gold: #ffd700;
+      --accent-red: #ff4757;
+      --accent-blue: #1e90ff;
+      --accent-green: #2ed573;
+      --accent-purple: #a55eea;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #2c3e50, #000000);
+      color: var(--text-color);
+      font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'MS PMincho', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* ボタン共通のアニメーション・インタラクション設定 */
+    button, .mode-btn, .menu-btn, .skill-btn, .action-btn, .hand-piece {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    button:hover:not(:disabled), .mode-btn:hover:not(:disabled), .menu-btn:hover:not(:disabled), .skill-btn:hover:not(:disabled), .action-btn:hover:not(:disabled), .hand-piece:hover {
+      transform: translateY(-2px);
+    }
+    button:active:not(:disabled), .mode-btn:active:not(:disabled), .menu-btn:active:not(:disabled), .skill-btn:active:not(:disabled), .action-btn:active:not(:disabled), .hand-piece:active {
+      transform: translateY(1px) scale(0.97) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+    }
+
+    /* タイトル画面・オーバーレイ */
+    .screen-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.3s ease;
+      opacity: 1;
+    }
+
+    .screen-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .screen-overlay.fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .title-logo {
+      font-size: 3.2rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+      text-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 69, 0, 0.6);
+      letter-spacing: 4px;
+      margin-bottom: 5px;
+      text-align: center;
+      animation: logoGlow 2.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes logoGlow {
+      from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.4); }
+      to { text-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 0 80px rgba(255, 69, 0, 1), 0 0 100px rgba(255, 215, 0, 0.8); }
+    }
+
+    .title-sub {
+      font-size: 1rem;
+      color: #aaa;
+      margin-top: -10px;
+      margin-bottom: 15px;
+    }
+
+    .mode-toggle-container {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      padding: 5px;
+      border: 1px solid var(--accent-gold);
+      margin-bottom: 15px;
+    }
+
+    .mode-btn {
+      padding: 10px 25px;
+      border: none;
+      background: transparent;
+      color: #888;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 25px;
+    }
+
+    .mode-btn.active {
+      background: var(--accent-gold);
+      color: #000;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+
+    .menu-btn {
+      width: 280px;
+      padding: 14px 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #3a3d40, #181719);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .menu-btn:hover {
+      border-color: var(--accent-gold);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+      color: var(--accent-gold);
+    }
+
+    .menu-btn.primary {
+      background: linear-gradient(135deg, #8b0000, #4a0000);
+      border-color: #ff4757;
+    }
+
+    .settings-card {
+      background: var(--card-bg);
+      border: 1px solid var(--accent-gold);
+      padding: 25px;
+      border-radius: 12px;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-group label {
+      font-size: 0.95rem;
+      color: var(--accent-gold);
+    }
+
+    .setting-group select {
+      padding: 8px;
+      border-radius: 5px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      font-size: 1rem;
+    }
+
+    /* チュートリアル */
+    .tutorial-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 500;
+    }
+
+    .tutorial-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 20, 30, 0.95);
+      border: 2px solid var(--accent-gold);
+      border-radius: 12px;
+      padding: 15px 20px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tutorial-title {
+      color: var(--accent-gold);
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .tutorial-desc {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .tutorial-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ゲームレイアウト */
+    .game-container {
+      display: none;
+      flex-direction: row;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1400px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      transition: opacity 0.3s ease;
+      opacity: 1;
+    }
+
+    .game-container.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .game-container.fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .side-panel {
+      width: 280px;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .player-info {
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .player-info.active {
+      border: 1px solid var(--accent-gold);
+      background: rgba(255, 215, 0, 0.08);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+
+    .player-title {
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .player-title span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .level-badge {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #000;
+      background: var(--accent-gold);
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 5px;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+
+    .sg-display {
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+      background: rgba(0,0,0,0.4);
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,215,0,0.3);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .gauge-container {
+      width: 100%;
+      height: 12px;
+      background: #333;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 5px;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+    }
+
+    .gauge-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1e90ff, #00ff88, #ffd700);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+    }
+
+    .skill-status-box {
+      font-size: 0.8rem;
+      background: rgba(0,0,0,0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: #ddd;
+    }
+
+    .skill-status-val {
+      font-weight: bold;
+      color: var(--accent-gold);
+    }
+
+    .swift-status-box {
+      font-size: 0.8rem;
+      background: linear-gradient(135deg, rgba(30,144,255,0.25), rgba(0,0,0,0.4));
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #1e90ff;
+      color: #fff;
+      font-weight: bold;
+      text-align: center;
+      animation: swiftPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes swiftPulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(30,144,255,0.5); }
+      50% { box-shadow: 0 0 14px rgba(30,144,255,0.95); }
+    }
+
+    .swift-status-box .swift-steps-val {
+      color: #ffd700;
+      font-size: 1rem;
+    }
+
+    .com-skill-probs {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .com-prob-item {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .hand-box {
+      min-height: 60px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .hand-piece {
+      width: 36px;
+      height: 40px;
+      background: var(--board-color);
+      color: #000;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid var(--board-border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .hand-piece.selected {
+      outline: 3px solid var(--accent-gold);
+      transform: scale(1.08);
+      box-shadow: 0 0 12px var(--accent-gold);
+    }
+
+    .hand-piece-count {
+      position: absolute;
+      bottom: 0px;
+      right: 2px;
+      font-size: 0.7rem;
+      color: #a00;
+      font-weight: bold;
+    }
+
+    .hand-piece.piece-summon-anim {
+      animation: summonGlow 1.2s ease-out forwards;
+    }
+
+    @keyframes summonGlow {
+      0% {
+        transform: scale(1.6);
+        box-shadow: 0 0 35px #ffd700, 0 0 50px #ff8c00, inset 0 0 20px #ffffff;
+        border-color: #ffd700;
+      }
+      50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 25px #ffd700;
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      }
+    }
+
+    .skills-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .skill-btn {
+      padding: 8px;
+      border: 1px solid #555;
+      background: #252530;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .skill-btn:not(:disabled):hover {
+      border-color: var(--accent-gold);
+      background: #353545;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+    }
+
+    .skill-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: #333;
+    }
+
+    .board-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 472px;
+    }
+
+    .market-panel {
+      width: 280px;
+      background: var(--card-bg);
+      border: 1px solid var(--accent-gold);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .market-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+      padding-bottom: 5px;
+    }
+
+    .stock-chart-container {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 5px;
+    }
+
+    .stock-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.4);
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .stock-stat-item {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .destroyed-list {
+      max-height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(0,0,0,0.3);
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #444;
+    }
+
+    .buy-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .buy-btn {
+      padding: 4px 8px;
+      background: var(--accent-gold);
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .buy-btn:disabled {
+      background: #555;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    .weather-banner {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid var(--accent-gold);
+      border-radius: 20px;
+      padding: 5px 20px;
+      font-size: 0.9rem;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .shogi-board {
+      display: grid;
+      grid-template-columns: repeat(9, 52px);
+      grid-template-rows: repeat(9, 56px);
+      gap: 1px;
+      background: var(--board-border);
+      border: 4px solid var(--board-border);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.8);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .shogi-board.foggy-board::after {
+      content: '';
+      position: absolute;
+      top: -12px; left: -12px; right: -12px; bottom: -12px;
+      border: 12px solid rgba(220, 225, 230, 0.4);
+      border-radius: 8px;
+      filter: blur(6px);
+      pointer-events: none;
+      z-index: 90;
+      animation: fogMove 6s infinite alternate ease-in-out;
+    }
+
+    @keyframes fogMove {
+      0% { transform: translate(-3px, -3px) scale(1); opacity: 0.4; }
+      50% { transform: translate(3px, 1px) scale(1.02); opacity: 0.75; }
+      100% { transform: translate(1px, 3px) scale(0.99); opacity: 0.5; }
+    }
+
+    .cell {
+      background: var(--board-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cell.selected {
+      background: #ffeaa7 !important;
+      box-shadow: inset 0 0 10px #fdcb6e;
+    }
+
+    .cell.movable::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: rgba(46, 213, 115, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 0 12px #2ed573, 0 0 20px #2ed573;
+      animation: pulseMove 1.2s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulseMove {
+      from { transform: scale(0.8); opacity: 0.7; }
+      to { transform: scale(1.3); opacity: 1; }
+    }
+
+    .cell.in-check {
+      background: #ff7675 !important;
+      animation: checkPulse 0.8s infinite alternate;
+    }
+
+    @keyframes checkPulse {
+      from { box-shadow: inset 0 0 8px #d63031, 0 0 10px #ff4757; }
+      to { box-shadow: inset 0 0 20px #d63031, 0 0 25px #ff4757; }
+    }
+
+    .cell.effect-boost { background: #f8a5c2; }
+    .cell.effect-boost::before { content: '強'; position: absolute; top: 2px; left: 2px; font-size: 0.65rem; color: #b33939; font-weight: bold; }
+    .cell.effect-trap { background: #d1ccc0; }
+    .cell.effect-trap::before { content: '罠'; position: absolute; top: 2px; left: 2px; font-size: 0.65rem; color: #8854d0; font-weight: bold; }
+    .cell.effect-warp { background: #74b9ff; }
+    .cell.effect-warp::before { content: '渦'; position: absolute; top: 2px; left: 2px; font-size: 0.65rem; color: #0984e3; font-weight: bold; }
+    .cell.effect-heal { background: #55efc4; }
+    .cell.effect-heal::before { content: '輝'; position: absolute; top: 2px; left: 2px; font-size: 0.65rem; color: #00b894; font-weight: bold; }
+
+    .cell.lightning-target {
+      background: #ffeaa7 !important;
+      box-shadow: inset 0 0 15px #d63031, 0 0 20px #fffa65 !important;
+      animation: lightningWarningPulse 0.6s infinite alternate;
+    }
+    .cell.lightning-target::after {
+      content: '⚡雷';
+      position: absolute;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #d63031;
+      text-shadow: 0 0 6px #fff, 0 0 12px #ffd700;
+      top: 2px;
+      right: 2px;
+      z-index: 10;
+    }
+
+    @keyframes lightningWarningPulse {
+      from { border: 2px solid #fffa65; opacity: 0.8; }
+      to { border: 2px solid #ff4757; opacity: 1; box-shadow: inset 0 0 20px #ff4757, 0 0 25px #ffd700; }
+    }
+
+/* 直前の一手を示す小さい印 */
+    .cell.last-move::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-red), 0 0 12px #ff0000;
+      z-index: 250;
+      animation: pulseMove 1.2s infinite alternate ease-in-out;
+    }
+
+    .tile-effect-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+    }
+
+    .tile-effect-text {
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-shadow: 0 0 8px #000, 0 0 15px currentColor, 0 0 25px currentColor;
+      animation: textFloat 0.9s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    .tile-effect-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      animation: pulseCircle 0.9s ease-out forwards;
+    }
+
+    .skill-cutin-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle, rgba(139, 0, 0, 0.95) 0%, rgba(10, 5, 20, 0.98) 80%);
+      border: 8px solid var(--accent-gold);
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      animation: skillCutinBg 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: inset 0 0 120px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.6);
+    }
+
+    .skill-cutin-overlay.color-com {
+      background: radial-gradient(circle, rgba(110, 0, 180, 0.95) 0%, rgba(10, 5, 20, 0.98) 80%);
+      border-color: #a55eea;
+      box-shadow: inset 0 0 120px rgba(165, 94, 234, 0.8), 0 0 80px rgba(165, 94, 234, 0.6);
+    }
+
+    .skill-cutin-overlay.color-user {
+      background: radial-gradient(circle, rgba(0, 120, 255, 0.95) 0%, rgba(10, 5, 20, 0.98) 80%);
+      border-color: #1e90ff;
+      box-shadow: inset 0 0 120px rgba(30, 144, 255, 0.8), 0 0 80px rgba(30, 144, 255, 0.6);
+    }
+
+    .skill-cutin-user {
+      font-size: 2.4rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+      margin-bottom: 10px;
+      letter-spacing: 4px;
+      text-shadow: 0 0 15px #000, 0 0 30px var(--accent-gold);
+      animation: skillCutinSubText 1s ease-out forwards;
+    }
+
+    .skill-cutin-title {
+      font-size: 5.2rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 12px;
+      text-shadow: 0 0 25px var(--accent-gold), 0 0 50px #ff0000, 0 0 80px var(--accent-gold);
+      animation: skillCutinText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .skill-cutin-sub {
+      font-size: 2rem;
+      color: var(--accent-gold);
+      letter-spacing: 4px;
+      margin-top: 10px;
+      font-weight: bold;
+      text-shadow: 0 0 15px var(--accent-gold);
+      animation: skillCutinSubText 1s ease-out forwards;
+    }
+
+    @keyframes skillCutinBg {
+      0% { opacity: 0; transform: scale(1.3); }
+      20% { opacity: 1; transform: scale(1); }
+      80% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.9); }
+    }
+
+    @keyframes skillCutinText {
+      0% { opacity: 0; transform: scale(3) translateY(-40px); }
+      20% { opacity: 1; transform: scale(1) translateY(0); }
+      80% { opacity: 1; transform: scale(1.08); }
+      100% { opacity: 0; transform: scale(0.8) translateY(20px); }
+    }
+
+    @keyframes skillCutinSubText {
+      0% { opacity: 0; transform: translateY(20px); }
+      25% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .gameover-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 4000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      animation: gameoverFadeIn 0.8s ease-out forwards;
+    }
+
+    @keyframes gameoverFadeIn {
+      from { opacity: 0; transform: scale(1.1); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .gameover-banner {
+      font-size: 4.2rem;
+      font-weight: 900;
+      color: var(--accent-gold);
+      text-shadow: 0 0 25px #ffd700, 0 0 50px #ff8c00, 0 0 100px #ff0000;
+      letter-spacing: 8px;
+      margin-bottom: 10px;
+      animation: bannerPulse 2s infinite alternate ease-in-out;
+      text-align: center;
+    }
+
+    @keyframes bannerPulse {
+      from { transform: scale(1); text-shadow: 0 0 25px #ffd700, 0 0 50px #ff8c00; }
+      to { transform: scale(1.08); text-shadow: 0 0 40px #ffd700, 0 0 80px #ff0000, 0 0 120px #ffd700; }
+    }
+
+    .gameover-sub {
+      font-size: 1.6rem;
+      color: #ffffff;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(255,255,255,0.8);
+    }
+
+    .gameover-buttons {
+      display: flex;
+      gap: 15px;
+      z-index: 4010;
+    }
+
+    .destroy-effect-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      animation: destroyAnim 0.9s ease-out forwards;
+    }
+
+    .destroy-effect-text {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #ff4757;
+      text-shadow: 0 0 8px #000, 0 0 15px #ff4757, 0 0 25px #ffd700;
+      animation: textFloat 0.9s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    .destroy-effect-circle {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(255,71,87,0.8) 50%, rgba(255,0,0,0) 80%);
+      animation: pulseCircle 0.9s ease-out forwards;
+      box-shadow: 0 0 30px #ffd700;
+    }
+
+    @keyframes destroyAnim {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+      100% { opacity: 0; transform: scale(0.2); }
+    }
+
+    @keyframes textFloat {
+      0% { transform: translateY(0px) scale(0.8); opacity: 0; }
+      30% { transform: translateY(-6px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(-18px) scale(0.9); opacity: 0; }
+    }
+
+    @keyframes pulseCircle {
+      0% { transform: scale(0.2); opacity: 0.9; }
+      50% { transform: scale(1.4); opacity: 0.8; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .effect-legend-box {
+      width: 100%;
+      background: rgba(20, 20, 28, 0.85);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 5px;
+      font-size: 0.75rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-badge {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: #000;
+    }
+    .legend-badge.boost { background: #f8a5c2; color: #b33939; }
+    .legend-badge.trap { background: #d1ccc0; color: #8854d0; }
+    .legend-badge.warp { background: #74b9ff; color: #0984e3; }
+    .legend-badge.heal { background: #55efc4; color: #00b894; }
+
+    .piece {
+      width: 44px;
+      height: 48px;
+      background: linear-gradient(180deg, #f3d08c, #c7923e);
+      clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #111;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+      will-change: transform;
+    }
+
+    .piece.sente { transform: rotate(0deg); }
+    .piece.gote { transform: rotate(180deg); }
+    .piece.promoted { color: #c0392b; }
+    .piece.frozen { filter: grayscale(0.8) opacity(0.7); }
+
+    .piece.moving-anim {
+      position: absolute;
+      z-index: 200;
+      top: 4px;
+      left: 4px;
+      pointer-events: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal-card {
+      background: #1e1e24;
+      border: 2px solid var(--accent-gold);
+      border-radius: 12px;
+      padding: 20px;
+      width: 300px;
+      text-align: center;
+      display: flex; flex-direction: column; gap: 15px;
+    }
+
+    .action-btn {
+      padding: 8px 16px; border-radius: 6px; border: none;
+      font-size: 1rem; font-weight: bold; cursor: pointer;
+    }
+    .action-btn.confirm { background: var(--accent-gold); color: #000; }
+    .action-btn.cancel { background: #555; color: #fff; }
+
+    .game-log {
+      width: 100%; height: 80px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid #444; border-radius: 6px;
+      padding: 8px; font-size: 0.8rem;
+      overflow-y: auto; color: #ccc;
+    }
+    .log-entry { margin-bottom: 3px; }
+
+    .com-comment-box {
+      background: rgba(10, 15, 25, 0.85);
+      border: 1px solid var(--accent-gold);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      color: var(--accent-gold);
+      text-align: center;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+      margin-bottom: 4px;
+    }
+
+    .foul-rule-item {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .foul-rule-name {
+      color: var(--accent-gold);
+      font-weight: bold;
+      font-size: 0.95rem;
+      margin-bottom: 3px;
+    }
+    .foul-rule-desc {
+      font-size: 0.8rem;
+      color: #ddd;
+      line-height: 1.4;
+    }
+
+    .gameover-bar {
+      width: 100%;
+      background: linear-gradient(135deg, #8b0000, #4a0000);
+      border: 1px solid var(--accent-gold);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--accent-gold);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- タイトル画面 -->
+  <div id="titleScreen" class="screen-overlay">
+    <div class="title-logo">超・ギミック将棋</div>
+    <div class="title-sub">〜 スキル＆頭脳バトル 〜</div>
+
+    <div class="mode-toggle-container">
+      <button id="modeGimmickBtn" class="mode-btn active" onclick="setGimmickMode(true)">ギミックあり</button>
+      <button id="modeNormalBtn" class="mode-btn" onclick="setGimmickMode(false)">伝統将棋 (OFF)</button>
+    </div>
+
+    <button class="menu-btn primary" onclick="startGameFromTitle()">対局開始</button>
+    <button class="menu-btn" onclick="startTutorial()">チュートリアル</button>
+    <button class="menu-btn" onclick="showSettings()">対局設定</button>
+    <button class="menu-btn" onclick="showFoulRulesModal()">反則行為一覧</button>
+  </div>
+
+  <!-- 設定画面 -->
+  <div id="settingsScreen" class="screen-overlay" style="display: none;">
+    <div class="title-logo" style="font-size: 2rem;">対局設定</div>
+    <div class="settings-card">
+      <div class="setting-group">
+        <label>対戦モード</label>
+        <select id="settingGameMode" onchange="toggleComOptions()">
+          <option value="pvp">2人対戦 (1台の端末)</option>
+          <option value="com" selected>VS COM</option>
+          <option value="auto">自動プレイ (AI vs AI)</option>
+        </select>
+      </div>
+      <div class="setting-group" id="comSideGroup">
+        <label>あなたの手番</label>
+        <select id="settingPlayerSide">
+          <option value="sente" selected>先手 (▲手前)</option>
+          <option value="gote">後手 (△奥)</option>
+        </select>
+      </div>
+      <div class="setting-group" id="comLevelGroup">
+        <label>COM 思考レベル</label>
+        <select id="settingComLevel">
+          <option value="weak">激弱 (ランダム)</option>
+          <option value="easy">初級 (駒取り優先)</option>
+          <option value="normal" selected>中級 (学習AI)</option>
+          <option value="hard">上級 (高度AI)</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>演出アニメーション</label>
+        <select id="settingAnimation">
+          <option value="on" selected>オン (標準)</option>
+          <option value="off">オフ (高速表示)</option>
+        </select>
+      </div>
+      <button class="menu-btn primary" style="width: 100%; margin-top: 10px;" onclick="saveSettingsAndBack()">保存して戻る</button>
+    </div>
+  </div>
+
+  <!-- ゲームメイン画面 -->
+  <div id="gameContainer" class="game-container">
+    
+    <!-- 後手サイド (幅280px) -->
+    <div class="side-panel">
+      <div id="gotePanel" class="player-info">
+        <div class="player-title">
+          <span>
+            <span id="goteName">△ 後手</span>
+            <span id="goteLevel" class="level-badge">Lv.1</span>
+          </span>
+          <span id="goteTurnTag"></span>
+        </div>
+        <div class="sg-display">
+          <span>SG:</span>
+          <span id="goteSgVal">0</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #aaa;">スキルゲージ</div>
+        <div class="gauge-container">
+          <div id="goteGauge" class="gauge-bar"></div>
+        </div>
+      </div>
+
+      <div id="goteSkillStatusBox" class="skill-status-box">
+        スキル状態: <span id="goteSkillStatusVal" class="skill-status-val">使用可能</span>
+      </div>
+
+      <div id="goteSwiftStatus" class="swift-status-box" style="display:none;">
+        ⚡ 神速発動中！<br>あと <span id="goteSwiftStepsVal" class="swift-steps-val">0</span> 回行動可能
+      </div>
+
+      <div id="goteComSkillProbs" class="com-skill-probs" style="display:none;">
+        <div style="font-weight:bold; color:var(--accent-gold); margin-bottom:2px;">COMスキル発動確率</div>
+        <div class="com-prob-item"><span>神速 (30pt):</span><span id="goteProbSwift" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>召喚 (50pt):</span><span id="goteProbResurrect" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>天罰 (70pt):</span><span id="goteProbMeteor" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>略奪 (60pt):</span><span id="goteProbSteal" style="font-weight:bold;">0%</span></div>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--accent-gold);">△ 持ち駒</div>
+      <div id="goteHand" class="hand-box"></div>
+
+      <div id="goteSkills" class="skills-container" style="display:none;">
+        <button class="skill-btn" onclick="useSkill('swift', 'gote')" id="goteSkillSwift"><span>神速 (2回移動)</span><span>30pt</span></button>
+        <button class="skill-btn" onclick="useSkill('resurrect', 'gote')" id="goteSkillResurrect"><span>召喚 (駒復活)</span><span>50pt</span></button>
+        <button class="skill-btn" onclick="useSkill('meteor', 'gote')" id="goteSkillMeteor"><span>天罰 (マス破壊)</span><span>70pt</span></button>
+        <button class="skill-btn" onclick="useSkill('steal', 'gote')" id="goteSkillSteal"><span>略奪 (持ち駒奪取)</span><span>60pt</span></button>
+      </div>
+    </div>
+
+    <!-- 将棋盤 -->
+    <div class="board-container">
+      <div class="weather-banner" id="weatherBanner">
+        <span>天候: <strong id="weatherName" style="color:#fff;">晴天</strong></span>
+        <span id="weatherEffect" style="font-size:0.8rem; color:#ccc;">(標準)</span>
+      </div>
+
+      <div class="com-comment-box" id="comCommentBox">
+        <span id="comCommentText">「さあ、尋常にお尋ね勝負！」</span>
+      </div>
+
+      <div id="gameoverBar" class="gameover-bar" style="display: none;">
+        <span id="gameoverBarText">【対局終了】</span>
+        <button class="action-btn confirm" style="padding: 4px 12px; font-size: 0.85rem;" onclick="returnToTitle()">タイトルへ戻る</button>
+      </div>
+
+      <div id="shogiBoard" class="shogi-board"></div>
+
+      <div class="effect-legend-box" id="effectLegendBox">
+        <div class="legend-item"><span class="legend-badge boost">強</span> 全方向1マス移動</div>
+        <div class="legend-item"><span class="legend-badge trap">罠</span> 1ターン麻痺</div>
+        <div class="legend-item"><span class="legend-badge warp">渦</span> 空き渦へ跳躍</div>
+        <div class="legend-item"><span class="legend-badge heal">輝</span> ゲージ+30pt</div>
+      </div>
+
+      <div class="game-log" id="gameLog">
+        <div class="log-entry">対局を開始します。</div>
+      </div>
+    </div>
+
+    <!-- 先手サイド (幅280px) -->
+    <div class="side-panel">
+      <div id="sentePanel" class="player-info active">
+        <div class="player-title">
+          <span>
+            <span id="senteName">▲ 先手</span>
+            <span id="senteLevel" class="level-badge">Lv.1</span>
+          </span>
+          <span id="senteTurnTag">手番</span>
+        </div>
+        <div class="sg-display">
+          <span>SG:</span>
+          <span id="senteSgVal">0</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #aaa;">スキルゲージ</div>
+        <div class="gauge-container">
+          <div id="senteGauge" class="gauge-bar"></div>
+        </div>
+      </div>
+
+      <div id="senteSkillStatusBox" class="skill-status-box">
+        スキル状態: <span id="senteSkillStatusVal" class="skill-status-val">使用可能</span>
+      </div>
+
+      <div id="senteSwiftStatus" class="swift-status-box" style="display:none;">
+        ⚡ 神速発動中！<br>あと <span id="senteSwiftStepsVal" class="swift-steps-val">0</span> 回行動可能
+      </div>
+
+      <div id="senteComSkillProbs" class="com-skill-probs" style="display:none;">
+        <div style="font-weight:bold; color:var(--accent-gold); margin-bottom:2px;">COMスキル発動確率</div>
+        <div class="com-prob-item"><span>神速 (30pt):</span><span id="senteProbSwift" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>召喚 (50pt):</span><span id="senteProbResurrect" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>天罰 (70pt):</span><span id="senteProbMeteor" style="font-weight:bold;">0%</span></div>
+        <div class="com-prob-item"><span>略奪 (60pt):</span><span id="senteProbSteal" style="font-weight:bold;">0%</span></div>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--accent-gold);">▲ 持ち駒</div>
+      <div id="senteHand" class="hand-box"></div>
+
+      <div id="senteSkills" class="skills-container">
+        <button class="skill-btn" onclick="useSkill('swift', 'sente')" id="senteSkillSwift"><span>神速 (2回移動)</span><span>30pt</span></button>
+        <button class="skill-btn" onclick="useSkill('resurrect', 'sente')" id="senteSkillResurrect"><span>召喚 (駒復活)</span><span>50pt</span></button>
+        <button class="skill-btn" onclick="useSkill('meteor', 'sente')" id="senteSkillMeteor"><span>天罰 (マス破壊)</span><span>70pt</span></button>
+        <button class="skill-btn" onclick="useSkill('steal', 'sente')" id="senteSkillSteal"><span>略奪 (持ち駒奪取)</span><span>60pt</span></button>
+      </div>
+
+      <button class="skill-btn" style="justify-content:center;" onclick="showFoulRulesModal()">📜 反則行為一覧</button>
+      <button class="action-btn cancel" style="margin-top: auto;" onclick="returnToTitle()">タイトルへ戻る</button>
+    </div>
+
+    <!-- 闇市 (一番右に配置) -->
+    <div class="market-panel" id="marketPanel">
+      <div class="market-title">闇市 (駒取引所)</div>
+      <div class="stock-chart-container">
+        <canvas id="stockChart" width="256" height="100"></canvas>
+      </div>
+      <div class="stock-stats">
+        <div class="stock-stat-item"><span>現在値:</span><span id="stockCurrent" style="color:var(--accent-gold); font-weight:bold;">100%</span></div>
+        <div class="stock-stat-item"><span>SG価値:</span><span id="sgValueCurrent" style="color:var(--accent-gold); font-weight:bold;">100</span></div>
+        <div class="stock-stat-item"><span>最高値:</span><span id="stockMax" style="color:var(--accent-red);">100%</span></div>
+        <div class="stock-stat-item"><span>最安値:</span><span id="stockMin" style="color:var(--accent-green);">100%</span></div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 5px;">購入可能駒一覧</div>
+      <div id="destroyedList" class="destroyed-list">
+        <div style="font-size:0.75rem; color:#888; text-align:center;">購入可能な駒はありません</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 成り選択モーダル -->
+  <div id="promoteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-gold);">駒を成りますか？</div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button class="action-btn confirm" onclick="resolvePromotion(true)">成る</button>
+        <button class="action-btn cancel" onclick="resolvePromotion(false)">成らない</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 反則行為一覧モーダル -->
+  <div id="foulRulesModal" class="modal-overlay" style="display: none; z-index: 5000;">
+    <div class="modal-card" style="width: 480px; max-width: 90vw; max-height: 80vh;">
+      <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-gold);">反則行為（禁じ手）一覧</div>
+      <div id="foulRulesList" style="text-align: left; overflow-y: auto; max-height: 55vh; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;"></div>
+      <button class="action-btn confirm" onclick="hideFoulRulesModal()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 対局終了演出オーバーレイ -->
+  <div id="gameoverOverlay" class="gameover-overlay" style="display: none;">
+    <div class="gameover-banner" id="gameoverTitle">勝 負 決 着</div>
+    <div class="gameover-sub" id="gameoverSub">▲ 先手の勝利！</div>
+    <div class="gameover-buttons">
+      <button class="menu-btn primary" onclick="closeGameoverOverlay()">盤面を見る</button>
+      <button class="menu-btn" onclick="returnToTitle()">タイトルへ戻る</button>
+    </div>
+  </div>
+
+  <!-- チュートリアル -->
+  <div id="tutorialOverlay" class="tutorial-overlay" style="display: none;">
+    <div class="tutorial-box">
+      <div class="tutorial-title" id="tutTitle">チュートリアル</div>
+      <div class="tutorial-desc" id="tutDesc">説明文</div>
+      <div class="tutorial-buttons">
+        <button class="action-btn cancel" onclick="endTutorial()">終了</button>
+        <button class="action-btn confirm" id="tutNextBtn" onclick="nextTutorialStep()">次へ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* --- 基本定数・データ --- */
+    const BOARD_SIZE = 9;
+    const SKILL_COOLDOWN_TURNS = 6;
+    const SG_MAX = 200; // スキルポイント上限を200に設定
+    const BASE_SG_VALUE = 100; // SG基準価値
+    
+    const PIECE_TYPES = {
+      FU: { name: '歩', val: 100, prom: 'TO', isPromoted: false },
+      KY: { name: '香', val: 250, prom: 'NY', isPromoted: false },
+      KE: { name: '桂', val: 300, prom: 'NK', isPromoted: false },
+      GI: { name: '銀', val: 450, prom: 'NG', isPromoted: false },
+      KI: { name: '金', val: 550, prom: null, isPromoted: false },
+      KA: { name: '角', val: 850, prom: 'UM', isPromoted: false },
+      HI: { name: '飛', val: 1000, prom: 'RY', isPromoted: false },
+      OU: { name: '玉', val: 20000, prom: null, isPromoted: false },
+      
+      TO: { name: 'と', val: 500, prom: null, isPromoted: true, base: 'FU' },
+      NY: { name: '成香', val: 500, prom: null, isPromoted: true, base: 'KY' },
+      NK: { name: '成桂', val: 500, prom: null, isPromoted: true, base: 'KE' },
+      NG: { name: '成銀', val: 550, prom: null, isPromoted: true, base: 'GI' },
+      UM: { name: '馬', val: 1150, prom: null, isPromoted: true, base: 'KA' },
+      RY: { name: '龍', val: 1300, prom: null, isPromoted: true, base: 'HI' }
+    };
+
+    const EFFECT_TYPES = {
+      NONE: 'none', BOOST: 'boost', TRAP: 'trap', WARP: 'warp', HEAL: 'heal'
+    };
+
+    // 反則行為（禁じ手）の定義一覧。ルールエンジンはこのリストに基づいて違法手を排除する。
+    const FOUL_RULES = [
+      { id: 'nifu', name: '二歩', desc: '同じ列（筋）に自分の成っていない歩が既にある状態で、さらに歩を打つこと。持ち駒の歩を打つ際は自動的に禁止されます。' },
+      { id: 'uchifuzume', name: '打ち歩詰め', desc: '持ち駒の歩を打って相手の玉を詰ませること。歩「打ち」による即詰みだけが禁止され、動かした歩で詰ませる「突き歩詰め」は反則ではありません。' },
+      { id: 'ikidokoro', name: '行き所のない駒', desc: '歩・香車を最奥段に、桂馬を最奥から2段以内に、移動または打つこと。これらのマスでは次に動けなくなるため禁止されます。特殊マス（渦）によるワープでも同様に判定されます。' },
+      { id: 'oute_houchi', name: '王手放置（自殺手）', desc: '自玉に王手がかかったままになる手（自玉を相手の利きにさらす手を含む）。渦（ワープ）で自玉が危険な場所に移動する場合も自動的に無効化されます。' },
+      { id: 'ryoou', name: '両王手放置', desc: '複数の相手駒から同時に王手を受けている状態で、片方の王手しか防がない手を指すこと。王手放置の一種として判定されます。' },
+      { id: 'nite_zashi', name: '二手指し', desc: '自分の手番中に連続して2回駒を動かすこと（神速スキルによる正規の連続行動を除く）。' },
+      { id: 'sennichite', name: '千日手', desc: '同一局面が4回出現した場合は無勝負（引き分け）となります。連続王手による千日手は、王手をかけ続けた側の反則負けです。' },
+      { id: 'oute_kaihi_gimu', name: '王手放置による着手義務違反', desc: '王手がかかっている場合、その王手を解消しない手は選択できません（合法手生成の時点で除外）。' },
+      { id: 'toorenai_ma', name: '通れないマスへの侵入', desc: '駒の動き方のルールに反する移動（他の駒を飛び越える、利きの範囲外へ移動するなど）。' },
+      { id: 'jibun_koma_hoka', name: '味方の駒がいるマスへの移動', desc: '自分の駒が既に存在するマスに、自分の別の駒を移動・打つこと。' },
+      { id: 'frozen_move', name: '麻痺・やる気喪失駒の使用', desc: '天候や罠の影響で「やる気を失った（麻痺）」駒を動かすこと。回復するまで一切動かせません。' },
+      { id: 'warp_illegal', name: '渦マスの違法ワープ', desc: '渦（ワープ）による移動先が、二歩・行き所のない駒・自玉の王手放置のいずれかに抵触する場合、そのワープは発生しません（安全な渦のみが有効になります）。' }
+    ];
+
+    function showFoulRulesModal() {
+      const modal = document.getElementById('foulRulesModal');
+      if (!modal) return;
+      const listEl = document.getElementById('foulRulesList');
+      listEl.innerHTML = '';
+      FOUL_RULES.forEach((rule, i) => {
+        const item = document.createElement('div');
+        item.className = 'foul-rule-item';
+        item.innerHTML = `<div class="foul-rule-name">${i + 1}. ${rule.name}</div><div class="foul-rule-desc">${rule.desc}</div>`;
+        listEl.appendChild(item);
+      });
+      modal.style.display = 'flex';
+    }
+
+    function hideFoulRulesModal() {
+      const modal = document.getElementById('foulRulesModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    const WEATHER_LIST = [
+      { name: "晴天", effect: "(標準)", weakType: null },
+      { name: "大雨", effect: "(一部の駒がやる気を失う)", weakType: "RAIN" },
+      { name: "強風", effect: "(一部の駒がやる気を失う)", weakType: "WIND" },
+      { name: "豪雪", effect: "(一部の駒がやる気を失う)", weakType: "SNOW" },
+      { name: "雷",   effect: "(次ターンに落雷発生。駒を避難させよう)", weakType: "THUNDER" },
+      { name: "霧",   effect: "(視界不良のため『と金』が前・左右のみ移動可能)", weakType: "FOG" }
+    ];
+
+    /* --- ゲーム変数 --- */
+    let isGimmickMode = true;
+    let gameMode = 'com'; // 'pvp', 'com', 'auto'
+    let playerSide = 'sente';
+    let comLevel = 'normal';
+    let enableAnimation = true;
+    
+    let currentTurn = 'sente';
+    let board = [];
+    let cellEffects = [];
+    let hands = { sente: {}, gote: {} };
+    let gauges = { sente: 0, gote: 0 };
+    let levels = { sente: 1, gote: 1 };
+    let sg = { sente: 0, gote: 0 };
+    let sgValue = BASE_SG_VALUE; // ① SG価値（初期値100）
+    
+    let marketStock = { FU: 3, KY: 3 };
+    let destroyedPieces = [];
+    let nextDestroyedId = 1;
+    let marketPriceHistory = [1.0];
+
+    let currentWeather = WEATHER_LIST[0];
+    let weatherTurnsRemaining = 0;
+    let nextLightningTarget = null; // 落雷予想地点 {r, c}
+
+    let turnsCount = 1;
+    let isGameOver = false;
+    let isAnimating = false;
+    
+    let cooldowns = { sente: 0, gote: 0 };
+    let lastSkillUser = null;
+    let lastSkillTurn = -999; // 最後にスキルが発動されたターン（連続発動禁止の判定用）
+    let comStrategies = { sente: 'balanced', gote: 'balanced' }; // COMの現在戦略（中級以上で自動判断）
+
+    let selectedCell = null;
+    let selectedHandPiece = null;
+    let validMoves = [];
+    
+    let activeSkillMode = null;
+    let swiftStepsLeft = 0;
+    let pendingPromotion = null;
+    let isTutorial = false;
+    let tutorialStep = 0;
+
+    let lastSummonedPieceInfo = null;
+    let summonEffectClearTimer = null;
+    const SUMMON_EFFECT_DURATION = 1200;
+
+    /* 召喚・闇市購入時の金色エフェクトを開始する。
+       renderHandsは何度も呼ばれるため、クリア用タイマーはここで一度だけ予約し、
+       途中で再描画されてもアニメーションが途切れないようにする。 */
+    function triggerSummonEffect(side, type) {
+      lastSummonedPieceInfo = { side, type, ts: Date.now() };
+      if (summonEffectClearTimer) clearTimeout(summonEffectClearTimer);
+      summonEffectClearTimer = setTimeout(() => {
+        lastSummonedPieceInfo = null;
+        summonEffectClearTimer = null;
+        renderHands();
+      }, SUMMON_EFFECT_DURATION);
+    }
+
+    let playerMoveHistory = [];
+    let positionHistory = {}; // 千日手（同一局面繰り返し）検出用
+    let checkStreakSide = null; // 連続王手をかけ続けている側
+    let checkStreakCount = 0;
+    let lastMoveCell = null; // 直前に動かした・打ったマスの記録用
+
+    const INITIAL_BOARD_LAYOUT = [
+      ['KY','KE','GI','KI','OU','KI','GI','KE','KY'],
+      [ null,'HI', null, null, null, null, null,'KA', null],
+      ['FU','FU','FU','FU','FU','FU','FU','FU','FU'],
+      [ null, null, null, null, null, null, null, null, null],
+      [ null, null, null, null, null, null, null, null, null],
+      [ null, null, null, null, null, null, null, null, null],
+      ['FU','FU','FU','FU','FU','FU','FU','FU','FU'],
+      [ null,'KA', null, null, null, null, null,'HI', null],
+      ['KY','KE','GI','KI','OU','KI','GI','KE','KY']
+    ];
+
+    function log(msg) {
+      const logEl = document.getElementById('gameLog');
+      if (!logEl) return;
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerText = msg;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function addSg(side, amount) {
+      sg[side] = Math.min(SG_MAX, Math.max(0, sg[side] + amount));
+    }
+
+    function addGauge(side, amount) {
+      gauges[side] = Math.min(100, Math.max(0, gauges[side] + amount));
+    }
+
+    /* --- 画面遷移ユーティリティ --- */
+    function transitionScreen(fadeOutEl, fadeInEl, onComplete) {
+      if (!fadeOutEl && !fadeInEl) {
+        if (onComplete) onComplete();
+        return;
+      }
+
+      if (fadeOutEl) {
+        fadeOutEl.classList.remove('fade-in');
+        fadeOutEl.classList.add('fade-out');
+        setTimeout(() => {
+          fadeOutEl.style.display = 'none';
+          fadeOutEl.classList.remove('fade-out');
+          if (fadeInEl) {
+            fadeInEl.classList.remove('fade-out');
+            fadeInEl.style.display = 'flex';
+            fadeInEl.classList.add('fade-in');
+            setTimeout(() => {
+              fadeInEl.classList.remove('fade-in');
+              if (onComplete) onComplete();
+            }, 300);
+          } else {
+            if (onComplete) onComplete();
+          }
+        }, 300);
+      } else if (fadeInEl) {
+        fadeInEl.classList.remove('fade-out');
+        fadeInEl.style.display = 'flex';
+        fadeInEl.classList.add('fade-in');
+        setTimeout(() => {
+          fadeInEl.classList.remove('fade-in');
+          if (onComplete) onComplete();
+        }, 300);
+      }
+    }
+
+    /* --- 思考評価エンジン --- */
+    class LightweightNNUE {
+      constructor() {
+        this.storageKey = 'gimmick_shogi_ai_weights';
+        this.w1 = Array(128).fill(0).map((_, i) => Array(16).fill(0).map((_, j) => Math.sin(i * 17 + j * 31) * 0.15));
+        this.b1 = Array(16).fill(0).map((_, j) => Math.cos(j * 13) * 0.05);
+        this.w2 = Array(16).fill(0).map((_, i) => Math.sin(i * 23) * 0.25);
+        this.b2 = 0.1;
+        this.history = [];
+        this.loadWeights();
+      }
+
+      loadWeights() {
+        try {
+          const data = localStorage.getItem(this.storageKey);
+          if (data) {
+            const parsed = JSON.parse(data);
+            if (parsed.w1 && parsed.w2) {
+              this.w1 = parsed.w1;
+              this.b1 = parsed.b1;
+              this.w2 = parsed.w2;
+              this.b2 = parsed.b2;
+            }
+          }
+        } catch(e) {
+          console.error("学習データの読み込みに失敗しました:", e);
+        }
+      }
+
+      saveWeights() {
+        try {
+          const data = JSON.stringify({
+            w1: this.w1, b1: this.b1, w2: this.w2, b2: this.b2
+          });
+          localStorage.setItem(this.storageKey, data);
+        } catch(e) {
+          console.error("学習データの保存に失敗しました:", e);
+        }
+      }
+
+      extractFeatures(b, h, side) {
+        let features = Array(128).fill(0);
+        let idx = 0;
+
+        let kingPos = { sente: null, gote: null };
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (b[r] && b[r][c] && b[r][c].type === 'OU') {
+              kingPos[b[r][c].side] = { r, c };
+            }
+          }
+        }
+
+        const opp = (side === 'sente') ? 'gote' : 'sente';
+        const oppKing = kingPos[opp] || { r: 4, c: 4 };
+
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            const p = b[r] ? b[r][c] : null;
+            if (p) {
+              const isMine = (p.side === side);
+              const distToOppKing = Math.abs(r - oppKing.r) + Math.abs(c - oppKing.c);
+              
+              if (idx < 81) {
+                let score = PIECE_TYPES[p.type].val / 100.0;
+                if (isMine) score += Math.max(0, (10 - distToOppKing) * 0.2);
+                if (p.frozen) score -= 0.5; // やる気を失った駒は評価減
+                features[idx] = isMine ? score : -score;
+              }
+            }
+            idx++;
+          }
+        }
+
+        let handScore = 0;
+        Object.keys(h[side] || {}).forEach(k => handScore += (h[side][k] || 0) * (PIECE_TYPES[k].val / 100.0));
+        Object.keys(h[opp] || {}).forEach(k => handScore -= (h[opp][k] || 0) * (PIECE_TYPES[k].val / 100.0));
+        features[100] = handScore;
+
+        // 闇市レートと所有SGも評価要素に反映
+        const currentRate = calculateMarketRate();
+        features[101] = (sg[side] / 200.0) * (2.0 - currentRate);
+
+        return features;
+      }
+
+      evaluate(b, h, side, recordHistory = false) {
+        const feat = this.extractFeatures(b, h, side);
+        let hidden = Array(16).fill(0);
+        for (let j = 0; j < 16; j++) {
+          let sum = this.b1[j];
+          for (let i = 0; i < 128; i++) sum += feat[i] * this.w1[i][j];
+          hidden[j] = Math.max(0, sum);
+        }
+
+        let output = this.b2;
+        for (let i = 0; i < 16; i++) output += hidden[i] * this.w2[i];
+
+        if (recordHistory) {
+          this.history.push({ feat, hidden, output, side });
+        }
+
+        let score = output * 1000.0;
+        const opp = (side === 'sente') ? 'gote' : 'sente';
+
+        if (isCheck(opp, b)) {
+          score += 600.0;
+        }
+
+        // 天候：雷の危険地域（落雷予想マス）への退避評価
+        if (isGimmickMode && nextLightningTarget) {
+          const p = b[nextLightningTarget.r] ? b[nextLightningTarget.r][nextLightningTarget.c] : null;
+          if (p && p.side === side) {
+            score -= (PIECE_TYPES[p.type].val * 1.5);
+          }
+        }
+
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            const p = b[r] ? b[r][c] : null;
+            if (p && p.side === opp) {
+              const pVal = PIECE_TYPES[p.type].val;
+              if (pVal >= 450) {
+                const rawMoves = getRawMoves(r, c, b);
+                for (let m of rawMoves) {
+                  const targetP = b[m.r][m.c];
+                  if (targetP && targetP.side === side && targetP.type === 'OU') {
+                    score -= (pVal * 2.0);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        return score;
+      }
+
+      learnFromGame(winnerSide) {
+        if (this.history.length === 0) return;
+        const lr = 0.01;
+        
+        this.history.forEach(item => {
+          const target = (item.side === winnerSide) ? 1.0 : -1.0;
+          const error = target - item.output;
+
+          for (let i = 0; i < 16; i++) {
+            this.w2[i] += lr * error * item.hidden[i];
+          }
+          this.b2 += lr * error;
+
+          for (let j = 0; j < 16; j++) {
+            if (item.hidden[j] > 0) {
+              const dHidden = error * this.w2[j];
+              for (let i = 0; i < 128; i++) {
+                this.w1[i][j] += lr * dHidden * item.feat[i];
+              }
+              this.b1[j] += lr * dHidden;
+            }
+          }
+        });
+
+        this.history = [];
+        this.saveWeights();
+        log("COMが対局結果から学習データを更新しました。");
+      }
+    }
+
+    const nnueEngine = new LightweightNNUE();
+
+    function setGimmickMode(enabled) {
+      isGimmickMode = enabled;
+      document.getElementById('modeGimmickBtn').classList.toggle('active', enabled);
+      document.getElementById('modeNormalBtn').classList.toggle('active', !enabled);
+    }
+
+    function showSettings() {
+      applySettingsToUI(); // 保存済み設定をフォームに反映してから表示
+      const titleEl = document.getElementById('titleScreen');
+      const settingsEl = document.getElementById('settingsScreen');
+      transitionScreen(titleEl, settingsEl);
+    }
+
+    function toggleComOptions() {
+      const mode = document.getElementById('settingGameMode').value;
+      const isCom = (mode === 'com');
+      document.getElementById('comSideGroup').style.display = isCom ? 'flex' : 'none';
+      document.getElementById('comLevelGroup').style.display = (mode === 'com' || mode === 'auto') ? 'flex' : 'none';
+    }
+
+    function saveSettingsAndBack() {
+      gameMode = document.getElementById('settingGameMode').value;
+      playerSide = document.getElementById('settingPlayerSide').value;
+      comLevel = document.getElementById('settingComLevel').value;
+      enableAnimation = (document.getElementById('settingAnimation').value === 'on');
+      saveSettingsToStorage(); // 設定内容をローカルストレージに保存
+
+      const settingsEl = document.getElementById('settingsScreen');
+      const titleEl = document.getElementById('titleScreen');
+      transitionScreen(settingsEl, titleEl);
+    }
+
+    function startGameFromTitle() {
+      isTutorial = false;
+      const titleEl = document.getElementById('titleScreen');
+      const gameEl = document.getElementById('gameContainer');
+      
+      transitionScreen(titleEl, gameEl, () => {
+        initGame();
+      });
+    }
+
+    function returnToTitle() {
+      document.getElementById('gameoverOverlay').style.display = 'none';
+      document.getElementById('gameoverBar').style.display = 'none';
+      document.getElementById('tutorialOverlay').style.display = 'none';
+
+      const gameEl = document.getElementById('gameContainer');
+      const titleEl = document.getElementById('titleScreen');
+      transitionScreen(gameEl, titleEl);
+    }
+
+    function getRandomWeakness() {
+      const weaks = ["RAIN", "WIND", "SNOW"];
+      return weaks[Math.floor(Math.random() * weaks.length)];
+    }
+
+    function initGame() {
+      currentTurn = 'sente';
+      turnsCount = 1;
+      isGameOver = false;
+      isAnimating = false;
+      gauges = { sente: 0, gote: 0 };
+      levels = { sente: 1, gote: 1 };
+      sg = { sente: 0, gote: 0 };
+      sgValue = BASE_SG_VALUE; // ① SG価値初期化
+      
+      marketStock = { FU: 3, KY: 3 };
+      destroyedPieces = [];
+      nextDestroyedId = 1;
+      marketPriceHistory = [1.0];
+      currentWeather = WEATHER_LIST[0];
+      weatherTurnsRemaining = 0;
+      nextLightningTarget = null;
+
+      cooldowns = { sente: 0, gote: 0 };
+      lastSkillUser = null;
+      lastSkillTurn = -999;
+      comStrategies = { sente: 'balanced', gote: 'balanced' };
+      hands = { sente: {}, gote: {} };
+      selectedCell = null;
+      selectedHandPiece = null;
+      validMoves = [];
+      activeSkillMode = null;
+      swiftStepsLeft = 0;
+      playerMoveHistory = [];
+      nnueEngine.history = [];
+      if (summonEffectClearTimer) { clearTimeout(summonEffectClearTimer); summonEffectClearTimer = null; }
+      lastSummonedPieceInfo = null;
+      positionHistory = {};
+      checkStreakSide = null;
+      checkStreakCount = 0;
+
+      document.getElementById('gameoverOverlay').style.display = 'none';
+      document.getElementById('gameoverBar').style.display = 'none';
+
+      board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const type = INITIAL_BOARD_LAYOUT[r][c];
+          if (type) {
+            board[r][c] = { 
+              type: type, 
+              side: (r <= 2) ? 'gote' : 'sente', 
+              frozen: false,
+              weakWeather: getRandomWeakness()
+            };
+          }
+        }
+      }
+
+      cellEffects = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EFFECT_TYPES.NONE));
+      if (isGimmickMode && !isTutorial) {
+        generateRandomEffects();
+      }
+
+      const isSenteHuman = (gameMode === 'pvp') || (gameMode === 'com' && playerSide === 'sente');
+      const isGoteHuman = (gameMode === 'pvp') || (gameMode === 'com' && playerSide === 'gote');
+
+      document.getElementById('senteSkills').style.display = (isGimmickMode && isSenteHuman) ? 'flex' : 'none';
+      document.getElementById('goteSkills').style.display = (isGimmickMode && isGoteHuman) ? 'flex' : 'none';
+      document.getElementById('senteSkillStatusBox').style.display = isGimmickMode ? 'block' : 'none';
+      document.getElementById('goteSkillStatusBox').style.display = isGimmickMode ? 'block' : 'none';
+
+      document.getElementById('weatherBanner').style.display = isGimmickMode ? 'flex' : 'none';
+      document.getElementById('effectLegendBox').style.display = isGimmickMode ? 'flex' : 'none';
+      document.getElementById('marketPanel').style.display = isGimmickMode ? 'flex' : 'none';
+
+      const isSenteCom = (gameMode === 'auto') || (gameMode === 'com' && playerSide === 'gote');
+      const isGoteCom = (gameMode === 'auto') || (gameMode === 'com' && playerSide === 'sente');
+      document.getElementById('senteComSkillProbs').style.display = (isGimmickMode && isSenteCom) ? 'flex' : 'none';
+      document.getElementById('goteComSkillProbs').style.display = (isGimmickMode && isGoteCom) ? 'flex' : 'none';
+
+      updateNamesAndUI();
+      updateWeatherDisplay();
+      renderBoard();
+      renderHands();
+      updateGaugeUI();
+      updateMarketUI();
+      updateComComment('start');
+      log("対局を開始します。学習データ読み込み完了。");
+
+      if (isComTurn()) {
+        setTimeout(makeComMove, 600);
+      }
+    }
+
+    function updateNamesAndUI() {
+      if (gameMode === 'auto') {
+        document.getElementById('senteName').innerText = `▲ COM [${getComLevelName()}]`;
+        document.getElementById('goteName').innerText = `△ COM [${getComLevelName()}]`;
+      } else if (gameMode === 'com') {
+        document.getElementById('senteName').innerText = playerSide === 'sente' ? '▲ あなた (先手)' : `▲ COM [${getComLevelName()}]`;
+        document.getElementById('goteName').innerText = playerSide === 'gote' ? '△ あなた (後手)' : `△ COM [${getComLevelName()}]`;
+      } else {
+        document.getElementById('senteName').innerText = '▲ 先手';
+        document.getElementById('goteName').innerText = '△ 後手';
+      }
+      document.getElementById('senteLevel').innerText = `Lv.${levels.sente}`;
+      document.getElementById('goteLevel').innerText = `Lv.${levels.gote}`;
+    }
+
+    function getComLevelName() {
+      switch(comLevel) {
+        case 'weak': return '激弱';
+        case 'easy': return '初級';
+        case 'normal': return '中級';
+        case 'hard': return '上級';
+      }
+    }
+
+    function generateRandomEffects() {
+      const effects = [EFFECT_TYPES.BOOST, EFFECT_TYPES.BOOST, EFFECT_TYPES.TRAP, EFFECT_TYPES.TRAP, EFFECT_TYPES.WARP, EFFECT_TYPES.HEAL];
+      effects.forEach(eff => {
+        let r, c;
+        do {
+          r = Math.floor(Math.random() * 5) + 2;
+          c = Math.floor(Math.random() * 9);
+        } while (cellEffects[r][c] !== EFFECT_TYPES.NONE);
+        cellEffects[r][c] = eff;
+      });
+    }
+
+    function calculateMarketRate() {
+      let activeCount = 0;
+      let promotedCount = 0;
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const p = board[r] ? board[r][c] : null;
+          if (p) {
+            activeCount++;
+            if (PIECE_TYPES[p.type].isPromoted) promotedCount++;
+          }
+        }
+      }
+
+      let rate = 1.0 + (40 - activeCount) * 0.03 + (promotedCount * 0.05);
+      return Math.max(0.3, Math.min(3.0, rate));
+    }
+
+    function updateMarketState() {
+      const currentRate = calculateMarketRate();
+      marketPriceHistory.push(currentRate);
+      if (marketPriceHistory.length > 20) marketPriceHistory.shift();
+      updateMarketUI();
+    }
+
+    function getPiecePrice(type) {
+      const currentRate = marketPriceHistory[marketPriceHistory.length - 1] || 1.0;
+      const rawType = PIECE_TYPES[type] ? (PIECE_TYPES[type].base || type) : type;
+
+      let basePrice = 100;
+      if (rawType === 'FU') basePrice = 50;
+      else if (rawType === 'KY') basePrice = 200;
+      else {
+        const multiplierMap = {
+          KE: 5,
+          GI: 8,
+          KI: 10,
+          KA: 15,
+          HI: 20
+        };
+        const fuPrice = Math.round(50 * currentRate);
+        const mult = multiplierMap[rawType] || 5;
+        return fuPrice * mult;
+      }
+
+      return Math.max(1, Math.round(basePrice * currentRate));
+    }
+
+    /* 消滅した駒（天罰・落雷）の闇市価格：原価（歩の3～8倍）の60%に割引 */
+    const DESTROYED_PRICE_MULTIPLIER = {
+      FU: 1,
+      KY: 3,
+      KE: 4,
+      GI: 5,
+      KI: 6,
+      KA: 7,
+      HI: 8
+    };
+    const DESTROYED_PRICE_DISCOUNT = 0.6;
+
+    function getDestroyedPiecePrice(type) {
+      const rawType = PIECE_TYPES[type] ? (PIECE_TYPES[type].base || type) : type;
+      const mult = DESTROYED_PRICE_MULTIPLIER[rawType] || 1;
+      const genka = 50 * mult; // 原価（歩の価格を基準に3～8倍）
+      return Math.max(1, Math.round(genka * DESTROYED_PRICE_DISCOUNT));
+    }
+
+    function buyMarketPiece(pieceType, isStock = false, destroyedId = null) {
+      if (isGameOver || isAnimating) return;
+      
+      const price = (destroyedId !== null) ? getDestroyedPiecePrice(pieceType) : getPiecePrice(pieceType);
+
+      if (sg[currentTurn] < price) {
+        log("SGが不足しているため購入できません！");
+        return;
+      }
+
+      let wasBuyback = false;
+      if (isStock) {
+        if (!marketStock[pieceType] || marketStock[pieceType] <= 0) return;
+        marketStock[pieceType]--;
+      } else if (destroyedId !== null) {
+        const idx = destroyedPieces.findIndex(p => p.id === destroyedId);
+        if (idx === -1) return;
+        destroyedPieces.splice(idx, 1);
+        wasBuyback = true;
+      }
+
+      sg[currentTurn] -= price;
+      hands[currentTurn][pieceType] = (hands[currentTurn][pieceType] || 0) + 1;
+
+      // 闇市で購入した際にも、召喚と同じ金色のエフェクトを付与する
+      triggerSummonEffect(currentTurn, pieceType);
+
+      // 消滅した駒を闇市から買い戻した場合は、専用のカットイン演出を表示する
+      if (wasBuyback) {
+        playMarketBuybackCutin(currentTurn, pieceType);
+      }
+
+      log(`${currentTurn === 'sente' ? '▲' : '△'} が闇市で【${PIECE_TYPES[pieceType].name}】を ${price} SG で購入しました！`);
+      if (isComSide(currentTurn)) updateComComment('market_buy');
+      updateGaugeUI();
+      renderHands();
+      updateMarketUI();
+    }
+
+    function updateMarketUI() {
+      if (!isGimmickMode) return;
+
+      const currentRate = marketPriceHistory[marketPriceHistory.length - 1] || 1.0;
+      const minRate = Math.min(...marketPriceHistory);
+      const maxRate = Math.max(...marketPriceHistory);
+      const avgRate = marketPriceHistory.reduce((a, b) => a + b, 0) / marketPriceHistory.length;
+
+      document.getElementById('stockCurrent').innerText = `${Math.round(currentRate * 100)}%`;
+      document.getElementById('sgValueCurrent').innerText = `${Math.round(sgValue)}`; // ① SG価値表示
+      document.getElementById('stockMin').innerText = `${Math.round(minRate * 100)}%`;
+      document.getElementById('stockMax').innerText = `${Math.round(maxRate * 100)}%`;
+
+      const canvas = document.getElementById('stockChart');
+      if (canvas && canvas.getContext) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, (canvas.height / 4) * i);
+          ctx.lineTo(canvas.width, (canvas.height / 4) * i);
+          ctx.stroke();
+        }
+
+        if (marketPriceHistory.length > 1) {
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+
+          const step = canvas.width / (Math.max(marketPriceHistory.length - 1, 1));
+          marketPriceHistory.forEach((val, i) => {
+            const x = i * step;
+            const y = canvas.height - ((val - 0.3) / (3.0 - 0.3)) * (canvas.height - 10) - 5;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+      }
+
+      const listEl = document.getElementById('destroyedList');
+      listEl.innerHTML = '';
+
+      let hasItems = false;
+
+      ['FU', 'KY'].forEach(type => {
+        if (marketStock[type] > 0) {
+          hasItems = true;
+          const price = getPiecePrice(type);
+          
+          const row = document.createElement('div');
+          row.className = 'buy-item';
+
+          const nameSpan = document.createElement('span');
+          nameSpan.innerText = `${PIECE_TYPES[type].name} (在庫:${marketStock[type]})`;
+
+          const priceSpan = document.createElement('span');
+          priceSpan.style.color = 'var(--accent-gold)';
+          priceSpan.style.fontWeight = 'bold';
+          priceSpan.innerText = `${price} SG`;
+
+          const buyBtn = document.createElement('button');
+          buyBtn.className = 'buy-btn';
+          buyBtn.innerText = '購入';
+
+          const canBuy = sg[currentTurn] >= price && !isGameOver && !isAnimating && (!isComTurn() || gameMode === 'auto');
+          buyBtn.disabled = !canBuy;
+          buyBtn.onclick = () => buyMarketPiece(type, true, null);
+
+          const rightDiv = document.createElement('div');
+          rightDiv.style.display = 'flex';
+          rightDiv.style.alignItems = 'center';
+          rightDiv.style.gap = '8px';
+          rightDiv.appendChild(priceSpan);
+          rightDiv.appendChild(buyBtn);
+
+          row.appendChild(nameSpan);
+          row.appendChild(rightDiv);
+          listEl.appendChild(row);
+        }
+      });
+
+      destroyedPieces.forEach(item => {
+        hasItems = true;
+        const price = getDestroyedPiecePrice(item.type);
+        const rawType = PIECE_TYPES[item.type].base || item.type;
+        
+        const row = document.createElement('div');
+        row.className = 'buy-item';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = `${PIECE_TYPES[rawType].name} [消滅品・特価]`;
+
+        const priceSpan = document.createElement('span');
+        priceSpan.style.color = 'var(--accent-gold)';
+        priceSpan.style.fontWeight = 'bold';
+        priceSpan.innerText = `${price} SG`;
+
+        const buyBtn = document.createElement('button');
+        buyBtn.className = 'buy-btn';
+        buyBtn.innerText = '購入';
+
+        const canBuy = sg[currentTurn] >= price && !isGameOver && !isAnimating && (!isComTurn() || gameMode === 'auto');
+        buyBtn.disabled = !canBuy;
+        buyBtn.onclick = () => buyMarketPiece(rawType, false, item.id);
+
+        const rightDiv = document.createElement('div');
+        rightDiv.style.display = 'flex';
+        rightDiv.style.alignItems = 'center';
+        rightDiv.style.gap = '8px';
+        rightDiv.appendChild(priceSpan);
+        rightDiv.appendChild(buyBtn);
+
+        row.appendChild(nameSpan);
+        row.appendChild(rightDiv);
+        listEl.appendChild(row);
+      });
+
+      if (!hasItems) {
+        listEl.innerHTML = '<div style="font-size:0.75rem; color:#888; text-align:center; padding:10px;">購入可能な駒はありません</div>';
+      }
+    }
+
+    function renderBoard() {
+      const boardEl = document.getElementById('shogiBoard');
+      boardEl.innerHTML = '';
+
+      if (currentWeather.name === "霧") {
+        boardEl.classList.add('foggy-board');
+      } else {
+        boardEl.classList.remove('foggy-board');
+      }
+
+      const kingInCheck = isCheck(currentTurn, board);
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+
+          if (isGimmickMode) {
+            const eff = cellEffects[r][c];
+            if (eff !== EFFECT_TYPES.NONE) cell.classList.add(`effect-${eff}`);
+          }
+
+          if (selectedCell && selectedCell.r === r && selectedCell.c === c) cell.classList.add('selected');
+
+          const isMovable = validMoves.some(m => m.r === r && m.c === c);
+          if (isMovable) cell.classList.add('movable');
+
+          if (isGimmickMode && nextLightningTarget && nextLightningTarget.r === r && nextLightningTarget.c === c) {
+            cell.classList.add('lightning-target');
+          }
+
+          // ★追加: 直前の一手だった場合、印をつける
+          if (lastMoveCell && lastMoveCell.r === r && lastMoveCell.c === c) {
+            cell.classList.add('last-move');
+          }
+
+          const piece = board[r][c];
+          if (piece) {
+            if (piece.type === 'OU' && piece.side === currentTurn && kingInCheck) {
+              cell.classList.add('in-check');
+            }
+
+            const pieceEl = document.createElement('div');
+            pieceEl.className = `piece ${piece.side}`;
+            if (PIECE_TYPES[piece.type].isPromoted) pieceEl.classList.add('promoted');
+            if (piece.frozen) pieceEl.classList.add('frozen');
+            pieceEl.innerText = PIECE_TYPES[piece.type].name;
+            cell.appendChild(pieceEl);
+          }
+
+          cell.addEventListener('click', () => handleCellClick(r, c));
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function renderHands() {
+      ['sente', 'gote'].forEach(side => {
+        const handEl = document.getElementById(`${side}Hand`);
+        handEl.innerHTML = '';
+
+        Object.keys(hands[side]).forEach(type => {
+          const count = hands[side][type];
+          if (count > 0) {
+            const item = document.createElement('div');
+            item.className = 'hand-piece';
+            if (selectedHandPiece && selectedHandPiece.side === side && selectedHandPiece.type === type) {
+              item.classList.add('selected');
+            }
+
+            if (lastSummonedPieceInfo && lastSummonedPieceInfo.side === side && lastSummonedPieceInfo.type === type) {
+              item.classList.add('piece-summon-anim');
+              // renderHandsは召喚/購入後の一定時間内に何度も呼ばれうるため、
+              // 経過時間ぶんだけ負のanimation-delayを与えて、再描画されても
+              // アニメーションが最初から再スタートしたり途中で消えたりしないようにする
+              const elapsed = Date.now() - (lastSummonedPieceInfo.ts || Date.now());
+              item.style.animationDelay = `-${Math.max(0, elapsed)}ms`;
+            }
+
+            item.innerText = PIECE_TYPES[type].name;
+
+            if (count > 1) {
+              const cntBadge = document.createElement('span');
+              cntBadge.className = 'hand-piece-count';
+              cntBadge.innerText = count;
+              item.appendChild(cntBadge);
+            }
+
+            item.addEventListener('click', (e) => {
+              e.stopPropagation();
+              handleHandClick(side, type);
+            });
+            handEl.appendChild(item);
+          }
+        });
+      });
+    }
+
+    function updateWeatherDisplay() {
+      document.getElementById('weatherName').innerText = currentWeather.name;
+      const turnInfo = weatherTurnsRemaining > 0 ? ` (残り${weatherTurnsRemaining}T)` : '';
+      document.getElementById('weatherEffect').innerText = `${currentWeather.effect}${turnInfo}`;
+    }
+
+    /* ① 天候に応じたSG価値の微変動 */
+    function updateSgValueByWeather(weatherName) {
+      let changeRate = 0;
+      if (weatherName === "晴天") changeRate = 0.0;
+      else if (weatherName === "霧") changeRate = -0.05;
+      else if (weatherName === "大雨") changeRate = 0.05;
+      else if (weatherName === "強風") changeRate = 0.03;
+      else if (weatherName === "雷") changeRate = 0.08;
+
+      if (changeRate !== 0) {
+        sgValue += BASE_SG_VALUE * changeRate;
+        // ③ 最大±10%以内に補正 (90 ~ 110)
+        sgValue = Math.min(BASE_SG_VALUE * 1.1, Math.max(BASE_SG_VALUE * 0.9, sgValue));
+        const sign = changeRate > 0 ? '+' : '';
+        log(`【天候影響】天候が【${weatherName}】になり、SG価値が ${sign}${Math.round(changeRate * 100)}% 変動しました。（SG価値: ${Math.round(sgValue)}）`);
+        updateComComment(changeRate > 0 ? 'sg_up' : 'sg_down');
+      }
+    }
+
+    const WEATHER_COMMENT_KEY = {
+      "晴天": "weather_sunny", "大雨": "weather_rain", "強風": "weather_wind",
+      "豪雪": "weather_snow", "雷": "weather_thunder", "霧": "weather_fog"
+    };
+
+    /* ④ SG価値の自然復元ロジック */
+    function decaySgValue() {
+      sgValue = sgValue * 0.98 + BASE_SG_VALUE * 0.02;
+      // ③ ±10%制限維持
+      sgValue = Math.min(BASE_SG_VALUE * 1.1, Math.max(BASE_SG_VALUE * 0.9, sgValue));
+    }
+
+    /* 天候変化感覚を 4ターン毎に変更 */
+    function triggerWeatherOrEvent() {
+      // ② SG価値の予兆表示（変化1ターン前）
+      if ((turnsCount + 1) % 4 === 0) {
+        const omenTexts = [
+          "「市場がざわついている…SGの価値が変動しそうだ…」",
+          "「経済が不安定だ…駒の購入は慎重にしたい…」"
+        ];
+        const omen = omenTexts[Math.floor(Math.random() * omenTexts.length)];
+        log(`【予兆】${omen}`);
+        document.getElementById('comCommentText').innerText = omen;
+      }
+
+      if (turnsCount % 4 === 0) {
+        const isWeatherEvent = Math.random() < 0.6;
+
+        if (isWeatherEvent) {
+          const rand = Math.random();
+          let nextWeather;
+          if (rand < 0.05) {
+            nextWeather = WEATHER_LIST.find(w => w.name === "雷");
+          } else {
+            const otherWeathers = WEATHER_LIST.filter(w => w.name !== "雷");
+            nextWeather = otherWeathers[Math.floor(Math.random() * otherWeathers.length)];
+          }
+
+          currentWeather = nextWeather;
+          weatherTurnsRemaining = (currentWeather.name !== "晴天") ? 2 : 0;
+          updateWeatherDisplay();
+
+          log(`【イベント発生】天候が【${currentWeather.name}】に変化しました！ ${currentWeather.effect}`);
+          const weatherCommentKey = WEATHER_COMMENT_KEY[currentWeather.name];
+          if (weatherCommentKey) updateComComment(weatherCommentKey);
+
+          /* ① 天候によるSG価値の微変動実行 */
+          updateSgValueByWeather(currentWeather.name);
+
+          let candidatePieces = [];
+          for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+              const p = board[r][c];
+              if (p) {
+                p.frozen = false;
+                const base = PIECE_TYPES[p.type].base || p.type;
+                if (base !== 'OU' && base !== 'HI' && base !== 'KA') {
+                  if (currentWeather.weakType && p.weakWeather === currentWeather.weakType) {
+                    candidatePieces.push({ r, c, piece: p });
+                  }
+                }
+              }
+            }
+          }
+
+          for (let i = candidatePieces.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidatePieces[i], candidatePieces[j]] = [candidatePieces[j], candidatePieces[i]];
+          }
+          const frozenTargets = candidatePieces.slice(0, 2);
+          frozenTargets.forEach(t => {
+            t.piece.frozen = true;
+          });
+
+          if (frozenTargets.length > 0) {
+            log(`天候の影響で ${frozenTargets.length} 個の駒がやる気を失い動かなくなりました！`);
+            updateComComment('frozen');
+          }
+        } else {
+          const bonusSg = 15;
+          addSg('sente', bonusSg);
+          addSg('gote', bonusSg);
+          log(`【イベント発生】臨時ボーナス！双方に ${bonusSg} SG が給付されました。`);
+          updateGaugeUI();
+        }
+      }
+    }
+
+    /* 確実に落雷を実行するロジック（落雷の確実な実行と次ターンの予告セット） */
+    function processLightningCycle() {
+      if (!isGimmickMode) {
+        nextLightningTarget = null;
+        return;
+      }
+
+      // 1. 設定されていた予告地点へ落雷を実行
+      if (nextLightningTarget) {
+        const tr = nextLightningTarget.r;
+        const tc = nextLightningTarget.c;
+        const targetPiece = board[tr][tc];
+
+        if (targetPiece && targetPiece.type === 'OU') {
+          log(`⚡【落雷】${tr + 1}行${tc + 1}列に雷が落ちましたが、玉には天が味方し無傷でした。`);
+          playTileEffect(tr, tc, 'trap', '⚡玉は無事！', '#fffa65');
+          updateComComment('lightning_miss');
+        } else if (targetPiece) {
+          board[tr][tc] = null;
+          destroyedPieces.push({
+            id: nextDestroyedId++,
+            type: targetPiece.type,
+            originalSide: targetPiece.side
+          });
+          log(`⚡⚡【落雷命中】${tr + 1}行${tc + 1}列に落雷！【${PIECE_TYPES[targetPiece.type].name}】が消滅しました！`);
+          playTileEffect(tr, tc, 'trap', '⚡落雷直撃！', '#ffd700');
+          updateComComment('lightning_hit');
+        } else {
+          log(`⚡【落雷】${tr + 1}行${tc + 1}列に雷が落ちましたが、駒は存在せず無傷でした。`);
+          playTileEffect(tr, tc, 'trap', '⚡空振り！', '#fffa65');
+          updateComComment('lightning_miss');
+        }
+        nextLightningTarget = null;
+      }
+
+      // 2. 雷天候中の場合、次のターンの落雷予告を設置
+      if (currentWeather.name === "雷" && weatherTurnsRemaining > 0) {
+        const targetR = Math.floor(Math.random() * BOARD_SIZE);
+        const targetC = Math.floor(Math.random() * BOARD_SIZE);
+        nextLightningTarget = { r: targetR, c: targetC };
+        log(`⚡「近くで雷鳴が轟く...！」 (${targetR + 1}行${targetC + 1}列に落雷予告！次のターンまでに退避させてください)`);
+      }
+    }
+
+    function canUseSkill(side, skillType, minGauge = 30) {
+      if (currentTurn !== side) return { can: false, reason: "相手の手番" };
+      if (cooldowns[side] > 0) return { can: false, reason: `クールダウン中 (残り${cooldowns[side]}T)` };
+      const opp = (side === 'sente') ? 'gote' : 'sente';
+      // 連続スキル発動の禁止: どちらかがスキルを発動したら、直後の相手手番では発動できない
+      if (lastSkillTurn >= 0 && turnsCount - lastSkillTurn <= 1) return { can: false, reason: "連続発動不可（直前にスキル発動あり）" };
+      if (gauges[side] < minGauge) return { can: false, reason: "ゲージ不足" };
+      
+      if (skillType !== 'resurrect' && levels[side] < levels[opp]) {
+        return { can: false, reason: "レベル不足" };
+      }
+
+      return { can: true, reason: "使用可能" };
+    }
+
+    function calculateSpecificComSkillProbability(side, skillType) {
+      let cost = 30;
+      if (skillType === 'resurrect') cost = 50;
+      else if (skillType === 'meteor') cost = 70;
+      else if (skillType === 'steal') cost = 60;
+
+      const check = canUseSkill(side, skillType, cost);
+      if (!check.can) return 0;
+
+      const opp = (side === 'sente') ? 'gote' : 'sente';
+      let prob = 50;
+
+      if (skillType === 'swift') {
+        prob = 45 + Math.floor((gauges[side] - 30) * 0.4) + (levels[side] - levels[opp]) * 5;
+      } else if (skillType === 'resurrect') {
+        prob = 55 + Math.floor((gauges[side] - 50) * 0.5);
+      } else if (skillType === 'meteor') {
+        let targets = [];
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (board[r] && board[r][c] && board[r][c].side !== side && board[r][c].type !== 'OU') {
+              targets.push(PIECE_TYPES[board[r][c].type].val);
+            }
+          }
+        }
+        if (targets.length === 0) return 0;
+        const maxVal = Math.max(...targets);
+        prob = 60;
+        if (maxVal >= 1000) prob += 25;
+        else if (maxVal >= 450) prob += 12;
+        else prob -= 15;
+        prob += Math.floor((gauges[side] - 70) * 0.3) + (levels[side] - levels[opp]) * 5;
+      } else if (skillType === 'steal') {
+        const oppPieces = Object.keys(hands[opp]).filter(k => hands[opp][k] > 0);
+        if (oppPieces.length === 0) return 0;
+        prob = 50 + oppPieces.length * 10 + Math.floor((gauges[side] - 60) * 0.3) + (levels[side] - levels[opp]) * 5;
+      }
+
+      return Math.min(99, Math.max(1, Math.round(prob)));
+    }
+
+    function updateSwiftStatusUI() {
+      if (!isGimmickMode) return;
+      ['sente', 'gote'].forEach(side => {
+        const box = document.getElementById(`${side}SwiftStatus`);
+        if (!box) return;
+        if (currentTurn === side && swiftStepsLeft > 0) {
+          box.style.display = 'block';
+          const valEl = document.getElementById(`${side}SwiftStepsVal`);
+          if (valEl) valEl.innerText = swiftStepsLeft;
+        } else {
+          box.style.display = 'none';
+        }
+      });
+    }
+
+    function updateGaugeUI() {
+      document.getElementById('senteGauge').style.width = `${gauges.sente}%`;
+      document.getElementById('goteGauge').style.width = `${gauges.gote}%`;
+      document.getElementById('senteLevel').innerText = `Lv.${levels.sente}`;
+      document.getElementById('goteLevel').innerText = `Lv.${levels.gote}`;
+
+      document.getElementById('senteSgVal').innerText = Math.round(sg.sente);
+      document.getElementById('goteSgVal').innerText = Math.round(sg.gote);
+
+      updateSwiftStatusUI();
+
+      if (isGimmickMode) {
+        ['sente', 'gote'].forEach(side => {
+          const statusValEl = document.getElementById(`${side}SkillStatusVal`);
+          const check = canUseSkill(side, 'resurrect', 30);
+
+          if (check.can) {
+            statusValEl.innerText = "使用可能";
+            statusValEl.style.color = "var(--accent-green)";
+          } else {
+            statusValEl.innerText = `使用不可 (${check.reason})`;
+            statusValEl.style.color = "var(--accent-red)";
+          }
+
+          const isCom = (gameMode === 'auto') || (gameMode === 'com' && playerSide !== side);
+          if (isCom) {
+            const probSwift = calculateSpecificComSkillProbability(side, 'swift');
+            const probResurrect = calculateSpecificComSkillProbability(side, 'resurrect');
+            const probMeteor = calculateSpecificComSkillProbability(side, 'meteor');
+            const probSteal = calculateSpecificComSkillProbability(side, 'steal');
+
+            document.getElementById(`${side}ProbSwift`).innerText = `${probSwift}%`;
+            document.getElementById(`${side}ProbResurrect`).innerText = `${probResurrect}%`;
+            document.getElementById(`${side}ProbMeteor`).innerText = `${probMeteor}%`;
+            document.getElementById(`${side}ProbSteal`).innerText = `${probSteal}%`;
+          }
+        });
+
+        ['sente', 'gote'].forEach(side => {
+          if (document.getElementById(`${side}Skills`)) {
+            document.getElementById(`${side}SkillSwift`).disabled = !canUseSkill(side, 'swift', 30).can;
+            document.getElementById(`${side}SkillResurrect`).disabled = !canUseSkill(side, 'resurrect', 50).can;
+            document.getElementById(`${side}SkillMeteor`).disabled = !canUseSkill(side, 'meteor', 70).can;
+            document.getElementById(`${side}SkillSteal`).disabled = !canUseSkill(side, 'steal', 60).can;
+          }
+        });
+      }
+    }
+
+    function isCheck(side, currentBoard) {
+      let kingPos = null;
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (currentBoard[r] && currentBoard[r][c] && currentBoard[r][c].side === side && currentBoard[r][c].type === 'OU') {
+            kingPos = { r, c };
+            break;
+          }
+        }
+      }
+      if (!kingPos) return false;
+
+      const opp = (side === 'sente') ? 'gote' : 'sente';
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (currentBoard[r] && currentBoard[r][c] && currentBoard[r][c].side === opp) {
+            const rawMoves = getRawMoves(r, c, currentBoard);
+            if (rawMoves.some(m => m.r === kingPos.r && m.c === kingPos.c)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function handleCellClick(r, c) {
+      if (isGameOver || isAnimating || isComTurn()) return;
+
+      if (activeSkillMode === 'meteor') {
+        if (validMoves.some(m => m.r === r && m.c === c)) executeMeteorSkill(r, c);
+        resetSelection();
+        return;
+      }
+
+      if (selectedCell) {
+        if (validMoves.some(m => m.r === r && m.c === c)) {
+          movePiece(selectedCell.r, selectedCell.c, r, c);
+          return;
+        }
+      }
+
+      if (selectedHandPiece) {
+        if (validMoves.some(m => m.r === r && m.c === c)) {
+          dropPiece(selectedHandPiece.side, selectedHandPiece.type, r, c);
+          resetSelection();
+          return;
+        }
+      }
+
+      const piece = board[r][c];
+      if (piece && piece.side === currentTurn) {
+        if (piece.frozen) {
+          log("その駒はやる気を失っているか麻痺していて動かせません！");
+          resetSelection();
+          return;
+        }
+        selectedCell = { r, c };
+        selectedHandPiece = null;
+        validMoves = getLegalMoves(r, c, board);
+        renderBoard();
+      } else {
+        resetSelection();
+      }
+    }
+
+    function handleHandClick(side, type) {
+      if (isGameOver || isAnimating || isComTurn() || side !== currentTurn) return;
+      selectedCell = null;
+      selectedHandPiece = { side, type };
+      validMoves = getLegalDropMoves(side, type, board);
+      renderBoard();
+      renderHands();
+    }
+
+    function resetSelection() {
+      selectedCell = null;
+      selectedHandPiece = null;
+      validMoves = [];
+      activeSkillMode = null;
+      renderBoard();
+      renderHands();
+    }
+
+    /* 「行き所のない駒」判定：歩・香が最奥段、桂馬が最奥2段に来ると次に動けなくなるため禁止 */
+    function isStuckSquareForPiece(type, side, r) {
+      if (type === 'FU' || type === 'KY') {
+        return side === 'sente' ? r === 0 : r === 8;
+      }
+      if (type === 'KE') {
+        return side === 'sente' ? r <= 1 : r >= 7;
+      }
+      return false;
+    }
+
+    function getLegalMoves(r, c, currentBoard) {
+      const raw = getRawMoves(r, c, currentBoard);
+      const piece = currentBoard[r][c];
+      let legal = [];
+
+      raw.forEach(m => {
+        let nextB = JSON.parse(JSON.stringify(currentBoard));
+        nextB[m.r][m.c] = nextB[r][c];
+        nextB[r][c] = null;
+
+        if (!isCheck(piece.side, nextB)) {
+          legal.push(m);
+        }
+      });
+      return legal;
+    }
+
+    function getLegalDropMoves(side, type, currentBoard, currentHands, fastMode) {
+      const raw = getValidDropMoves(side, type, currentBoard);
+      const opp = (side === 'sente') ? 'gote' : 'sente';
+      const handsRef = currentHands || hands;
+      let legal = [];
+
+      raw.forEach(m => {
+        let nextB = JSON.parse(JSON.stringify(currentBoard));
+        nextB[m.r][m.c] = { type: type, side: side, frozen: false, weakWeather: getRandomWeakness() };
+
+        // 反則1: 王手放置（自殺手）の禁止
+        if (isCheck(side, nextB)) return;
+
+        // 反則2: 打ち歩詰め（歩を「打つ」ことで即詰みにする手）の禁止
+        // ※探索用の高速モード(fastMode)では、コストの高い再帰判定を省略する（実際に指す手の判定では常に厳密判定する）
+        if (!fastMode && type === 'FU' && isCheck(opp, nextB)) {
+          let nextHands = JSON.parse(JSON.stringify(handsRef));
+          nextHands[side][type] = Math.max(0, (nextHands[side][type] || 1) - 1);
+          if (!hasAnyLegalMove(opp, nextB, nextHands, true)) {
+            return; // 打ち歩詰めなのでこのマスへの投入は禁止
+          }
+        }
+
+        legal.push(m);
+      });
+      return legal;
+    }
+
+    /* 指定した側が、現在の局面で合法手（移動または打ち）を1つでも持っているか判定する。
+       詰み・ステイルメイトの検出、および打ち歩詰め判定に使用する。 */
+    function hasAnyLegalMove(side, currentBoard, currentHands, fastMode) {
+      const handsRef = currentHands || hands;
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const p = currentBoard[r] ? currentBoard[r][c] : null;
+          if (p && p.side === side && !p.frozen) {
+            if (getLegalMoves(r, c, currentBoard).length > 0) return true;
+          }
+        }
+      }
+
+      const handTypes = Object.keys(handsRef[side] || {});
+      for (let i = 0; i < handTypes.length; i++) {
+        const type = handTypes[i];
+        if ((handsRef[side][type] || 0) > 0) {
+          if (getLegalDropMoves(side, type, currentBoard, handsRef, fastMode).length > 0) return true;
+        }
+      }
+      return false;
+    }
+
+    /* 千日手判定用の局面ハッシュ（駒配置・持ち駒・手番のみを対象とし、天候等のフレーバー情報は除外） */
+    function hashPosition() {
+      let parts = [];
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        let row = '';
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const p = board[r][c];
+          row += p ? `${p.type}${p.side[0]}${p.frozen ? 'f' : ''}` : '-';
+          row += ',';
+        }
+        parts.push(row);
+      }
+      const handStr = ['sente', 'gote'].map(side =>
+        Object.keys(hands[side]).sort().map(k => `${k}${hands[side][k]}`).join('')
+      ).join('|');
+      return parts.join('/') + '#' + handStr + '#' + currentTurn;
+    }
+
+    function getRawMoves(r, c, currentBoard) {
+      const piece = currentBoard[r][c];
+      if (!piece) return [];
+
+      let moves = [];
+      const dir = (piece.side === 'sente') ? -1 : 1;
+      const isBoosted = isGimmickMode && (cellEffects[r][c] === EFFECT_TYPES.BOOST);
+
+      const addMove = (tr, tc) => {
+        if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) return false;
+        const target = currentBoard[tr][tc];
+        if (!target) {
+          moves.push({ r: tr, c: tc });
+          return true;
+        } else if (target.side !== piece.side) {
+          moves.push({ r: tr, c: tc });
+          return false;
+        }
+        return false;
+      };
+
+      const addRanged = (dr, dc) => {
+        let tr = r + dr, tc = c + dc;
+        while (tr >= 0 && tr < BOARD_SIZE && tc >= 0 && tc < BOARD_SIZE) {
+          const target = currentBoard[tr][tc];
+          if (!target) moves.push({ r: tr, c: tc });
+          else {
+            if (target.side !== piece.side) moves.push({ r: tr, c: tc });
+            break;
+          }
+          tr += dr; tc += dc;
+        }
+      };
+
+      if (isBoosted && !PIECE_TYPES[piece.type].isPromoted) {
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr !== 0 || dc !== 0) addMove(r + dr, c + dc);
+      }
+
+      if (isGimmickMode && currentWeather.name === "霧" && piece.type === 'TO') {
+        addMove(r + dir, c);
+        addMove(r, c - 1);
+        addMove(r, c + 1);
+        return moves;
+      }
+
+      switch (piece.type) {
+        case 'FU': addMove(r + dir, c); break;
+        case 'KY': addRanged(dir, 0); break;
+        case 'KE': addMove(r + dir * 2, c - 1); addMove(r + dir * 2, c + 1); break;
+        case 'GI': addMove(r + dir, c - 1); addMove(r + dir, c); addMove(r + dir, c + 1); addMove(r - dir, c - 1); addMove(r - dir, c + 1); break;
+        case 'KI': case 'TO': case 'NY': case 'NK': case 'NG':
+          addMove(r + dir, c - 1); addMove(r + dir, c); addMove(r + dir, c + 1);
+          addMove(r, c - 1); addMove(r, c + 1); addMove(r - dir, c); break;
+        case 'KA': addRanged(-1, -1); addRanged(-1, 1); addRanged(1, -1); addRanged(1, 1); break;
+        case 'HI': addRanged(-1, 0); addRanged(1, 0); addRanged(0, -1); addRanged(0, 1); break;
+        case 'UM': addRanged(-1, -1); addRanged(-1, 1); addRanged(1, -1); addRanged(1, 1); addMove(r - 1, c); addMove(r + 1, c); addMove(r, c - 1); addMove(r, c + 1); break;
+        case 'RY': addRanged(-1, 0); addRanged(1, 0); addRanged(0, -1); addRanged(0, 1); addMove(r - 1, c - 1); addMove(r - 1, c + 1); addMove(r + 1, c - 1); addMove(r + 1, c + 1); break;
+        case 'OU': for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr !== 0 || dc !== 0) addMove(r + dr, c + dc); break;
+      }
+
+      return moves;
+    }
+
+    function getValidDropMoves(side, type, currentBoard) {
+      let drops = [];
+      let pawnColumns = new Set();
+
+      if (type === 'FU') {
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (currentBoard[r] && currentBoard[r][c] && currentBoard[r][c].side === side && currentBoard[r][c].type === 'FU') {
+              pawnColumns.add(c);
+            }
+          }
+        }
+      }
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (!currentBoard[r] || !currentBoard[r][c]) {
+            if (type === 'FU' && pawnColumns.has(c)) continue;
+            if (side === 'sente') {
+              if ((type === 'FU' || type === 'KY') && r === 0) continue;
+              if (type === 'KE' && r <= 1) continue;
+            } else {
+              if ((type === 'FU' || type === 'KY') && r === 8) continue;
+              if (type === 'KE' && r >= 7) continue;
+            }
+            drops.push({ r, c });
+          }
+        }
+      }
+      return drops;
+    }
+
+    function movePiece(fromR, fromC, toR, toC) {
+      if (enableAnimation) {
+        const fromCell = document.querySelector(`.cell[data-r="${fromR}"][data-c="${fromC}"]`);
+        const toCell = document.querySelector(`.cell[data-r="${toR}"][data-c="${toC}"]`);
+        const pieceEl = fromCell ? fromCell.querySelector('.piece') : null;
+
+        if (fromCell && toCell && pieceEl) {
+          isAnimating = true;
+
+          const fromRect = fromCell.getBoundingClientRect();
+          const toRect = toCell.getBoundingClientRect();
+          const deltaX = toRect.left - fromRect.left;
+          const deltaY = toRect.top - fromRect.top;
+
+          pieceEl.classList.add('moving-anim');
+
+          const startTime = performance.now();
+          const duration = 250;
+          const baseRotate = board[fromR][fromC].side === 'gote' ? 'rotate(180deg)' : '';
+
+          function animate(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            const x = deltaX * eased;
+            const y = deltaY * eased;
+
+            pieceEl.style.transform = `translate(${x}px, ${y}px) ${baseRotate}`;
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              pieceEl.classList.remove('moving-anim');
+              pieceEl.style.transform = '';
+              isAnimating = false;
+
+              executeMoveLogic(fromR, fromC, toR, toC);
+
+              resetSelection();
+            }
+          }
+
+          requestAnimationFrame(animate);
+          return;
+        }
+      }
+      executeMoveLogic(fromR, fromC, toR, toC);
+    }
+
+    function recordPlayerMove(moveInfo) {
+      if (gameMode === 'com' && currentTurn === playerSide) {
+        playerMoveHistory.push(moveInfo);
+      }
+    }
+
+    function executeMoveLogic(fromR, fromC, toR, toC) {
+      const piece = board[fromR][fromC];
+      const target = board[toR][toC];
+
+      recordPlayerMove({ type: 'move', from: { r: fromR, c: fromC }, to: { r: toR, c: toC }, isCapture: !!target, pieceType: piece.type });
+
+      let gainedSg = Math.round(5 * (sgValue / BASE_SG_VALUE)); // SG価値補正
+
+      if (target) {
+        const rawType = PIECE_TYPES[target.type].base || target.type;
+        hands[currentTurn][rawType] = (hands[currentTurn][rawType] || 0) + 1;
+        addGauge(currentTurn, 15);
+
+        const capturedValue = Math.round(PIECE_TYPES[target.type].val * (sgValue / BASE_SG_VALUE));
+        gainedSg += capturedValue;
+
+        if (isComSide(currentTurn)) updateComComment('capture');
+        if (isComSide(target.side)) updateComComment('captured');
+
+        if (target.type === 'OU') {
+          addSg(currentTurn, gainedSg);
+          board[toR][toC] = piece;
+          board[fromR][fromC] = null;
+          renderBoard();
+          endGame(currentTurn);
+          return;
+        }
+      }
+
+      addSg(currentTurn, gainedSg);
+      // 駒を動かすだけでスキルゲージがたまる（駒取り時は既に+15加算済み）
+      addGauge(currentTurn, target ? 0 : 8);
+      levels[currentTurn]++;
+      log(`${currentTurn === 'sente' ? '▲' : '△'} が駒を動かし +${gainedSg} SG 獲得！ (Level ${levels[currentTurn]})`);
+
+      board[toR][toC] = piece;
+      board[fromR][fromC] = null;
+
+      const isEnemyZone = (piece.side === 'sente') ? (toR <= 2 || fromR <= 2) : (toR >= 6 || fromR >= 6);
+      const canPromote = PIECE_TYPES[piece.type].prom !== null;
+
+      let mustPromote = false;
+      if (piece.side === 'sente') {
+        if ((piece.type === 'FU' || piece.type === 'KY') && toR === 0) mustPromote = true;
+        if (piece.type === 'KE' && toR <= 1) mustPromote = true;
+      } else {
+        if ((piece.type === 'FU' || piece.type === 'KY') && toR === 8) mustPromote = true;
+        if (piece.type === 'KE' && toR >= 7) mustPromote = true;
+      }
+
+      if (canPromote && isEnemyZone) {
+        if (mustPromote) {
+          board[toR][toC].type = PIECE_TYPES[piece.type].prom;
+          log(`${piece.side === 'sente' ? '▲' : '△'} の【${PIECE_TYPES[piece.type].name}】が成り【${PIECE_TYPES[board[toR][toC].type].name}】に進化しました！`);
+          if (isComSide(piece.side)) updateComComment('promote');
+          postMoveProcess(toR, toC);
+        } else if (isComTurn()) {
+          board[toR][toC].type = PIECE_TYPES[piece.type].prom;
+          log(`COMの【${PIECE_TYPES[piece.type].name}】が成りました！`);
+          updateComComment('promote');
+          postMoveProcess(toR, toC);
+        } else {
+          pendingPromotion = { r: toR, c: toC, origType: piece.type };
+          document.getElementById('promoteModal').style.display = 'flex';
+        }
+      } else {
+        postMoveProcess(toR, toC);
+      }
+    }
+
+    function resolvePromotion(doPromote) {
+      document.getElementById('promoteModal').style.display = 'none';
+      if (pendingPromotion) {
+        const { r, c, origType } = pendingPromotion;
+        if (doPromote) {
+          board[r][c].type = PIECE_TYPES[origType].prom;
+          log(`【${PIECE_TYPES[origType].name}】を成りました！`);
+        }
+        postMoveProcess(r, c);
+        pendingPromotion = null;
+      }
+    }
+
+    function dropPiece(side, type, r, c) {
+      recordPlayerMove({ type: 'drop', to: { r, c }, pieceType: type });
+
+      hands[side][type]--;
+      board[r][c] = {
+        type: type,
+        side: side,
+        frozen: false,
+        weakWeather: getRandomWeakness()
+      };
+      addGauge(side, 5); // 持ち駒を打った場合も少量たまる
+      log(`${side === 'sente' ? '▲' : '△'} が持ち駒の【${PIECE_TYPES[type].name}】を打ちました。`);
+      if (isComSide(side)) updateComComment('drop');
+      postMoveProcess(r, c);
+    }
+
+    function postMoveProcess(r, c) {
+      // ギミックマスの効果判定（スキル発動による仮想座標(4,4)呼び出し時、実際に駒が無ければ判定しない）
+      if (isGimmickMode && cellEffects[r][c] !== EFFECT_TYPES.NONE && board[r][c]) {
+        const eff = cellEffects[r][c];
+        if (eff === EFFECT_TYPES.TRAP) {
+          // 反則防止: 玉を永続的に動けなくする事態を避けるため、玉は罠で麻痺しない
+          if (board[r][c].type !== 'OU') {
+            board[r][c].frozen = true;
+            log(`【罠発動】${r + 1}行${c + 1}列の罠により、駒が麻痺しました！`);
+            playTileEffect(r, c, 'trap', '罠作動！', '#8854d0');
+            updateComComment('trap');
+          } else {
+            log(`【罠発動】${r + 1}行${c + 1}列の罠が発動しましたが、玉は麻痺しません。`);
+          }
+        } else if (eff === EFFECT_TYPES.HEAL) {
+          addGauge(currentTurn, 30);
+          log(`【輝き発動】スキルゲージが +30pt 増加！`);
+          playTileEffect(r, c, 'heal', 'ゲージ回復！', '#00b894');
+          updateComComment('heal');
+        } else if (eff === EFFECT_TYPES.WARP) {
+          const movingPiece = board[r][c];
+          let warpTargets = [];
+          for (let tr = 0; tr < BOARD_SIZE; tr++) {
+            for (let tc = 0; tc < BOARD_SIZE; tc++) {
+              if (cellEffects[tr][tc] === EFFECT_TYPES.WARP && (tr !== r || tc !== c) && !board[tr][tc]) {
+                // 反則防止①: 行き所のない駒（歩・香が最奥段、桂馬が最奥2段）へはワープしない
+                if (isStuckSquareForPiece(movingPiece.type, movingPiece.side, tr)) continue;
+
+                // 反則防止②: 歩がワープすることで二歩になる場合は除外
+                if (movingPiece.type === 'FU') {
+                  let hasPawnInCol = false;
+                  for (let rr = 0; rr < BOARD_SIZE; rr++) {
+                    if (rr === r && tc === c) continue; // 移動元は除く
+                    const other = board[rr][tc];
+                    if (other && other.side === movingPiece.side && other.type === 'FU' && !(rr === r && tc === c)) {
+                      hasPawnInCol = true;
+                      break;
+                    }
+                  }
+                  if (hasPawnInCol) continue;
+                }
+
+                // 反則防止③: ワープの結果、自玉が王手にさらされる場合は除外
+                let simB = JSON.parse(JSON.stringify(board));
+                simB[tr][tc] = simB[r][c];
+                simB[r][c] = null;
+                if (isCheck(movingPiece.side, simB)) continue;
+
+                warpTargets.push({ r: tr, c: tc });
+              }
+            }
+          }
+          if (warpTargets.length > 0) {
+            const dest = warpTargets[Math.floor(Math.random() * warpTargets.length)];
+            board[dest.r][dest.c] = board[r][c];
+            board[r][c] = null;
+            log(`【渦発動】${r + 1}行${c + 1}列から ${dest.r + 1}行${dest.c + 1}列へワープ！`);
+            playTileEffect(dest.r, dest.c, 'warp', 'ワープ！', '#0984e3');
+            updateComComment('warp');
+          } else {
+            log(`【渦発動】ワープ先が安全に存在しないため、発動が見送られました。`);
+          }
+        }
+      }
+
+      // 神速スキル（連続行動）の処理
+      if (swiftStepsLeft > 0) {
+        swiftStepsLeft--;
+        if (swiftStepsLeft > 0) {
+          log(`【神速】連続行動可能！もう一度駒を動かせます。`);
+          renderBoard();
+          renderHands();
+          updateGaugeUI();
+          updateMarketUI();
+          if (isComTurn()) setTimeout(makeComMove, 600);
+          return;
+        }
+      }
+
+      // ターン終了共通処理
+      decaySgValue(); // ④ SG価値の自然減衰・復元
+      turnsCount++;
+      
+      if (weatherTurnsRemaining > 0) {
+        weatherTurnsRemaining--;
+        if (weatherTurnsRemaining === 0) {
+          currentWeather = WEATHER_LIST[0]; // 晴天に戻る
+          log("天候が【晴天】に戻りました。");
+        }
+      }
+
+      if (isGimmickMode) {
+        triggerWeatherOrEvent();
+        processLightningCycle();
+      }
+
+      // クールダウン経過
+      if (cooldowns[currentTurn] > 0) cooldowns[currentTurn]--;
+
+      // COMのコメント: 直前に指したのが自分か相手か判定し、優勢・劣勢のコメントを出す
+      const moverSide = currentTurn; // まだ手番交代前（＝直前に指した側）
+
+      // 手番の変更
+      currentTurn = (currentTurn === 'sente') ? 'gote' : 'sente';
+      updateMarketState();
+
+      renderBoard();
+      renderHands();
+      updateGaugeUI();
+      updateMarketUI();
+
+      const nowInCheck = isCheck(currentTurn, board);
+      if (nowInCheck) {
+        log(`【王手】${currentTurn === 'sente' ? '▲ 先手' : '△ 後手'}に王手がかかっています！`);
+        // 連続王手のカウント（千日手時の反則判定用）
+        if (checkStreakSide === moverSide) {
+          checkStreakCount++;
+        } else {
+          checkStreakSide = moverSide;
+          checkStreakCount = 1;
+        }
+        if (isComSide(moverSide)) updateComComment('check_given');
+        if (isComSide(currentTurn)) updateComComment('check_received');
+      } else {
+        checkStreakSide = null;
+        checkStreakCount = 0;
+      }
+
+      // 反則/終局チェック①: 詰み・ステイルメイト（合法手が1つも無い）の検出
+      if (!hasAnyLegalMove(currentTurn, board, hands)) {
+        if (nowInCheck) {
+          log(`【詰み】${currentTurn === 'sente' ? '▲ 先手' : '△ 後手'}に合法手がなく、詰みです。`);
+        } else {
+          log(`【ステイルメイト】${currentTurn === 'sente' ? '▲ 先手' : '△ 後手'}が指せる手がありません。`);
+        }
+        endGame(moverSide);
+        return;
+      }
+
+      // 反則/終局チェック②: 千日手（同一局面4回）の判定
+      const posKey = hashPosition();
+      positionHistory[posKey] = (positionHistory[posKey] || 0) + 1;
+      if (positionHistory[posKey] >= 4) {
+        if (checkStreakSide && checkStreakCount >= 4) {
+          // 連続王手の千日手は、王手をかけ続けた側の反則負け
+          const loser = checkStreakSide;
+          const winner = loser === 'sente' ? 'gote' : 'sente';
+          log(`【反則】連続王手の千日手のため、${loser === 'sente' ? '▲ 先手' : '△ 後手'}の反則負けです。`);
+          endGame(winner, 'perpetual_check');
+        } else {
+          log(`【千日手】同一局面が4回出現したため、この対局は引き分けです。`);
+          endGame(null, 'sennichite');
+        }
+        return;
+      }
+
+      // COMのコメント: 形勢に応じたひとことコメント
+      if (isComSide(currentTurn === 'sente' ? 'gote' : 'sente')) {
+        // 直近で指したのがCOMなら、そのCOMから見た形勢コメントを出す
+      }
+      maybeCommentOnPosition(moverSide);
+
+      if (isComTurn() && !isGameOver) {
+        setTimeout(makeComMove, 600);
+      }
+    }
+
+    function isComTurn() {
+      if (gameMode === 'auto') return true;
+      if (gameMode === 'com') {
+        return (playerSide === 'sente' && currentTurn === 'gote') || (playerSide === 'gote' && currentTurn === 'sente');
+      }
+      return false;
+    }
+
+    /* 指定した側がCOM操作であるかを判定する（対局モードに応じて汎用的に使用） */
+    function isComSide(side) {
+      if (gameMode === 'auto') return true;
+      if (gameMode === 'com') return side !== playerSide;
+      return false;
+    }
+
+    /* 直近の指し手後の形勢を評価し、COMのひとことコメントを出す（COM側の手番後のみ） */
+    function maybeCommentOnPosition(moverSide) {
+      if (!isComSide(moverSide) || isGameOver) return;
+      if (Math.random() > 0.35) return; // 毎回は喋らせすぎない
+      try {
+        const score = nnueEngine.evaluate(board, hands, moverSide, false);
+        if (score > 500) updateComComment('advantage');
+        else if (score < -500) updateComComment('disadvantage');
+      } catch (e) { /* 評価失敗時は何もしない */ }
+    }
+
+    /* --- スキル発動処理 --- */
+    function useSkill(type, side) {
+      if (isGameOver || isAnimating) return;
+      const check = canUseSkill(side, type, type === 'swift' ? 30 : (type === 'resurrect' ? 50 : (type === 'meteor' ? 70 : 60)));
+      if (!check.can) return;
+
+      if (type === 'swift') {
+        gauges[side] -= 30;
+        swiftStepsLeft = 2;
+        cooldowns[side] = SKILL_COOLDOWN_TURNS;
+        lastSkillUser = side; lastSkillTurn = turnsCount;
+        playSkillCutin("神速", side);
+        log(`【スキル】${side === 'sente' ? '▲' : '△'} が【神速】を発動！2回連続行動を得ました！`);
+        if (isComSide(side)) updateComComment('skill_swift');
+      } else if (type === 'resurrect') {
+        gauges[side] -= 50;
+        cooldowns[side] = SKILL_COOLDOWN_TURNS;
+        lastSkillUser = side; lastSkillTurn = turnsCount;
+        // 召喚で出現する駒は歩・飛車・角行・王以外に限定
+        const SUMMONABLE_TYPES = ['KY', 'KE', 'GI', 'KI'];
+        const summonedType = SUMMONABLE_TYPES[Math.floor(Math.random() * SUMMONABLE_TYPES.length)];
+        hands[side][summonedType] = (hands[side][summonedType] || 0) + 1;
+        triggerSummonEffect(side, summonedType);
+        playSkillCutin("召喚", side);
+        log(`【スキル】${side === 'sente' ? '▲' : '△'} が【召喚】を発動！持ち駒に『${PIECE_TYPES[summonedType].name}』が加わりました！`);
+        if (isComSide(side)) updateComComment('skill_resurrect');
+        // 召喚専用エフェクト表示のため一度描画してから、駒追加をもってターンを終了する
+        updateGaugeUI();
+        renderHands();
+        renderBoard();
+        postMoveProcess(4, 4);
+        return;
+      } else if (type === 'meteor') {
+        activeSkillMode = 'meteor';
+        validMoves = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (board[r][c] && board[r][c].side !== side && board[r][c].type !== 'OU') {
+              validMoves.push({ r, c });
+            }
+          }
+        }
+        log(`【天罰】破壊する相手の駒を選択してください。`);
+        renderBoard();
+        return;
+      } else if (type === 'steal') {
+        const opp = side === 'sente' ? 'gote' : 'sente';
+        const oppPieces = Object.keys(hands[opp]).filter(k => hands[opp][k] > 0);
+        if (oppPieces.length > 0) {
+          gauges[side] -= 60;
+          cooldowns[side] = SKILL_COOLDOWN_TURNS;
+          lastSkillUser = side; lastSkillTurn = turnsCount;
+          const stolenType = oppPieces[Math.floor(Math.random() * oppPieces.length)];
+          hands[opp][stolenType]--;
+          hands[side][stolenType] = (hands[side][stolenType] || 0) + 1;
+          playSkillCutin("略奪", side);
+          log(`【スキル】${side === 'sente' ? '▲' : '△'} が【略奪】を発動！相手の【${PIECE_TYPES[stolenType].name}】を奪いました！`);
+          if (isComSide(side)) updateComComment('skill_steal');
+        }
+      }
+
+      updateGaugeUI();
+      renderHands();
+      renderBoard();
+    }
+
+    function executeMeteorSkill(r, c) {
+      const side = currentTurn;
+      gauges[side] -= 70;
+      cooldowns[side] = SKILL_COOLDOWN_TURNS;
+      lastSkillUser = side; lastSkillTurn = turnsCount;
+      const targetP = board[r][c];
+      board[r][c] = null;
+      destroyedPieces.push({ id: nextDestroyedId++, type: targetP.type, originalSide: targetP.side });
+      playSkillCutin("天罰", side);
+      log(`【スキル】${side === 'sente' ? '▲' : '△'} の【天罰】により ${r + 1}行${c + 1}列の【${PIECE_TYPES[targetP.type].name}】が破壊されました！`);
+      if (isComSide(side)) updateComComment('skill_meteor');
+      playTileEffect(r, c, 'trap', '天罰直撃！', '#ff4757');
+      activeSkillMode = null;
+      updateGaugeUI();
+      updateMarketUI(); // 消滅した駒を瞬時に闇市へ反映
+    }
+
+    /* --- COM 思考 AI --- */
+    /* ============================================================
+       COM思考エンジン: αβ法によるミニマックス探索
+       ============================================================ */
+    const MATE_SCORE = 100000;
+
+    // 難易度ごとの探索深さ（手数）と、深い階層での分岐数上限（性能担保のため）
+    const COM_SEARCH_CONFIG = {
+      weak:   { depth: 0, branchCap: null },   // ランダム（探索なし）
+      easy:   { depth: 1, branchCap: null },   // 1手読み（駒得優先）
+      normal: { depth: 3, branchCap: 14 },     // 3手読み（相手の応手まで考慮）
+      hard: {
+             depth: 6,              // 上級は6手読みに強化
+             branchCap: 5,          // 深さ優先で分岐は厳選
+             quiescence: "limited", // 王手・大駒交換のみ
+             aspiration: true,
+             killerMoves: "light",  // ソートなし
+             historyHeuristic: "light",
+             transposition: "shallow", // 深さ3以上だけ保存
+            }
+
+    };
+
+    function cloneBoardHands(simBoard, simHands) {
+      return {
+        board: simBoard.map(row => row.map(cell => cell ? { ...cell } : null)),
+        hands: { sente: { ...simHands.sente }, gote: { ...simHands.gote } }
+      };
+    }
+
+    function generateAllActions(side, simBoard, simHands) {
+      let actions = [];
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const p = simBoard[r][c];
+          if (p && p.side === side && !p.frozen) {
+            const moves = getLegalMoves(r, c, simBoard);
+            moves.forEach(m => actions.push({ type: 'move', from: { r, c }, to: { r: m.r, c: m.c } }));
+          }
+        }
+      }
+      Object.keys(simHands[side]).forEach(type => {
+        if (simHands[side][type] > 0) {
+          const drops = getLegalDropMoves(side, type, simBoard, simHands);
+          drops.forEach(d => actions.push({ type: 'drop', pieceType: type, to: { r: d.r, c: d.c } }));
+        }
+      });
+      return actions;
+    }
+
+    /* 探索中は常に成れる時は成る（強い指し手の近似として簡略化） */
+    function applyActionToSim(action, simBoard, simHands, side) {
+      if (action.type === 'move') {
+        const piece = simBoard[action.from.r][action.from.c];
+        const captured = simBoard[action.to.r][action.to.c];
+        if (captured) {
+          const rawType = PIECE_TYPES[captured.type].base || captured.type;
+          simHands[side][rawType] = (simHands[side][rawType] || 0) + 1;
+        }
+        simBoard[action.to.r][action.to.c] = piece;
+        simBoard[action.from.r][action.from.c] = null;
+
+        const canPromote = PIECE_TYPES[piece.type].prom !== null;
+        if (canPromote) {
+          const isEnemyZone = (side === 'sente') ? (action.to.r <= 2 || action.from.r <= 2) : (action.to.r >= 6 || action.from.r >= 6);
+          const mustPromote = isStuckSquareForPiece(piece.type, side, action.to.r);
+          if (isEnemyZone && (mustPromote || true)) {
+            piece.type = PIECE_TYPES[piece.type].prom;
+          }
+        }
+        return { captured, wasKingCapture: !!(captured && captured.type === 'OU') };
+      } else {
+        simHands[side][action.pieceType]--;
+        simBoard[action.to.r][action.to.c] = { type: action.pieceType, side: side, frozen: false };
+        return { captured: null, wasKingCapture: false };
+      }
+    }
+
+    /* 手の並び替え：駒を取る手や中央志向の手を優先し、αβ枝刈りの効率を高める */
+    function orderActions(actions, simBoard, side) {
+      // 中級以上は現在の戦略に応じて手の評価にバイアスをかける
+      const useStrategy = (comLevel === 'normal' || comLevel === 'hard');
+      const strategy = useStrategy ? (comStrategies[side] || 'balanced') : 'balanced';
+      let ownKing = null, oppKing = null;
+      if (strategy === 'aggressive') oppKing = findKingPosition(simBoard, side === 'sente' ? 'gote' : 'sente');
+      if (strategy === 'defensive') ownKing = findKingPosition(simBoard, side);
+      return actions
+        .map(a => {
+          let score = 0;
+          if (a.type === 'move') {
+            const target = simBoard[a.to.r][a.to.c];
+            if (target) score += PIECE_TYPES[target.type].val * 10;
+            score += (4 - Math.abs(4 - a.to.c)) + (4 - Math.abs(4 - a.to.r));
+          }
+          if (strategy === 'aggressive' && oppKing) {
+            score += Math.max(0, 10 - (Math.abs(a.to.r - oppKing.r) + Math.abs(a.to.c - oppKing.c))) * 2.5; // 敵玉に近づく手を優先
+          } else if (strategy === 'defensive' && ownKing) {
+            score += Math.max(0, 8 - (Math.abs(a.to.r - ownKing.r) + Math.abs(a.to.c - ownKing.c))) * 2.0; // 自玉周辺の守備を優先
+          } else if (strategy === 'economy' && isGimmickMode && cellEffects[a.to.r] && cellEffects[a.to.r][a.to.c] === EFFECT_TYPES.HEAL) {
+            score += 25; // ゲージ回復マスを優先
+          }
+          return { a, score: score + Math.random() * 0.05 };
+        })
+        .sort((x, y) => y.score - x.score)
+        .map(x => x.a);
+    }
+
+    function minimaxSearch(simBoard, simHands, turnSide, rootSide, depth, alpha, beta, branchCap) {
+      const actions = generateAllActions(turnSide, simBoard, simHands);
+
+      if (actions.length === 0) {
+        // turnSideに合法手が無い＝詰み（またはステイルメイト）。手数が短いほど高評価にする。
+        const loserIsRoot = (turnSide === rootSide);
+        return loserIsRoot ? (-MATE_SCORE - depth) : (MATE_SCORE + depth);
+      }
+
+      if (depth <= 0) {
+        return nnueEngine.evaluate(simBoard, simHands, rootSide, false);
+      }
+
+      let ordered = orderActions(actions, simBoard, turnSide);
+      if (branchCap && ordered.length > branchCap) {
+        ordered = ordered.slice(0, branchCap);
+      }
+
+      const isMaximizing = (turnSide === rootSide);
+      let best = isMaximizing ? -Infinity : Infinity;
+
+      for (let i = 0; i < ordered.length; i++) {
+        const cloned = cloneBoardHands(simBoard, simHands);
+        const result = applyActionToSim(ordered[i], cloned.board, cloned.hands, turnSide);
+
+        let score;
+        if (result.wasKingCapture) {
+          score = isMaximizing ? (MATE_SCORE + depth) : (-MATE_SCORE - depth);
+        } else {
+          const nextTurn = turnSide === 'sente' ? 'gote' : 'sente';
+          score = minimaxSearch(cloned.board, cloned.hands, nextTurn, rootSide, depth - 1, alpha, beta, branchCap);
+        }
+
+        if (isMaximizing) {
+          if (score > best) best = score;
+          if (best > alpha) alpha = best;
+        } else {
+          if (score < best) best = score;
+          if (best < beta) beta = best;
+        }
+        if (alpha >= beta) break; // αβ枝刈り
+      }
+
+      return best;
+    }
+
+    /* --- COM戦略システム（中級以上で局面に応じ自動選択） --- */
+    const COM_STRATEGIES = {
+      aggressive: { name: '攻め（敵玉へ猛攻）',   skillMult: { swift: 1.3, resurrect: 0.7, meteor: 1.4, steal: 1.0 }, buyMult: 1.2 },
+      defensive:  { name: '守り（自玉の安全重視）', skillMult: { swift: 0.8, resurrect: 1.5, meteor: 0.8, steal: 0.8 }, buyMult: 0.8 },
+      economy:    { name: '蓄財（闇市投資重視）',   skillMult: { swift: 0.9, resurrect: 1.2, meteor: 0.9, steal: 1.5 }, buyMult: 1.8 },
+      balanced:   { name: 'バランス（攻守兼備）',   skillMult: { swift: 1.0, resurrect: 1.0, meteor: 1.0, steal: 1.0 }, buyMult: 1.0 }
+    };
+
+    function findKingPosition(simBoard, side) {
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const p = simBoard[r] ? simBoard[r][c] : null;
+          if (p && p.type === 'OU' && p.side === side) return { r, c };
+        }
+      }
+      return null;
+    }
+
+    /* 中級(normal)以上のCOMは、形勢・所持SG・王手の有無から戦略を自動判断する */
+    function updateComStrategy(side) {
+      if (comLevel !== 'normal' && comLevel !== 'hard') {
+        comStrategies[side] = 'balanced';
+        return;
+      }
+      let score = 0;
+      try { score = nnueEngine.evaluate(board, hands, side, false); } catch (e) { /* ignore */ }
+
+      let next;
+      if (isCheck(side, board) || score < -600) {
+        next = 'defensive';   // 王手中・大幅劣勢 → 守備重視
+      } else if (score > 500) {
+        next = 'aggressive';  // 優勢 → 畳み掛ける
+      } else if (sg[side] >= 150) {
+        next = 'economy';     // SG潤沢 → 闇市購入・略奪重視
+      } else {
+        next = 'balanced';
+      }
+
+      if (comStrategies[side] !== next) {
+        comStrategies[side] = next;
+        const sName = COM_STRATEGIES[next].name;
+        log(`【COM戦略】${side === 'sente' ? '▲' : '△'} COMが戦略を【${sName}】に切り替えました。`);
+        const box = document.getElementById('comCommentText');
+        if (box) box.innerText = `「ふむ…ここは【${sName}】でいくか。」`;
+      }
+    }
+
+    function getComStrategySkillMult(side, skillType) {
+      if (comLevel !== 'normal' && comLevel !== 'hard') return 1;
+      const strat = COM_STRATEGIES[comStrategies[side]] || COM_STRATEGIES.balanced;
+      return (strat.skillMult && strat.skillMult[skillType]) || 1;
+    }
+
+    /* --- COM思考中インジケータ --- */
+    let comThinkingEl = null;
+
+    function ensureComThinkingUI() {
+      if (comThinkingEl) return;
+      const style = document.createElement('style');
+      style.textContent = `
+        #comThinkingIndicator {
+          position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+          z-index: 4000; display: none; align-items: center; gap: 8px;
+          background: rgba(20, 20, 32, 0.92); border: 1px solid var(--accent-gold);
+          border-radius: 999px; padding: 8px 18px; pointer-events: none;
+          box-shadow: 0 0 18px rgba(255, 215, 0, 0.35);
+          font-size: 0.9rem; color: var(--accent-gold); white-space: nowrap;
+        }
+        .com-think-dots::after { content: ''; animation: comThinkDots 1s steps(4, end) infinite; }
+        @keyframes comThinkDots {
+          0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      comThinkingEl = document.createElement('div');
+      comThinkingEl.id = 'comThinkingIndicator';
+      comThinkingEl.innerHTML = `<span>🧠</span><span id="comThinkingText">COM思考中</span><span class="com-think-dots"></span>`;
+      document.body.appendChild(comThinkingEl);
+    }
+
+    function showComThinking() {
+      ensureComThinkingUI();
+      const txt = document.getElementById('comThinkingText');
+      if (txt) txt.innerText = 'COM思考中';
+      comThinkingEl.style.display = 'flex';
+    }
+
+    function setComThinkingText(text) {
+      if (!comThinkingEl) return;
+      const txt = document.getElementById('comThinkingText');
+      if (txt) txt.innerText = text;
+    }
+
+    function hideComThinking() {
+      if (comThinkingEl) comThinkingEl.style.display = 'none';
+    }
+
+    /* --- 対局設定のローカルストレージ保存/復元 --- */
+    const SETTINGS_STORAGE_KEY = 'gimmick_shogi_settings';
+
+    function saveSettingsToStorage() {
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+          gameMode, playerSide, comLevel, enableAnimation, isGimmickMode
+        }));
+        log("対局設定を保存しました。（次回起動時に自動で復元されます）");
+      } catch (e) {
+        console.error("設定の保存に失敗しました:", e);
+      }
+    }
+
+    function loadSettingsFromStorage() {
+      try {
+        const data = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!data) return;
+        const s = JSON.parse(data);
+        if (s.gameMode) gameMode = s.gameMode;
+        if (s.playerSide) playerSide = s.playerSide;
+        if (s.comLevel) comLevel = s.comLevel;
+        enableAnimation = (s.enableAnimation !== false);
+        if (typeof s.isGimmickMode === 'boolean') isGimmickMode = s.isGimmickMode;
+      } catch (e) {
+        console.error("設定の読み込みに失敗しました:", e);
+      }
+    }
+
+    function applySettingsToUI() {
+      const modeEl = document.getElementById('settingGameMode');
+      if (!modeEl) return;
+      modeEl.value = gameMode;
+      document.getElementById('settingPlayerSide').value = playerSide;
+      document.getElementById('settingComLevel').value = comLevel;
+      document.getElementById('settingAnimation').value = enableAnimation ? 'on' : 'off';
+      toggleComOptions();
+      setGimmickMode(isGimmickMode);
+    }
+
+    /* ルート局面での最善手選択。即詰み（1手詰み）を最優先で探索する。 */
+    function findBestComAction(side, depth, branchCap) {
+      const actions = generateAllActions(side, board, hands);
+      if (actions.length === 0) return null;
+
+      const opp = side === 'sente' ? 'gote' : 'sente';
+
+      // 最優先: 玉を取れる手、または一手詰みとなる手を発見したら即実行
+      for (let i = 0; i < actions.length; i++) {
+        const cloned = cloneBoardHands(board, hands);
+        const result = applyActionToSim(actions[i], cloned.board, cloned.hands, side);
+        if (result.wasKingCapture) return { action: actions[i], board: cloned.board, hands: cloned.hands };
+        if (isCheck(opp, cloned.board) && !hasAnyLegalMove(opp, cloned.board, cloned.hands)) {
+          return { action: actions[i], board: cloned.board, hands: cloned.hands };
+        }
+      }
+
+      let bestScore = -Infinity;
+      let candidates = [];
+      const ordered = orderActions(actions, board, side);
+
+      ordered.forEach(action => {
+        const cloned = cloneBoardHands(board, hands);
+        const result = applyActionToSim(action, cloned.board, cloned.hands, side);
+
+        let score;
+        if (result.wasKingCapture) {
+          score = MATE_SCORE * 2;
+        } else {
+          score = minimaxSearch(cloned.board, cloned.hands, opp, side, depth - 1, -Infinity, Infinity, branchCap);
+        }
+
+        const tieEps = (comLevel === 'hard') ? 0.001 : 0.5; // 上級は同値の手に流されず最善手を確実に選ぶ
+        if (score > bestScore + tieEps) {
+          bestScore = score;
+          candidates = [{ action, board: cloned.board, hands: cloned.hands }];
+        } else if (Math.abs(score - bestScore) <= tieEps) {
+          candidates.push({ action, board: cloned.board, hands: cloned.hands });
+        }
+      });
+
+      if (candidates.length === 0) {
+        const cloned = cloneBoardHands(board, hands);
+        applyActionToSim(ordered[0], cloned.board, cloned.hands, side);
+        candidates = [{ action: ordered[0], board: cloned.board, hands: cloned.hands }];
+      }
+
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    /* COMによる闇市での購入判断（高難易度ほど積極的に投資する） */
+    function considerComMarketPurchase(side) {
+      if (!isGimmickMode || comLevel === 'weak') return;
+      let buyChance = comLevel === 'hard' ? 0.6 : (comLevel === 'normal' ? 0.35 : 0.15);
+      if (comLevel === 'normal' || comLevel === 'hard') {
+        const strat = COM_STRATEGIES[comStrategies[side]] || COM_STRATEGIES.balanced;
+        buyChance = Math.min(0.95, buyChance * (strat.buyMult || 1)); // 戦略（蓄財など）で購入積極性が変化
+      }
+      if (Math.random() > buyChance) return;
+
+      const priorityTypes = ['HI', 'KA', 'KI', 'GI', 'KE', 'KY', 'FU'];
+      for (let i = 0; i < priorityTypes.length; i++) {
+        const type = priorityTypes[i];
+        const isStock = (type === 'FU' || type === 'KY') && marketStock[type] > 0;
+        const destroyedItem = !isStock ? destroyedPieces.find(p => (PIECE_TYPES[p.type].base || p.type) === type) : null;
+        if (!isStock && !destroyedItem) continue;
+
+        const price = destroyedItem ? getDestroyedPiecePrice(destroyedItem.type) : getPiecePrice(type);
+        if (sg[side] >= price) {
+          buyMarketPiece(type, isStock, destroyedItem ? destroyedItem.id : null);
+          return;
+        }
+      }
+    }
+
+    function makeComMove() {
+      if (isGameOver) return;
+      showComThinking(); // 「COM思考中…」を先に表示し、描画後に重い探索を実行する
+      setTimeout(() => {
+        try {
+          executeComMove();
+        } finally {
+          hideComThinking();
+        }
+      }, 120);
+    }
+
+    function executeComMove() {
+      if (isGameOver) return;
+
+      const side = currentTurn;
+      const opp = side === 'sente' ? 'gote' : 'sente';
+      updateComStrategy(side); // 中級以上: 局面に応じて戦略を自動選択
+      if (comLevel === 'normal' || comLevel === 'hard') {
+        setComThinkingText(`COM思考中（戦略: ${(COM_STRATEGIES[comStrategies[side]] || COM_STRATEGIES.balanced).name}）`);
+      }
+
+      // 1. スキル使用の判定
+      if (isGimmickMode) {
+        if (canUseSkill(side, 'meteor', 70).can && Math.random() < calculateSpecificComSkillProbability(side, 'meteor') / 100 * getComStrategySkillMult(side, 'meteor')) {
+          let targets = [];
+          for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+              if (board[r][c] && board[r][c].side === opp && board[r][c].type !== 'OU') {
+                targets.push({ r, c, val: PIECE_TYPES[board[r][c].type].val });
+              }
+            }
+          }
+          if (targets.length > 0) {
+            targets.sort((a, b) => b.val - a.val);
+            executeMeteorSkill(targets[0].r, targets[0].c);
+            postMoveProcess(targets[0].r, targets[0].c);
+            return;
+          }
+        }
+
+        if (canUseSkill(side, 'steal', 60).can && Math.random() < calculateSpecificComSkillProbability(side, 'steal') / 100 * getComStrategySkillMult(side, 'steal')) {
+          useSkill('steal', side);
+          postMoveProcess(4, 4);
+          return;
+        }
+
+        if (canUseSkill(side, 'resurrect', 50).can && Math.random() < calculateSpecificComSkillProbability(side, 'resurrect') / 100 * getComStrategySkillMult(side, 'resurrect')) {
+          // 召喚は発動した時点でターンが終了するため、これ以上の行動判断は行わない
+          useSkill('resurrect', side);
+          return;
+        }
+
+        if (canUseSkill(side, 'swift', 30).can && Math.random() < calculateSpecificComSkillProbability(side, 'swift') / 100 * getComStrategySkillMult(side, 'swift')) {
+          // 神速はターンを終了させず、この後の指し手選択にそのまま続けて2回目の行動につなげる
+          useSkill('swift', side);
+        }
+
+        // 1.5 闇市での駒購入判断
+        considerComMarketPurchase(side);
+      }
+
+      // 2. 難易度に応じた探索で最善手を選出
+      const config = COM_SEARCH_CONFIG[comLevel] || COM_SEARCH_CONFIG.normal;
+      let selected = null;
+
+      if (comLevel === 'weak') {
+        const actions = generateAllActions(side, board, hands);
+        if (actions.length === 0) {
+          endGame(opp);
+          return;
+        }
+        selected = { action: actions[Math.floor(Math.random() * actions.length)] };
+      } else {
+        selected = findBestComAction(side, config.depth, config.branchCap);
+        if (!selected) {
+          endGame(opp);
+          return;
+        }
+        // 実際に指した局面のみを学習データとして記録する
+        if (selected.board && selected.hands) {
+          try { nnueEngine.evaluate(selected.board, selected.hands, side, true); } catch (e) { /* ignore */ }
+        }
+      }
+
+      // 3. 指し手の実行
+      const selectedMove = selected.action;
+      if (selectedMove.type === 'move') {
+        movePiece(selectedMove.from.r, selectedMove.from.c, selectedMove.to.r, selectedMove.to.c);
+      } else {
+        dropPiece(side, selectedMove.pieceType, selectedMove.to.r, selectedMove.to.c);
+      }
+    }
+
+
+    function endGame(winner, reason) {
+      isGameOver = true;
+
+      // 引き分け（千日手）の場合は学習をスキップ
+      if (winner) nnueEngine.learnFromGame(winner);
+
+      const overlay = document.getElementById('gameoverOverlay');
+      const sub = document.getElementById('gameoverSub');
+      const titleEl = document.getElementById('gameoverTitle');
+
+      let winnerText;
+      if (!winner) {
+        winnerText = '引き分け（千日手）';
+        if (titleEl) titleEl.innerText = '持 将 棋';
+      } else {
+        winnerText = winner === 'sente' ? '▲ 先手の勝利！' : '△ 後手の勝利！';
+        if (reason === 'perpetual_check') {
+          winnerText += '（連続王手の千日手による反則勝ち）';
+        }
+        if (titleEl) titleEl.innerText = '勝 負 決 着';
+      }
+
+      sub.innerText = winnerText;
+      overlay.style.display = 'flex';
+
+      document.getElementById('gameoverBarText').innerText = `【対局終了】 ${winnerText}`;
+      document.getElementById('gameoverBar').style.display = 'flex';
+      log(`【対局決着】${winnerText}`);
+
+      // COMの勝敗コメント
+      if (winner && gameMode === 'com') {
+        if (isComSide(winner)) updateComComment('victory');
+        else updateComComment('defeat');
+      }
+    }
+
+    function closeGameoverOverlay() {
+      document.getElementById('gameoverOverlay').style.display = 'none';
+    }
+
+    function playSkillCutin(skillName, side) {
+      if (!enableAnimation) return;
+      const overlay = document.createElement('div');
+      overlay.className = `skill-cutin-overlay color-${side === playerSide ? 'user' : 'com'}`;
+
+      const userText = document.createElement('div');
+      userText.className = 'skill-cutin-user';
+      userText.innerText = side === 'sente' ? '▲ 先手の奥義' : '△ 後手の奥義';
+
+      const titleText = document.createElement('div');
+      titleText.className = 'skill-cutin-title';
+      titleText.innerText = skillName;
+
+      overlay.appendChild(userText);
+      overlay.appendChild(titleText);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => overlay.remove(), 1000);
+    }
+
+    /* 闇市で消滅した駒を買い戻した際の専用カットイン（スキル発動ではないため文言を変えて表示） */
+    function playMarketBuybackCutin(side, pieceType) {
+      if (!enableAnimation) return;
+      const overlay = document.createElement('div');
+      overlay.className = `skill-cutin-overlay color-${side === playerSide ? 'user' : 'com'}`;
+
+      const userText = document.createElement('div');
+      userText.className = 'skill-cutin-user';
+      userText.innerText = side === 'sente' ? '▲ 先手が闇市で取引' : '△ 後手が闇市で取引';
+
+      const titleText = document.createElement('div');
+      titleText.className = 'skill-cutin-title';
+      titleText.innerText = '買い戻し成立';
+
+      const subText = document.createElement('div');
+      subText.className = 'skill-cutin-sub';
+      subText.innerText = `『${PIECE_TYPES[pieceType].name}』が手元に戻った！`;
+
+      overlay.appendChild(userText);
+      overlay.appendChild(titleText);
+      overlay.appendChild(subText);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => overlay.remove(), 1000);
+    }
+
+    function playTileEffect(r, c, type, text, color) {
+      if (!enableAnimation) return;
+      const cell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+      if (!cell) return;
+
+      const effectEl = document.createElement('div');
+      effectEl.className = 'tile-effect-overlay';
+
+      const textEl = document.createElement('div');
+      textEl.className = 'tile-effect-text';
+      textEl.style.color = color;
+      textEl.innerText = text;
+
+      const ringEl = document.createElement('div');
+      ringEl.className = 'tile-effect-ring';
+      ringEl.style.border = `2px solid ${color}`;
+
+      effectEl.appendChild(textEl);
+      effectEl.appendChild(ringEl);
+      cell.appendChild(effectEl);
+
+      setTimeout(() => effectEl.remove(), 900);
+    }
+
+    /* COMコメント一覧（全30種類）。状況ごとに複数パターンを持たせランダムに表示する。 */
+    const COM_COMMENTS = {
+      start:            ["「さあ、尋常にお尋ね勝負！」", "「油断はいかんぞ…行くぞ！」", "「一局、よろしく頼む。」"],
+      capture:          ["「ふむ、なかなかやるな！」", "「その駒はいただくぞ！」", "「良い駒が手に入った。」"],
+      captured:         ["「むっ…やられたか。」", "「くっ、その手があったか…！」", "「まだまだ、これしきで動じんぞ。」"],
+      check_given:      ["「そこだ、王手だ！」", "「玉を追い詰めるぞ！」", "「逃げ場はあるかな？」"],
+      check_received:   ["「な、王手か…！」", "「危ない、これはしのがねば。」", "「落ち着け…対応を考えよう。」"],
+      promote:          ["「駒が成った、これで戦力アップだ！」", "「成り駒の力、見せてもらうぞ。」"],
+      drop:             ["「ここに打っておこう。」", "「この一手、狙いがあるぞ。」"],
+      skill_swift:      ["「【神速】発動！一気に畳み掛ける！」", "「速さこそ我が力！」"],
+      skill_resurrect:  ["「【召喚】だ、援軍を呼び戻す！」", "「歩よ、再び戦場へ！」"],
+      skill_meteor:     ["「【天罰】を受けるがいい！」", "「消え去れ、その駒！」"],
+      skill_steal:      ["「【略奪】、その駒はもらっていくぞ！」", "「いただいておこう。」"],
+      market_buy:       ["「闇市で戦力を補強しておくか。」", "「SGを投資して駒を手に入れた。」"],
+      weather_rain:     ["「大雨か…足元に気をつけねばな。」"],
+      weather_wind:     ["「強風だ、体勢を崩されるなよ。」"],
+      weather_snow:     ["「豪雪…視界が悪くなるな。」"],
+      weather_thunder:  ["「雷か…嫌な予感がするな。」", "「駒を避難させておくべきか。」"],
+      weather_fog:      ["「霧が出てきた、と金の動きが制限されるぞ。」"],
+      weather_sunny:    ["「天候は晴天に戻ったな。」"],
+      lightning_hit:    ["「⚡ 落雷が直撃したか…！」", "「なんという威力だ…！」"],
+      lightning_miss:   ["「⚡ 空振りか、ヒヤヒヤしたぞ。」"],
+      trap:             ["「罠にかかったな…動けまい。」", "「うっ、麻痺してしまった…！」"],
+      heal:             ["「これはありがたい、ゲージが回復する！」"],
+      warp:             ["「渦に飲まれた…！一体どこへ飛ばされるんだ！？」"],
+      frozen:           ["「天候の影響で駒がやる気を失ってしまったか…」"],
+      sg_up:            ["「SGの価値が上がったな、好機かもしれん。」"],
+      sg_down:          ["「SGの価値が下がった…慎重にいこう。」"],
+      advantage:        ["「この局面、悪くない手応えだ。」", "「優勢を維持できているな。」"],
+      disadvantage:     ["「うーむ、これは厳しい局面だ…」", "「劣勢を挽回せねばな。」"],
+      victory:          ["「勝負あり！見事な一局だった。」", "「私の勝ちだ！また対局しよう。」"],
+      defeat:           ["「参った…完敗だ。」", "「見事だ、また挑ませてくれ。」"]
+    };
+
+    function updateComComment(type) {
+      const box = document.getElementById('comCommentText');
+      if (!box) return;
+      const list = COM_COMMENTS[type] || COM_COMMENTS.start;
+      box.innerText = list[Math.floor(Math.random() * list.length)];
+    }
+
+    /* チュートリアル */
+    function startTutorial() {
+      isTutorial = true;
+      tutorialStep = 0;
+      document.getElementById('titleScreen').style.display = 'none';
+      document.getElementById('gameContainer').style.display = 'flex';
+      document.getElementById('tutorialOverlay').style.display = 'block';
+      initGame();
+      showTutorialStep();
+    }
+
+    function showTutorialStep() {
+      const steps = [
+        { title: "超・ギミック将棋へようこそ！", desc: "本ゲームは伝統的な将棋に、スキルゲージ・天候変動・闇市などの要素が加わった新感覚の将棋です。" },
+        { title: "1. 天候とSG価値の変動", desc: "天候が変化するとSG（スキルポイント）の価値も変動します！変化前には予兆も表示されます。" },
+        { title: "2. 闇市で駒を購入", desc: "溜まったSGを使って、闇市から盤面外の駒を購入して持ち駒に追加できます。" },
+        { title: "準備完了！", desc: "さあ、各種ギミックを駆使して勝利を目指しましょう！" }
+      ];
+      const cur = steps[tutorialStep];
+      document.getElementById('tutTitle').innerText = cur.title;
+      document.getElementById('tutDesc').innerText = cur.desc;
+    }
+
+    function nextTutorialStep() {
+      tutorialStep++;
+      if (tutorialStep >= 4) {
+        endTutorial();
+      } else {
+        showTutorialStep();
+      }
+    }
+
+    function endTutorial() {
+      isTutorial = false;
+      document.getElementById('tutorialOverlay').style.display = 'none';
+      returnToTitle();
+    }
+
+    /* 起動時: ローカルストレージに保存済みの対局設定を復元 */
+    loadSettingsFromStorage();
+    try { applySettingsToUI(); } catch (e) { /* 初期表示前でも安全に無視 */ }
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
