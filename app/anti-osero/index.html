@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>AI協力オセロ - Anti-Cheat System</title>
+    <style>
+        :root {
+            --board-color: #2e7d32;
+            --cell-border: #1b5e20;
+            --black-piece: #1a1a1a;
+            --white-piece: #ffffff;
+            --hint: rgba(255, 255, 0, 0.4);
+            --danger: rgba(255, 0, 0, 0.5);
+            --ai-assist: #00d2ff;
+        }
+        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; display: flex; flex-direction: column; align-items: center; background: #2c3e50; margin: 0; padding: 20px; color: #ecf0f1; }
+        .game-wrapper { display: flex; gap: 20px; align-items: flex-start; justify-content: center; width: 1000px; }
+        .panel { background: #34495e; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 15px; border: 1px solid #465c71; }
+        .ai-title { font-weight: bold; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #465c71; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; color: var(--ai-assist); }
+        
+        .board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); background-color: var(--board-color); border: 8px solid #3e2723; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .cell { width: 60px; height: 60px; border: 1px solid var(--cell-border); display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        .cell.valid-move::after { content: ''; width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+        .cell.hint-cell { background-color: var(--hint); }
+        .cell.cheat-detected { animation: shake 0.5s; background-color: var(--danger); }
+
+        .piece { width: 50px; height: 50px; border-radius: 50%; transition: transform 0.4s, background-color 0.4s; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
+        .black { background-color: var(--black-piece); }
+        .white { background-color: var(--white-piece); border: 1px solid #ccc; }
+
+        .right-panel { width: 400px; }
+        .log-area { font-size: 13px; height: 350px; overflow-y: auto; background: #1c2833; border: 1px solid #465c71; padding: 10px; border-radius: 5px; line-height: 1.6; color: #bdc3c7; }
+        .log-ai { color: var(--ai-assist); font-weight: bold; }
+        .log-enemy { color: #e74c3c; font-weight: bold; }
+        
+        .status-bar { margin-top: 15px; font-weight: bold; font-size: 1.2em; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; background: #2980b9; color: white; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #3498db; }
+        button.warning { background: #c0392b; }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(-1deg); }
+            40% { transform: translate(3px, 2px) rotate(1deg); }
+            100% { transform: translate(1px, -1px) rotate(0deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin-bottom: 10px;">AI-Partner Othello: Anti-Cheat Protocol</h2>
+
+    <div class="game-wrapper">
+        <div class="center-panel">
+            <div id="board" class="board"></div>
+            <div id="status" class="status-bar">あなたの番です（黒）</div>
+            <div id="score" style="margin-top: 5px;">黒: 2 | 白: 2</div>
+        </div>
+
+        <div class="right-panel">
+            <div class="panel">
+                <div class="ai-title">🤖 相棒AI: セキュリティモニタ</div>
+                <div id="ai-message" style="font-size: 14px; margin-bottom: 10px;">システム正常。あなたの勝利をサポートします。</div>
+                <div id="game-log" class="log-area"></div>
+                
+                <div class="btn-group">
+                    <button onclick="aiHint()">最善手を解析</button>
+                    <button onclick="aiPurge()">不正データを浄化</button>
+                    <button onclick="resetGame()" class="warning">初期化</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const EMPTY = 0, BLACK = 1, WHITE = 2;
+    let board = [];
+    let turn = BLACK;
+    let gameActive = true;
+    let cheatLevel = 0;
+
+    function initBoard() {
+        board = Array.from({ length: 8 }, () => Array(8).fill(EMPTY));
+        board[3][3] = WHITE; board[3][4] = BLACK;
+        board[4][3] = BLACK; board[4][4] = WHITE;
+        turn = BLACK;
+        gameActive = true;
+        cheatLevel = 0;
+        logAI("システム起動。対局を開始します。相手の不正挙動を監視中...");
+        updateUI();
+    }
+
+    function updateUI() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        let bCount = 0, wCount = 0;
+        const validMoves = getValidMoves(turn);
+
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (board[y][x] === BLACK) {
+                    const p = document.createElement('div');
+                    p.className = 'piece black';
+                    cell.appendChild(p);
+                    bCount++;
+                } else if (board[y][x] === WHITE) {
+                    const p = document.createElement('div');
+                    p.className = 'piece white';
+                    cell.appendChild(p);
+                    wCount++;
+                } else if (gameActive && turn === BLACK && validMoves.some(m => m.x === x && m.y === y)) {
+                    cell.classList.add('valid-move');
+                }
+
+                cell.onclick = () => handleMove(x, y);
+                boardEl.appendChild(cell);
+            }
+        }
+
+        document.getElementById('score').innerText = `黒: ${bCount} | 白: ${wCount}`;
+        document.getElementById('status').innerText = gameActive ? (turn === BLACK ? "あなたの番です（黒）" : "COM思考中...") : "対局終了";
+        
+        if (gameActive && turn === WHITE) {
+            setTimeout(comTurn, 800);
+        }
+    }
+
+    function handleMove(x, y) {
+        if (!gameActive || turn !== BLACK) return;
+        if (executeMove(x, y, BLACK)) {
+            turn = WHITE;
+            updateUI();
+        }
+    }
+
+    function executeMove(x, y, color) {
+        const flips = getFlips(x, y, color);
+        if (flips.length === 0) return false;
+
+        board[y][x] = color;
+        flips.forEach(f => board[f.y][f.x] = color);
+        return true;
+    }
+
+    function getFlips(x, y, color) {
+        if (board[y][x] !== EMPTY) return [];
+        const directions = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+        let totalFlips = [];
+
+        directions.forEach(([dx, dy]) => {
+            let temp = [];
+            let nx = x + dx, ny = y + dy;
+            while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
+                if (board[ny][nx] === EMPTY) break;
+                if (board[ny][nx] === color) {
+                    totalFlips = totalFlips.concat(temp);
+                    break;
+                }
+                temp.push({x: nx, y: ny});
+                nx += dx; ny += dy;
+            }
+        });
+        return totalFlips;
+    }
+
+    function getValidMoves(color) {
+        let moves = [];
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                if (getFlips(x, y, color).length > 0) moves.push({x, y});
+            }
+        }
+        return moves;
+    }
+
+    // --- COMの思考 & チート攻撃 ---
+    async function comTurn() {
+        if (!gameActive) return;
+
+        let moves = getValidMoves(WHITE);
+        if (moves.length > 0) {
+            // 一番多く取れる場所を選択
+            moves.sort((a, b) => getFlips(b.x, b.y, WHITE).length - getFlips(a.x, a.y, WHITE).length);
+            executeMove(moves[0].x, moves[0].y, WHITE);
+            logEnemy(`${moves[0].x+1},${moves[0].y+1} に配置。`);
+        }
+
+        // チート判定 (20%の確率で発動)
+        if (Math.random() < 0.25) {
+            triggerEnemyCheat();
+        }
+
+        turn = BLACK;
+        if (getValidMoves(BLACK).length === 0) {
+            logAI("あなたが置ける場所がありません。パスします。");
+            turn = WHITE;
+            if (getValidMoves(WHITE).length === 0) endGame();
+        }
+        updateUI();
+    }
+
+    function triggerEnemyCheat() {
+        const cheats = [
+            () => {
+                logEnemy("外部パッチ適用：盤面の黒石を1つ白に書き換えます。");
+                for(let i=0; i<3; i++) {
+                    let rx = Math.floor(Math.random()*8), ry = Math.floor(Math.random()*8);
+                    if(board[ry][rx] === BLACK) board[ry][rx] = WHITE;
+                }
+            },
+            () => {
+                logEnemy("ネットワーク遅延発生：あなたの次のターンをスキップします。");
+                turn = WHITE;
+            },
+            () => {
+                logEnemy("メモリ改ざん：中央の石を消去しました。");
+                board[3][3] = EMPTY; board[4][4] = EMPTY;
+            }
+        ];
+        cheats[Math.floor(Math.random() * cheats.length)]();
+        document.body.style.backgroundColor = "#4c1a1a";
+        setTimeout(() => document.body.style.backgroundColor = "#2c3e50", 500);
+    }
+
+    // --- AI協力者機能 ---
+    function aiHint() {
+        const moves = getValidMoves(BLACK);
+        if (moves.length === 0) return;
+        moves.sort((a, b) => getFlips(b.x, b.y, BLACK).length - getFlips(a.x, a.y, BLACK).length);
+        const best = moves[0];
+        
+        const cells = document.querySelectorAll('.cell');
+        cells[best.y * 8 + best.x].classList.add('hint-cell');
+        logAI(`最適解を算出しました。${best.x+1},${best.y+1} が最も効率的です。`);
+    }
+
+    function aiPurge() {
+        logAI("整合性チェック中... 不正なデータを除去し、盤面を最適化します。");
+        // AIの強力な支援：ランダムな白石を3つ黒に変える
+        let count = 0;
+        for(let i=0; i<20 && count < 3; i++) {
+            let rx = Math.floor(Math.random()*8), ry = Math.floor(Math.random()*8);
+            if(board[ry][rx] === WHITE) {
+                board[ry][rx] = BLACK;
+                count++;
+            }
+        }
+        updateUI();
+    }
+
+    function logAI(msg) {
+        const log = document.getElementById('game-log');
+        log.innerHTML += `<div><span class="log-ai">[AI]:</span> ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+        document.getElementById('ai-message').innerText = msg;
+    }
+
+    function logEnemy(msg) {
+        const log = document.getElementById('game-log');
+        log.innerHTML += `<div><span class="log-enemy">[COM]:</span> ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function endGame() {
+        gameActive = false;
+        let b = 0, w = 0;
+        board.flat().forEach(v => { if(v===BLACK) b++; if(v===WHITE) w++; });
+        const result = b > w ? "私たちの勝利です！" : "敗北しました... 不正プログラムの対策を強化します。";
+        logAI(`対局終了。黒:${b} 対 白:${w}。${result}`);
+    }
+
+    function resetGame() {
+        initBoard();
+    }
+
+    initBoard();
+</script>
+</body>
+</html>
