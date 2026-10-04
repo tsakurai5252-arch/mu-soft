@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本格将棋ゲーム - COM対戦対応</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: #f3f4f6;
+            touch-action: manipulation;
+        }
+        .wood-bg {
+            background-color: #deb887;
+            background-image: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+        }
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(9, minmax(0, 1fr));
+            grid-template-rows: repeat(9, minmax(0, 1fr));
+        }
+        .piece {
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .piece-sente {
+            color: #111;
+        }
+        .piece-gote {
+            color: #111;
+            transform: rotate(180deg);
+        }
+        .promoted {
+            color: #b91c1c !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-2 md:p-4 text-gray-800">
+
+    <!-- ヘッダーおよび対戦設定 -->
+    <header class="w-full max-w-3xl flex flex-col md:flex-row justify-between items-center bg-white shadow-md rounded-2xl px-4 py-3 mb-3 gap-3">
+        <div class="flex items-center justify-between w-full md:w-auto">
+            <h1 class="text-xl font-bold tracking-wider text-amber-900">将棋 - Shogi</h1>
+            <span id="turn-indicator" class="md:hidden px-3 py-1 bg-amber-100 text-amber-900 text-sm font-semibold rounded-full shadow-inner">
+                先手の番
+            </span>
+        </div>
+
+        <!-- モード・難易度選択UI -->
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+            <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                <span class="px-2 text-gray-600">モード:</span>
+                <button id="mode-pvp" onclick="setGameMode('pvp')" class="px-2.5 py-1 rounded-lg bg-white text-amber-900 shadow-sm transition">2人対戦</button>
+                <button id="mode-pve" onclick="setGameMode('pve')" class="px-2.5 py-1 rounded-lg text-gray-600 hover:text-amber-950 transition">対COM</button>
+            </div>
+
+            <div id="ai-level-container" class="hidden items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                <span class="px-2 text-gray-600">難易度:</span>
+                <select id="ai-level" onchange="changeAiLevel(this.value)" class="bg-white border border-gray-300 rounded-lg px-2 py-1 text-amber-900 font-bold focus:outline-none">
+                    <option value="1">Lv.1 初心者</option>
+                    <option value="2">Lv.2 入門</option>
+                    <option value="3" selected>Lv.3 中級</option>
+                    <option value="4">Lv.4 上級</option>
+                    <option value="5">Lv.5 達人</option>
+                </select>
+            </div>
+
+            <button onclick="resetGame()" class="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold rounded-xl shadow transition active:scale-95">
+                リセット
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-3xl flex flex-col items-center gap-3">
+        
+        <!-- 後手（上側）の持ち駒 ＆ ステータス -->
+        <div class="w-full bg-white rounded-2xl p-3 shadow-md flex flex-col gap-1">
+            <div class="text-xs font-bold text-gray-500 flex justify-between items-center">
+                <span id="gote-label">後手の持ち駒</span>
+                <span id="gote-captured-count" class="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">0枚</span>
+            </div>
+            <div id="gote-hand" class="min-h-[48px] flex flex-wrap gap-1.5 items-center p-1 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <!-- 動的挿入 -->
+            </div>
+        </div>
+
+        <!-- 将棋盤メインコンテナ -->
+        <div class="relative w-full aspect-[9/9] max-w-[500px] wood-bg rounded-xl shadow-2xl p-2 md:p-4 border-4 border-amber-900/40 flex items-center justify-center">
+            <!-- PC用 ターン表示バッジ -->
+            <div class="absolute -top-10 left-0 hidden md:flex items-center gap-2">
+                <span id="desktop-turn-indicator" class="px-4 py-1.5 bg-amber-100 text-amber-900 text-base font-bold rounded-full shadow">
+                    先手の番です
+                </span>
+                <span id="ai-thinking" class="hidden text-xs text-amber-800 font-bold animate-pulse bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                    COM思考中...
+                </span>
+            </div>
+
+            <!-- 座標ラベル（上） -->
+            <div class="absolute top-1 left-0 right-0 flex justify-around text-[10px] md:text-xs font-bold text-amber-900/60 px-6">
+                <span>９</span><span>８</span><span>７</span><span>６</span><span>５</span><span>４</span><span>３</span><span>２</span><span>１</span>
+            </div>
+            <!-- 座標ラベル（右） -->
+            <div class="absolute right-1 top-0 bottom-0 flex flex-col justify-around text-[10px] md:text-xs font-bold text-amber-900/60 py-6">
+                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>七</span><span>八</span><span>九</span>
+            </div>
+
+            <!-- 9x9グリッド盤面 -->
+            <div id="shogi-board" class="board-grid w-full h-full bg-[#e6c280] border border-amber-900/60 shadow-inner rounded overflow-hidden">
+                <!-- JavaScriptで生成 -->
+            </div>
+        </div>
+
+        <!-- 先手（下側）の持ち駒 -->
+        <div class="w-full bg-white rounded-2xl p-3 shadow-md flex flex-col gap-1">
+            <div class="text-xs font-bold text-gray-500 flex justify-between items-center">
+                <span id="sente-label">先手の持ち駒</span>
+                <span id="sente-captured-count" class="bg-amber-50 px-2 py-0.5 rounded-full text-amber-800">0枚</span>
+            </div>
+            <div id="sente-hand" class="min-h-[48px] flex flex-wrap gap-1.5 items-center p-1 bg-amber-50/50 rounded-xl border border-dashed border-amber-300">
+                <!-- 動的挿入 -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 成り確認モーダル -->
+    <div id="promote-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl flex flex-col items-center gap-4 animate-scale-up">
+            <h3 class="text-lg font-bold text-amber-900">駒を成りますか？</h3>
+            <p class="text-sm text-gray-600 text-center">この位置では駒を成ることができます。</p>
+            <div class="flex gap-3 w-full">
+                <button onclick="confirmPromote(true)" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl shadow transition">成る</button>
+                <button onclick="confirmPromote(false)" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-xl shadow transition">成らない</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メッセージポップアップ -->
+    <div id="message-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl flex flex-col items-center gap-4">
+            <h3 id="modal-title" class="text-xl font-bold text-amber-900">対局終了</h3>
+            <p id="modal-text" class="text-base text-gray-700 text-center"></p>
+            <button onclick="closeMessageModal()" class="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-2.5 rounded-xl shadow transition">OK</button>
+        </div>
+    </div>
+
+    <footer class="mt-2 text-xs text-gray-400 text-center">
+        本格将棋 Webアプリ - 2人対戦 / COM対戦
+    </footer>
+
+    <script>
+        // 駒の定義
+        const PIECES = {
+            FU: { name: '歩', type: 'FU', promoteTo: 'TO', value: 100, canPromote: true },
+            KY: { name: '香', type: 'KY', promoteTo: 'NY', value: 300, canPromote: true },
+            KE: { name: '桂', type: 'KE', promoteTo: 'NK', value: 350, canPromote: true },
+            GI: { name: '銀', type: 'GI', promoteTo: 'NG', value: 500, canPromote: true },
+            KI: { name: '金', type: 'KI', promoteTo: null, value: 600, canPromote: false },
+            KA: { name: '角', type: 'KA', promoteTo: 'UM', value: 800, canPromote: true },
+            HI: { name: '飛', type: 'HI', promoteTo: 'RY', value: 1000, canPromote: true },
+            OU: { name: '王', type: 'OU', promoteTo: null, value: 15000, canPromote: false },
+            TO: { name: 'と', type: 'TO', promoteTo: null, value: 600, isPromoted: true },
+            NY: { name: '成香', type: 'NY', promoteTo: null, value: 550, isPromoted: true },
+            NK: { name: '成桂', type: 'NK', promoteTo: null, value: 550, isPromoted: true },
+            NG: { name: '成銀', type: 'NG', promoteTo: null, value: 600, isPromoted: true },
+            UM: { name: '馬', type: 'UM', promoteTo: null, value: 1100, isPromoted: true },
+            RY: { name: '竜', type: 'RY', promoteTo: null, value: 1300, isPromoted: true }
+        };
+
+        // 状態管理
+        let board = [];
+        let turn = 0; // 0: 先手, 1: 後手
+        let hands = [[], []];
+        let selectedSquare = null;
+        let selectedHandPiece = null;
+        let validMoves = [];
+        let pendingPromotion = null;
+        
+        let gameMode = 'pvp'; // 'pvp' または 'pve'
+        let aiLevel = 3; // 1〜5
+        let isAiThinking = false;
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            const pvpBtn = document.getElementById('mode-pvp');
+            const pveBtn = document.getElementById('mode-pve');
+            const aiContainer = document.getElementById('ai-level-container');
+            const goteLabel = document.getElementById('gote-label');
+
+            if (mode === 'pvp') {
+                pvpBtn.className = 'px-2.5 py-1 rounded-lg bg-white text-amber-900 shadow-sm transition font-bold';
+                pveBtn.className = 'px-2.5 py-1 rounded-lg text-gray-600 hover:text-amber-950 transition';
+                aiContainer.classList.add('hidden');
+                aiContainer.classList.remove('flex');
+                goteLabel.innerText = '後手の持ち駒';
+            } else {
+                pveBtn.className = 'px-2.5 py-1 rounded-lg bg-white text-amber-900 shadow-sm transition font-bold';
+                pvpBtn.className = 'px-2.5 py-1 rounded-lg text-gray-600 hover:text-amber-950 transition';
+                aiContainer.classList.remove('hidden');
+                aiContainer.classList.add('flex');
+                goteLabel.innerText = 'COMの持ち駒';
+            }
+            resetGame();
+        }
+
+        function changeAiLevel(val) {
+            aiLevel = parseInt(val, 10);
+        }
+
+        function initGame() {
+            board = Array(9).fill(null).map(() => Array(9).fill(null));
+            turn = 0;
+            hands = [[], []];
+            selectedSquare = null;
+            selectedHandPiece = null;
+            validMoves = [];
+            pendingPromotion = null;
+            isAiThinking = false;
+
+            // 初期配置
+            const goteBack = ['KY', 'KE', 'GI', 'KI', 'OU', 'KI', 'GI', 'KE', 'KY'];
+            for (let c = 0; c < 9; c++) {
+                board[0][c] = { type: goteBack[c], player: 1 };
+            }
+            board[1][1] = { type: 'HI', player: 1 };
+            board[1][7] = { type: 'KA', player: 1 };
+            for (let c = 0; c < 9; c++) {
+                board[2][c] = { type: 'FU', player: 1 };
+            }
+
+            for (let c = 0; c < 9; c++) {
+                board[6][c] = { type: 'FU', player: 0 };
+            }
+            board[7][1] = { type: 'KA', player: 0 };
+            board[7][7] = { type: 'HI', player: 0 };
+            const senteBack = ['KY', 'KE', 'GI', 'KI', 'OU', 'KI', 'GI', 'KE', 'KY'];
+            for (let c = 0; c < 9; c++) {
+                board[8][c] = { type: senteBack[c], player: 0 };
+            }
+
+            renderBoard();
+            renderHands();
+            updateTurnIndicator();
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('shogi-board');
+            boardEl.innerHTML = '';
+
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'relative border border-amber-900/30 flex items-center justify-center cursor-pointer select-none aspect-square text-xs md:text-lg font-bold';
+                    
+                    const isSelected = selectedSquare && selectedSquare.r === r && selectedSquare.c === c;
+                    const isValidMove = validMoves.some(m => m.r === r && m.c === c);
+
+                    if (isSelected) {
+                        cell.classList.add('bg-amber-300/80');
+                    } else if (isValidMove) {
+                        cell.classList.add('bg-green-300/60');
+                    } else {
+                        cell.classList.add('hover:bg-amber-400/20');
+                    }
+
+                    const piece = board[r][c];
+                    if (piece) {
+                        const pieceEl = document.createElement('div');
+                        const baseDef = PIECES[piece.type];
+                        pieceEl.className = `piece flex items-center justify-center w-full h-full font-bold ${piece.player === 0 ? 'piece-sente' : 'piece-gote'} ${baseDef.isPromoted ? 'promoted' : ''}`;
+                        pieceEl.innerText = baseDef.name;
+                        cell.appendChild(pieceEl);
+
+                        if (selectedHandPiece && isValidMove) {
+                            cell.classList.add('bg-blue-300/60');
+                        }
+                    } else if (selectedHandPiece && isValidMove) {
+                        cell.classList.add('bg-blue-300/60');
+                    }
+
+                    cell.onclick = () => handleCellClick(r, c);
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function renderHands() {
+            const senteHandEl = document.getElementById('sente-hand');
+            const goteHandEl = document.getElementById('gote-hand');
+            senteHandEl.innerHTML = '';
+            goteHandEl.innerHTML = '';
+
+            document.getElementById('sente-captured-count').innerText = `${hands[0].length}枚`;
+            document.getElementById('gote-captured-count').innerText = `${hands[1].length}枚`;
+
+            hands[0].forEach((type, idx) => {
+                senteHandEl.appendChild(createHandPieceElement(0, type, idx));
+            });
+            if (hands[0].length === 0) senteHandEl.innerHTML = '<span class="text-xs text-gray-400 px-2">なし</span>';
+
+            hands[1].forEach((type, idx) => {
+                goteHandEl.appendChild(createHandPieceElement(1, type, idx));
+            });
+            if (hands[1].length === 0) goteHandEl.innerHTML = '<span class="text-xs text-gray-400 px-2">なし</span>';
+        }
+
+        function createHandPieceElement(player, type, idx) {
+            const div = document.createElement('div');
+            const isSelected = selectedHandPiece && selectedHandPiece.player === player && selectedHandPiece.index === idx;
+            div.className = `px-2.5 py-1 bg-white border ${isSelected ? 'border-amber-600 bg-amber-100 ring-2 ring-amber-400' : 'border-gray-300'} rounded-lg shadow-sm flex items-center gap-1 cursor-pointer text-xs font-bold transition hover:bg-amber-50`;
+            div.innerHTML = `<span>${PIECES[type].name}</span>`;
+            
+            // 人間プレイヤーのターンかつ、AI思考中でない場合のみクリック可能
+            if (turn === player && !(gameMode === 'pve' && player === 1 && isAiThinking)) {
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    handleHandClick(player, type, idx);
+                };
+            } else {
+                div.style.opacity = '0.6';
+                div.style.cursor = 'not-allowed';
+            }
+            return div;
+        }
+
+        function handleHandClick(player, type, idx) {
+            if (turn !== player || (gameMode === 'pve' && player === 1)) return;
+
+            if (selectedHandPiece && selectedHandPiece.player === player && selectedHandPiece.index === idx) {
+                selectedHandPiece = null;
+                validMoves = [];
+            } else {
+                selectedHandPiece = { player, type, index: idx };
+                selectedSquare = null;
+                validMoves = getDropMoves(player, type);
+            }
+            renderBoard();
+            renderHands();
+        }
+
+        function handleCellClick(r, c) {
+            // AI思考中や後手番（PVE時の後手）はクリック無効
+            if (isAiThinking || (gameMode === 'pve' && turn === 1)) return;
+
+            if (selectedHandPiece) {
+                const isValid = validMoves.some(m => m.r === r && m.c === c);
+                if (isValid) {
+                    dropPiece(selectedHandPiece.player, selectedHandPiece.type, selectedHandPiece.index, r, c);
+                }
+                return;
+            }
+
+            const piece = board[r][c];
+            if (selectedSquare === null) {
+                if (piece && piece.player === turn) {
+                    selectedSquare = { r, c };
+                    validMoves = getValidMoves(r, c, piece, board);
+                    renderBoard();
+                }
+            } else {
+                if (selectedSquare.r === r && selectedSquare.c === c) {
+                    selectedSquare = null;
+                    validMoves = [];
+                    renderBoard();
+                    return;
+                }
+
+                const isValid = validMoves.some(m => m.r === r && m.c === c);
+                if (isValid) {
+                    movePiece(selectedSquare.r, selectedSquare.c, r, c);
+                } else if (piece && piece.player === turn) {
+                    selectedSquare = { r, c };
+                    validMoves = getValidMoves(r, c, piece, board);
+                    renderBoard();
+                } else {
+                    selectedSquare = null;
+                    validMoves = [];
+                    renderBoard();
+                }
+            }
+        }
+
+        function movePiece(fromR, fromC, toR, toC, isAiAction = false, forcePromote = false) {
+            const piece = board[fromR][fromC];
+            const target = board[toR][toC];
+
+            if (target) {
+                if (target.type === 'OU') {
+                    board[toR][toC] = piece;
+                    board[fromR][fromC] = null;
+                    renderBoard();
+                    const winnerMsg = (piece.player === 0) ? '先手（あなた）の勝利！' : (gameMode === 'pve' ? 'COMの勝利！' : '後手の勝利！');
+                    showGameOverModal(winnerMsg);
+                    return true;
+                }
+                const baseType = getOriginalType(target.type);
+                hands[piece.player].push(baseType);
+            }
+
+            const baseDef = PIECES[piece.type];
+            const canPromoteZone = (piece.player === 0 && (fromR <= 2 || toR <= 2)) || (piece.player === 1 && (fromR >= 6 || toR >= 6));
+            
+            if (baseDef.canPromote && !baseDef.isPromoted && canPromoteZone) {
+                let mustPromote = false;
+                if (piece.type === 'FU' || piece.type === 'KY') {
+                    if (piece.player === 0 && toR === 0) mustPromote = true;
+                    if (piece.player === 1 && toR === 8) mustPromote = true;
+                }
+                if (piece.type === 'KE') {
+                    if (piece.player === 0 && toR <= 1) mustPromote = true;
+                    if (piece.player === 1 && toR >= 7) mustPromote = true;
+                }
+
+                if (mustPromote) {
+                    piece.type = baseDef.promoteTo;
+                    completeMove(fromR, fromC, toR, toC);
+                } else if (isAiAction) {
+                    // AIの場合は高度なレベルで成るかどうかを決定（簡易的に、敵陣奥なら成る）
+                    if (aiLevel >= 3 || forcePromote) {
+                        piece.type = baseDef.promoteTo;
+                    }
+                    completeMove(fromR, fromC, toR, toC);
+                } else {
+                    pendingPromotion = { fromR, fromC, toR, toC, piece };
+                    document.getElementById('promote-modal').classList.remove('hidden');
+                    document.getElementById('promote-modal').classList.add('flex');
+                    return false;
+                }
+            } else {
+                completeMove(fromR, fromC, toR, toC);
+            }
+            return true;
+        }
+
+        function confirmPromote(promote) {
+            const { fromR, fromC, toR, toC, piece } = pendingPromotion;
+            if (promote) {
+                piece.type = PIECES[piece.type].promoteTo;
+            }
+            document.getElementById('promote-modal').classList.add('hidden');
+            document.getElementById('promote-modal').classList.remove('flex');
+            pendingPromotion = null;
+            completeMove(fromR, fromC, toR, toC);
+        }
+
+        function completeMove(fromR, fromC, toR, toC) {
+            board[toR][toC] = board[fromR][fromC];
+            board[fromR][fromC] = null;
+
+            selectedSquare = null;
+            validMoves = [];
+            turn = 1 - turn;
+
+            renderBoard();
+            renderHands();
+            updateTurnIndicator();
+
+            checkAiTurn();
+        }
+
+        function dropPiece(player, type, handIdx, r, c, isAiAction = false) {
+            if (type === 'FU') {
+                for (let row = 0; row < 9; row++) {
+                    const p = board[row][c];
+                    if (p && p.player === player && p.type === 'FU') {
+                        if (!isAiAction) showMsg('同じ筋に二歩を打つことはできません。');
+                        return false;
+                    }
+                }
+            }
+
+            if (player === 0) {
+                if (type === 'FU' && r === 0) return false;
+                if (type === 'KY' && r === 0) return false;
+                if (type === 'KE' && r <= 1) return false;
+            } else {
+                if (type === 'FU' && r === 8) return false;
+                if (type === 'KY' && r === 8) return false;
+                if (type === 'KE' && r >= 7) return false;
+            }
+
+            board[r][c] = { type: type, player: player };
+            hands[player].splice(handIdx, 1);
+
+            selectedHandPiece = null;
+            validMoves = [];
+            turn = 1 - turn;
+
+            renderBoard();
+            renderHands();
+            updateTurnIndicator();
+
+            checkAiTurn();
+            return true;
+        }
+
+        function getOriginalType(type) {
+            switch(type) {
+                case 'TO': return 'FU';
+                case 'NY': return 'KY';
+                case 'NK': return 'KE';
+                case 'NG': return 'GI';
+                case 'UM': return 'KA';
+                case 'RY': return 'HI';
+                default: return type;
+            }
+        }
+
+        function getValidMoves(r, c, piece, currentBoard) {
+            const moves = [];
+            const p = piece.player;
+            const forward = p === 0 ? -1 : 1;
+
+            const addMove = (dr, dc) => {
+                const nr = r + dr * forward;
+                const nc = c + dc;
+                if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                    const target = currentBoard[nr][nc];
+                    if (!target || target.player !== p) {
+                        moves.push({ r: nr, c: nc });
+                    }
+                }
+            };
+
+            const addLineMoves = (directions) => {
+                directions.forEach(([dr, dc]) => {
+                    let step = 1;
+                    while (true) {
+                        const nr = r + (dr * forward) * step;
+                        const nc = c + dc * step;
+                        if (nr < 0 || nr >= 9 || nc < 0 || nc >= 9) break;
+                        const target = currentBoard[nr][nc];
+                        if (!target) {
+                            moves.push({ r: nr, c: nc });
+                        } else {
+                            if (target.player !== p) {
+                                moves.push({ r: nr, c: nc });
+                            }
+                            break;
+                        }
+                        step++;
+                    }
+                });
+            };
+
+            switch (piece.type) {
+                case 'FU': addMove(1, 0); break;
+                case 'KY': addLineMoves([[1, 0]]); break;
+                case 'KE': addMove(2, -1); addMove(2, 1); break;
+                case 'GI': addMove(1, 0); addMove(1, -1); addMove(1, 1); addMove(-1, -1); addMove(-1, 1); break;
+                case 'KI': 
+                case 'TO': case 'NY': case 'NK': case 'NG':
+                    addMove(1, 0); addMove(1, -1); addMove(1, 1); addMove(0, -1); addMove(0, 1); addMove(-1, 0); break;
+                case 'OU':
+                    addMove(1, 0); addMove(1, -1); addMove(1, 1); addMove(0, -1); addMove(0, 1); addMove(-1, 0); addMove(-1, -1); addMove(-1, 1); break;
+                case 'KA': addLineMoves([[1, 1], [1, -1], [-1, 1], [-1, -1]]); break;
+                case 'HI': addLineMoves([[1, 0], [-1, 0], [0, 1], [0, -1]]); break;
+                case 'UM': addLineMoves([[1, 1], [1, -1], [-1, 1], [-1, -1]]); addMove(1, 0); addMove(-1, 0); addMove(0, 1); addMove(0, -1); break;
+                case 'RY': addLineMoves([[1, 0], [-1, 0], [0, 1], [0, -1]]); addMove(1, 1); addMove(1, -1); addMove(-1, 1); addMove(-1, -1); break;
+            }
+            return moves;
+        }
+
+        function getDropMoves(player, type) {
+            const moves = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === null) {
+                        moves.push({ r, c });
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function updateTurnIndicator() {
+            const indicator = document.getElementById('turn-indicator');
+            const deskIndicator = document.getElementById('desktop-turn-indicator');
+            let text = '';
+            if (turn === 0) {
+                text = gameMode === 'pve' ? '先手（あなた）の番です' : '先手の番です';
+                indicator.className = 'md:hidden px-3 py-1 bg-amber-100 text-amber-900 text-sm font-semibold rounded-full shadow-inner';
+                deskIndicator.className = 'px-4 py-1.5 bg-amber-100 text-amber-900 text-base font-bold rounded-full shadow';
+            } else {
+                text = gameMode === 'pve' ? '後手（COM）の番です' : '後手の番です';
+                indicator.className = 'md:hidden px-3 py-1 bg-gray-200 text-gray-800 text-sm font-semibold rounded-full shadow-inner';
+                deskIndicator.className = 'px-4 py-1.5 bg-gray-200 text-gray-800 text-base font-bold rounded-full shadow';
+            }
+            indicator.innerText = text;
+            deskIndicator.innerText = text;
+        }
+
+        // ==========================
+        // COM (AI) ロジック
+        // ==========================
+        function checkAiTurn() {
+            if (gameMode === 'pve' && turn === 1) {
+                isAiThinking = true;
+                document.getElementById('ai-thinking').classList.remove('hidden');
+                document.getElementById('ai-thinking').classList.add('inline-block');
+
+                setTimeout(() => {
+                    makeAiMove();
+                    isAiThinking = false;
+                    document.getElementById('ai-thinking').classList.add('hidden');
+                    document.getElementById('ai-thinking').classList.remove('inline-block');
+                }, 400);
+            }
+        }
+
+        function makeAiMove() {
+            // レベルに応じた思考
+            // Lv.1: 完全ランダム
+            // Lv.2〜5: 簡易評価関数を用いたミニマックス（深さ1〜3）
+            let allActions = getAllPossibleMoves(1);
+            if (allActions.length === 0) return;
+
+            if (aiLevel === 1) {
+                // ランダム手
+                const action = allActions[Math.floor(Math.random() * allActions.length)];
+                executeAiAction(action);
+            } else if (aiLevel === 2) {
+                // 深さ1: 取れる駒があれば取る、なければランダム
+                let bestAction = allActions[0];
+                let maxVal = -99999;
+                allActions.forEach(act => {
+                    let score = Math.random() * 20; // 若干のゆらぎ
+                    if (act.type === 'move' && board[act.toR][act.toC]) {
+                        score += PIECES[board[act.toR][act.toC].type].value;
+                    }
+                    if (score > maxVal) {
+                        maxVal = score;
+                        bestAction = act;
+                    }
+                });
+                executeAiAction(bestAction);
+            } else {
+                // Lv.3, 4, 5: ミニマックス法 (深さ調整: Lv3=1, Lv4=2, Lv5=3)
+                let depth = aiLevel === 3 ? 1 : (aiLevel === 4 ? 2 : 3);
+                let bestAction = minimaxRoot(depth, 1);
+                if (bestAction) {
+                    executeAiAction(bestAction);
+                } else {
+                    executeAiAction(allActions[0]);
+                }
+            }
+        }
+
+        function getAllPossibleMoves(player) {
+            let actions = [];
+            // 1. 盤上の駒の移動
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = board[r][c];
+                    if (p && p.player === player) {
+                        const moves = getValidMoves(r, c, p, board);
+                        moves.forEach(m => {
+                            actions.push({
+                                type: 'move',
+                                fromR: r, fromC: c,
+                                toR: m.r, toC: m.c,
+                                piece: p
+                            });
+                        });
+                    }
+                }
+            }
+            // 2. 持ち駒の打ち込み
+            hands[player].forEach((type, idx) => {
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (board[r][c] === null) {
+                            // 簡易チェック
+                            if (type === 'FU') {
+                                let hasFu = false;
+                                for (let row = 0; row < 9; row++) {
+                                    if (board[row][c] && board[row][c].player === player && board[row][c].type === 'FU') hasFu = true;
+                                }
+                                if (hasFu) return;
+                                if (player === 1 && r === 8) return;
+                                if (player === 0 && r === 0) return;
+                            }
+                            actions.push({
+                                type: 'drop',
+                                player: player,
+                                pieceType: type,
+                                handIdx: idx,
+                                toR: r, toC: c
+                            });
+                        }
+                    }
+                }
+            });
+            return actions;
+        }
+
+        function executeAiAction(act) {
+            if (act.type === 'move') {
+                movePiece(act.fromR, act.fromC, act.toR, act.toC, true, aiLevel >= 4);
+            } else {
+                dropPiece(act.player, act.pieceType, act.handIdx, act.toR, act.toC, true);
+            }
+        }
+
+        // 簡易評価関数
+        function evaluateBoard() {
+            let score = 0;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = board[r][c];
+                    if (p) {
+                        let val = PIECES[p.type].value;
+                        if (p.player === 1) score += val; // 後手(COM)側が高得点
+                        else score -= val; // 先手側はマイナス
+                    }
+                }
+            }
+            // 持ち駒の評価
+            hands[1].forEach(t => score += PIECES[t].value * 0.9);
+            hands[0].forEach(t => score -= PIECES[t].value * 0.9);
+            return score;
+        }
+
+        function minimaxRoot(depth, player) {
+            let actions = getAllPossibleMoves(player);
+            let bestScore = -999999;
+            let bestAction = null;
+
+            actions.forEach(act => {
+                // 仮想的な盤面変更シミュレーション
+                let backup = cloneState();
+                applyActionSim(act);
+                let score = minimax(depth - 1, false, -999999, 999999);
+                restoreState(backup);
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestAction = act;
+                }
+            });
+            return bestAction;
+        }
+
+        function minimax(depth, isMaximizing, alpha, beta) {
+            if (depth === 0) {
+                return evaluateBoard();
+            }
+
+            let player = isMaximizing ? 1 : 0;
+            let actions = getAllPossibleMoves(player);
+            if (actions.length === 0) return isMaximizing ? -100000 : 100000;
+
+            if (isMaximizing) {
+                let maxEval = -999999;
+                for (let act of actions) {
+                    let backup = cloneState();
+                    applyActionSim(act);
+                    let evalVal = minimax(depth - 1, false, alpha, beta);
+                    restoreState(backup);
+                    maxEval = Math.max(maxEval, evalVal);
+                    alpha = Math.max(alpha, evalVal);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = 999999;
+                for (let act of actions) {
+                    let backup = cloneState();
+                    applyActionSim(act);
+                    let evalVal = minimax(depth - 1, true, alpha, beta);
+                    restoreState(backup);
+                    minEval = Math.min(minEval, evalVal);
+                    beta = Math.min(beta, evalVal);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+
+        function cloneState() {
+            return {
+                board: board.map(row => row.map(cell => cell ? { ...cell } : null)),
+                hands: [ [...hands[0]], [...hands[1]] ],
+                turn: turn
+            };
+        }
+
+        function restoreState(state) {
+            board = state.board;
+            hands = state.hands;
+            turn = state.turn;
+        }
+
+        function applyActionSim(act) {
+            if (act.type === 'move') {
+                let p = board[act.fromR][act.fromC];
+                let target = board[act.toR][act.toC];
+                if (target) {
+                    hands[p.player].push(getOriginalType(target.type));
+                }
+                board[act.toR][act.toC] = p;
+                board[act.fromR][act.fromC] = null;
+                // 成り処理（単純に敵陣なら成る）
+                const canPromoteZone = (p.player === 0 && act.toR <= 2) || (p.player === 1 && act.toR >= 6);
+                const def = PIECES[p.type];
+                if (def.canPromote && !def.isPromoted && canPromoteZone) {
+                    p.type = def.promoteTo;
+                }
+            } else {
+                board[act.toR][act.toC] = { type: act.pieceType, player: act.player };
+                hands[act.player].splice(act.handIdx, 1);
+            }
+            turn = 1 - turn;
+        }
+
+        // ==========================
+        // モーダル・メッセージ
+        // ==========================
+        function showGameOverModal(msg) {
+            document.getElementById('modal-title').innerText = '対局終了';
+            document.getElementById('modal-text').innerText = msg;
+            document.getElementById('message-modal').classList.remove('hidden');
+            document.getElementById('message-modal').classList.add('flex');
+        }
+
+        function showMsg(msg) {
+            document.getElementById('modal-title').innerText = 'お知らせ';
+            document.getElementById('modal-text').innerText = msg;
+            document.getElementById('message-modal').classList.remove('hidden');
+            document.getElementById('message-modal').classList.add('flex');
+        }
+
+        function closeMessageModal() {
+            document.getElementById('message-modal').classList.add('hidden');
+            document.getElementById('message-modal').classList.remove('flex');
+            if (document.getElementById('modal-title').innerText === '対局終了') {
+                initGame();
+            }
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
